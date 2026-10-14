@@ -91,4 +91,44 @@ describe('LocalDriver', () => {
     expect(() => driver.url('test.txt')).toThrow();
     await expect(driver.temporaryUrl('test.txt', 3600)).rejects.toThrow();
   });
+
+  it('should append and prepend content to a file', async () => {
+    const filePath = 'test/append-prepend.txt';
+    await driver.put(filePath, 'middle');
+
+    await driver.append(filePath, ' end');
+    let content = await driver.get(filePath);
+    expect(content.toString('utf-8')).toBe('middle end');
+
+    await driver.prepend(filePath, 'start ');
+    content = await driver.get(filePath);
+    expect(content.toString('utf-8')).toBe('start middle end');
+  });
+
+  it('should list files, allFiles, directories, and allDirectories', async () => {
+    await driver.makeDirectory('test/structure/sub1');
+    await driver.makeDirectory('test/structure/sub2/sub3');
+    await driver.put('test/structure/root.txt', 'root');
+    await driver.put('test/structure/sub1/file1.txt', '1');
+    await driver.put('test/structure/sub2/sub3/file3.txt', '3');
+
+    const directFiles = await driver.files('test/structure');
+    expect(directFiles).toContain('test/structure/root.txt');
+    expect(directFiles).not.toContain('test/structure/sub1/file1.txt');
+
+    const recursiveFiles = await driver.allFiles('test/structure');
+    expect(recursiveFiles).toContain('test/structure/root.txt');
+    expect(recursiveFiles).toContain('test/structure/sub1/file1.txt');
+    expect(recursiveFiles).toContain('test/structure/sub2/sub3/file3.txt');
+
+    const directDirs = await driver.directories('test/structure');
+    expect(directDirs).toContain('test/structure/sub1');
+    expect(directDirs).toContain('test/structure/sub2');
+    expect(directDirs).not.toContain('test/structure/sub2/sub3');
+
+    const recursiveDirs = await driver.allDirectories('test/structure');
+    expect(recursiveDirs).toContain('test/structure/sub1');
+    expect(recursiveDirs).toContain('test/structure/sub2');
+    expect(recursiveDirs).toContain('test/structure/sub2/sub3');
+  });
 });

@@ -144,4 +144,132 @@ export class LocalDriver implements StorageDriver {
       return false;
     }
   }
+
+  async append(filePath: string, data: string | Buffer): Promise<boolean> {
+    try {
+      const fullPath = this.getFullPath(filePath);
+      await this.ensureDirectoryExists(fullPath);
+      await fs.appendFile(fullPath, data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async prepend(filePath: string, data: string | Buffer): Promise<boolean> {
+    try {
+      const fullPath = this.getFullPath(filePath);
+      await this.ensureDirectoryExists(fullPath);
+      let existingContent = Buffer.alloc(0);
+      try {
+        existingContent = await fs.readFile(fullPath);
+      } catch {
+        // file doesn't exist yet, proceed with empty buffer
+      }
+      const newBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+      await fs.writeFile(fullPath, Buffer.concat([newBuffer, existingContent]));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async makeDirectory(dirPath: string): Promise<boolean> {
+    try {
+      const fullPath = this.getFullPath(dirPath);
+      await fs.mkdir(fullPath, { recursive: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async files(directory = ''): Promise<string[]> {
+    try {
+      const fullPath = this.getFullPath(directory);
+      const entries = await fs.readdir(fullPath, { withFileTypes: true });
+      const normalizedDir = directory
+        .replace(/\\/g, '/')
+        .replace(/^\/+|\/+$/g, '');
+      return entries
+        .filter((entry) => entry.isFile())
+        .map((entry) =>
+          normalizedDir ? `${normalizedDir}/${entry.name}` : entry.name,
+        );
+    } catch {
+      return [];
+    }
+  }
+
+  async allFiles(directory = ''): Promise<string[]> {
+    const result: string[] = [];
+    const scan = async (currentDir: string, relPrefix: string) => {
+      try {
+        const entries = await fs.readdir(currentDir, { withFileTypes: true });
+        for (const entry of entries) {
+          const entryRelPath = relPrefix
+            ? `${relPrefix}/${entry.name}`
+            : entry.name;
+          if (entry.isFile()) {
+            result.push(entryRelPath);
+          } else if (entry.isDirectory()) {
+            await scan(path.join(currentDir, entry.name), entryRelPath);
+          }
+        }
+      } catch {
+        // directory missing or inaccessible
+      }
+    };
+
+    const targetDir = this.getFullPath(directory);
+    const normalizedDir = directory
+      .replace(/\\/g, '/')
+      .replace(/^\/+|\/+$/g, '');
+    await scan(targetDir, normalizedDir);
+    return result;
+  }
+
+  async directories(directory = ''): Promise<string[]> {
+    try {
+      const fullPath = this.getFullPath(directory);
+      const entries = await fs.readdir(fullPath, { withFileTypes: true });
+      const normalizedDir = directory
+        .replace(/\\/g, '/')
+        .replace(/^\/+|\/+$/g, '');
+      return entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) =>
+          normalizedDir ? `${normalizedDir}/${entry.name}` : entry.name,
+        );
+    } catch {
+      return [];
+    }
+  }
+
+  async allDirectories(directory = ''): Promise<string[]> {
+    const result: string[] = [];
+    const scan = async (currentDir: string, relPrefix: string) => {
+      try {
+        const entries = await fs.readdir(currentDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const entryRelPath = relPrefix
+              ? `${relPrefix}/${entry.name}`
+              : entry.name;
+            result.push(entryRelPath);
+            await scan(path.join(currentDir, entry.name), entryRelPath);
+          }
+        }
+      } catch {
+        // directory missing or inaccessible
+      }
+    };
+
+    const targetDir = this.getFullPath(directory);
+    const normalizedDir = directory
+      .replace(/\\/g, '/')
+      .replace(/^\/+|\/+$/g, '');
+    await scan(targetDir, normalizedDir);
+    return result;
+  }
 }

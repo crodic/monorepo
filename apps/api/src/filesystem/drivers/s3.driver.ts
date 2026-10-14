@@ -451,4 +451,166 @@ export class S3Driver implements StorageDriver, MultipartCapable {
       return false;
     }
   }
+
+  async append(filePath: string, data: string | Buffer): Promise<boolean> {
+    try {
+      let existing: Uint8Array = Buffer.alloc(0);
+      try {
+        existing = await this.get(filePath);
+      } catch {
+        // file doesn't exist yet, proceed
+      }
+      const newBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+      await this.put(filePath, Buffer.concat([existing, newBuffer]));
+      return true;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to append to ${filePath}: ${error?.message || error}`,
+      );
+      return false;
+    }
+  }
+
+  async prepend(filePath: string, data: string | Buffer): Promise<boolean> {
+    try {
+      let existing: Uint8Array = Buffer.alloc(0);
+      try {
+        existing = await this.get(filePath);
+      } catch {
+        // file doesn't exist yet, proceed
+      }
+      const newBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+      await this.put(filePath, Buffer.concat([newBuffer, existing]));
+      return true;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to prepend to ${filePath}: ${error?.message || error}`,
+      );
+      return false;
+    }
+  }
+
+  async makeDirectory(dirPath: string): Promise<boolean> {
+    try {
+      const key = this.normalizeKey(dirPath).replace(/\/?$/, '/');
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: '',
+      });
+      await this.client.send(command);
+      return true;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to make directory ${dirPath}: ${error?.message || error}`,
+      );
+      return false;
+    }
+  }
+
+  async files(directory = ''): Promise<string[]> {
+    try {
+      const prefix = directory
+        ? this.normalizeKey(directory).replace(/\/?$/, '/')
+        : '';
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: prefix,
+        Delimiter: '/',
+      });
+      const response = await this.client.send(command);
+      const contents = response.Contents ?? [];
+      return contents
+        .map((item) => item.Key)
+        .filter((key): key is string => Boolean(key && !key.endsWith('/')));
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to list files in ${directory}: ${error?.message || error}`,
+      );
+      return [];
+    }
+  }
+
+  async allFiles(directory = ''): Promise<string[]> {
+    try {
+      const prefix = directory
+        ? this.normalizeKey(directory).replace(/\/?$/, '/')
+        : '';
+      const result: string[] = [];
+      let continuationToken: string | undefined;
+
+      do {
+        const command = new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        });
+        const response = await this.client.send(command);
+        if (response.Contents) {
+          for (const item of response.Contents) {
+            if (item.Key && !item.Key.endsWith('/')) {
+              result.push(item.Key);
+            }
+          }
+        }
+        continuationToken = response.NextContinuationToken;
+      } while (continuationToken);
+
+      return result;
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to list all files in ${directory}: ${error?.message || error}`,
+      );
+      return [];
+    }
+  }
+
+  async directories(directory = ''): Promise<string[]> {
+    try {
+      const prefix = directory
+        ? this.normalizeKey(directory).replace(/\/?$/, '/')
+        : '';
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucket,
+        Prefix: prefix,
+        Delimiter: '/',
+      });
+      const response = await this.client.send(command);
+      const prefixes = response.CommonPrefixes ?? [];
+      return prefixes
+        .map((item) => item.Prefix?.replace(/\/$/, ''))
+        .filter((p): p is string => Boolean(p));
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to list directories in ${directory}: ${error?.message || error}`,
+      );
+      return [];
+    }
+  }
+
+  async allDirectories(directory = ''): Promise<string[]> {
+    try {
+      const allFilesList = await this.allFiles(directory);
+      const dirSet = new Set<string>();
+      const normalizedBase = directory
+        ? this.normalizeKey(directory).replace(/\/?$/, '')
+        : '';
+
+      for (const file of allFilesList) {
+        let current = file.substring(0, file.lastIndexOf('/'));
+        while (current && current !== normalizedBase) {
+          dirSet.add(current);
+          const lastSlash = current.lastIndexOf('/');
+          if (lastSlash === -1) break;
+          current = current.substring(0, lastSlash);
+        }
+      }
+      return Array.from(dirSet).sort();
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to list all directories in ${directory}: ${error?.message || error}`,
+      );
+      return [];
+    }
+  }
 }

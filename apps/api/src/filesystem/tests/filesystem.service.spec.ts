@@ -80,4 +80,26 @@ describe('FilesystemService', () => {
     const url = service.url('facade.txt');
     expect(url).toBe(`http://localhost:3000/${testRoot}/facade.txt`);
   });
+
+  it('should delegate append, prepend, files, and makeDirectory to default disk', async () => {
+    await service.makeDirectory('sub');
+    await service.put('sub/note.txt', 'middle');
+    await service.append('sub/note.txt', ' end');
+    await service.prepend('sub/note.txt', 'start ');
+
+    const content = await service.get('sub/note.txt');
+    expect(content.toString('utf-8')).toBe('start middle end');
+
+    const files = await service.files('sub');
+    expect(files).toContain('sub/note.txt');
+  });
+
+  it('should return StreamableFile from download method', async () => {
+    await service.put('download.txt', 'downloadable content');
+    const streamableFile = await service.download('download.txt', 'custom.txt');
+
+    expect(streamableFile).toBeDefined();
+    expect(streamableFile.options.disposition).toContain('custom.txt');
+    expect(streamableFile.options.type).toBe('text/plain');
+  });
 });

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, StreamableFile } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import path from 'node:path';
 import type { Readable } from 'node:stream';
 import type { AllConfigType } from '../config/config.type';
 import type { StorageDisk } from './config/storage-config.type';
@@ -181,5 +182,54 @@ export class FilesystemService {
 
   async move(from: string, to: string): Promise<boolean> {
     return await this.disk().move(from, to);
+  }
+
+  async append(filePath: string, data: string | Buffer): Promise<boolean> {
+    return await this.disk().append(filePath, data);
+  }
+
+  async prepend(filePath: string, data: string | Buffer): Promise<boolean> {
+    return await this.disk().prepend(filePath, data);
+  }
+
+  async makeDirectory(dirPath: string): Promise<boolean> {
+    return await this.disk().makeDirectory(dirPath);
+  }
+
+  async files(directory?: string): Promise<string[]> {
+    return await this.disk().files(directory);
+  }
+
+  async allFiles(directory?: string): Promise<string[]> {
+    return await this.disk().allFiles(directory);
+  }
+
+  async directories(directory?: string): Promise<string[]> {
+    return await this.disk().directories(directory);
+  }
+
+  async allDirectories(directory?: string): Promise<string[]> {
+    return await this.disk().allDirectories(directory);
+  }
+
+  /**
+   * Return a StreamableFile for controller download responses with Content-Disposition attachment.
+   */
+  async download(
+    filePath: string,
+    name?: string,
+    headers?: Record<string, string>,
+  ): Promise<StreamableFile> {
+    const stream = await this.getStream(filePath);
+    const filename = name ?? path.basename(filePath);
+    const mimeType = await this.mimeType(filePath);
+    const size = await this.size(filePath);
+
+    return new StreamableFile(stream, {
+      type: mimeType,
+      disposition: `attachment; filename="${encodeURIComponent(filename)}"`,
+      length: size,
+      ...headers,
+    });
   }
 }

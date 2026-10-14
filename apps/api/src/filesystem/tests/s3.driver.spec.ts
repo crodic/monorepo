@@ -139,4 +139,54 @@ describe('S3Driver', () => {
     const res = await driver.deleteDirectory('folder');
     expect(res).toBe(true);
   });
+
+  it('should append and prepend content in S3', async () => {
+    // get returns existing content
+    mockSend
+      .mockResolvedValueOnce({
+        Body: {
+          transformToByteArray: jest
+            .fn()
+            .mockResolvedValue(new Uint8Array(Buffer.from('hello'))),
+        },
+      })
+      .mockResolvedValueOnce({}); // put
+
+    const appendRes = await driver.append('file.txt', ' world');
+    expect(appendRes).toBe(true);
+
+    mockSend
+      .mockResolvedValueOnce({
+        Body: {
+          transformToByteArray: jest
+            .fn()
+            .mockResolvedValue(new Uint8Array(Buffer.from('world'))),
+        },
+      })
+      .mockResolvedValueOnce({}); // put
+
+    const prependRes = await driver.prepend('file.txt', 'hello ');
+    expect(prependRes).toBe(true);
+  });
+
+  it('should list files, allFiles, directories, and makeDirectory in S3', async () => {
+    mockSend.mockResolvedValueOnce({}); // makeDirectory PutObject
+    const makeDirRes = await driver.makeDirectory('new-folder');
+    expect(makeDirRes).toBe(true);
+
+    // files()
+    mockSend.mockResolvedValueOnce({
+      Contents: [{ Key: 'folder/file1.txt' }, { Key: 'folder/' }],
+      CommonPrefixes: [{ Prefix: 'folder/sub/' }],
+    });
+    const filesList = await driver.files('folder');
+    expect(filesList).toEqual(['folder/file1.txt']);
+
+    // directories()
+    mockSend.mockResolvedValueOnce({
+      CommonPrefixes: [{ Prefix: 'folder/sub/' }],
+    });
+    const dirsList = await driver.directories('folder');
+    expect(dirsList).toEqual(['folder/sub']);
+  });
 });

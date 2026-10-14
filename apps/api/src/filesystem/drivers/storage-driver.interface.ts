@@ -78,6 +78,41 @@ export interface StorageDriver {
    * Move / Rename a file.
    */
   move: (from: string, to: string) => Promise<boolean>;
+
+  /**
+   * Append content to a file.
+   */
+  append: (path: string, data: string | Buffer) => Promise<boolean>;
+
+  /**
+   * Prepend content to a file.
+   */
+  prepend: (path: string, data: string | Buffer) => Promise<boolean>;
+
+  /**
+   * Get an array of all files in a directory (non-recursive).
+   */
+  files: (directory?: string) => Promise<string[]>;
+
+  /**
+   * Get all files from the given directory (recursive).
+   */
+  allFiles: (directory?: string) => Promise<string[]>;
+
+  /**
+   * Get all of the directories within a given directory (non-recursive).
+   */
+  directories: (directory?: string) => Promise<string[]>;
+
+  /**
+   * Get all directories within a given directory (recursive).
+   */
+  allDirectories: (directory?: string) => Promise<string[]>;
+
+  /**
+   * Create a directory.
+   */
+  makeDirectory: (path: string) => Promise<boolean>;
 }
 
 export interface MultipartPartInput {
