@@ -5,6 +5,10 @@
   "compilerOptions": {
     "builder": "swc",
     "deleteOutDir": true,
-    "typeCheck": false
+    "typeCheck": false,
+    "assets": [
+      { "include": "i18n/**/*", "watchAssets": true },
+      { "include": "**/*.hbs", "watchAssets": true }
+    ]
   }
 }

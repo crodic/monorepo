@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm build && concurrently -k \"swc src -d dist --strip-leading-paths --watch\" \"node --watch dist/main.js\"",
-    "build": "swc src -d dist --strip-leading-paths && node -e \"const fs=require('fs'); if(fs.existsSync('src/mail/templates')) fs.cpSync('src/mail/templates', 'dist/mail/templates', {recursive: true});\"",
+    "build": "swc src -d dist --strip-leading-paths && node -e \"const fs=require('fs'); if(fs.existsSync('src/mail/templates')) fs.cpSync('src/mail/templates', 'dist/mail/templates', {recursive: true}); if(fs.existsSync('src/i18n')) fs.cpSync('src/i18n', 'dist/i18n', {recursive: true});\"",
     "check-types": "tsc --noEmit -p tsconfig.build.json",
     "start": "node dist/main",
     "start:dev": "nest start --watch",
@@ -54,6 +54,7 @@
     "keyv": "^6.1.0",
     "mime-types": "^3.0.2",
     "multer": "^2.4.0",
+    "nestjs-i18n": "^10.8.5",
     "nodemailer": "^10.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

@@ -4,8 +4,17 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import fs from 'fs';
+import path from 'path';
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
 import appConfig from './config/app.config';
 import { AllConfigType } from './config/config.type';
+import { Environment } from './common/constants/app.constant';
 import databaseConfig from './database/config/database.config';
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { HealthModule } from './health/health.module';
@@ -34,6 +43,40 @@ import { ApiModule } from './api/api.module';
         limit: 100,
       },
     ]),
+    I18nModule.forRootAsync({
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+        new HeaderResolver(['x-lang']),
+      ],
+      useFactory: (configService: ConfigService<AllConfigType>) => {
+        const env = configService.get('app.nodeEnv', { infer: true });
+        const isLocal = env === Environment.LOCAL;
+        const isDev = env === Environment.DEVELOPMENT;
+
+        const i18nPath = fs.existsSync(path.join(__dirname, './i18n/'))
+          ? path.join(__dirname, './i18n/')
+          : path.join(__dirname, '../src/i18n/');
+
+        return {
+          fallbackLanguage: configService.getOrThrow('app.fallbackLanguage', {
+            infer: true,
+          }),
+          loaderOptions: {
+            path: i18nPath,
+            watch: isLocal,
+          },
+          typesOutputPath: path.resolve(
+            __dirname,
+            __dirname.includes('dist')
+              ? '../src/generated/i18n.generated.ts'
+              : './generated/i18n.generated.ts',
+          ),
+          logging: isLocal || isDev,
+        };
+      },
+      inject: [ConfigService],
+    }),
     RedisModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],

@@ -2,6 +2,8 @@ import {
   ClassSerializerInterceptor,
   HttpStatus,
   RequestMethod,
+  UnprocessableEntityException,
+  ValidationError,
   ValidationPipe,
   VersioningType,
 } from '@nestjs/common';
@@ -10,6 +12,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { AllConfigType } from './config/config.type';
+import { GlobalExceptionFilter } from './filters/global-exception.filter';
 import { setupSwagger } from './utils/setup-swagger';
 
 async function bootstrap() {
@@ -52,11 +55,16 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
+  app.useGlobalFilters(new GlobalExceptionFilter(configService));
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
       errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+      exceptionFactory: (errors: ValidationError[]) => {
+        return new UnprocessableEntityException(errors);
+      },
     }),
   );
 

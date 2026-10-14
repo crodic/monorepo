@@ -1,5 +1,13 @@
 import { registerAs } from '@nestjs/config';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Environment } from '../common/constants/app.constant';
 import validateConfig from '../utils/validate-config';
 
@@ -10,6 +18,8 @@ export type AppConfig = {
   url: string;
   apiPrefix: string;
   corsOrigin: string;
+  fallbackLanguage: string;
+  debug: boolean;
 };
 
 class EnvironmentVariablesValidator {
@@ -38,6 +48,14 @@ class EnvironmentVariablesValidator {
   @IsString()
   @IsOptional()
   APP_CORS_ORIGIN?: string;
+
+  @IsString()
+  @IsOptional()
+  APP_FALLBACK_LANGUAGE?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  APP_DEBUG?: boolean;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -54,5 +72,7 @@ export default registerAs<AppConfig>('app', () => {
     corsOrigin:
       process.env.APP_CORS_ORIGIN ||
       'http://localhost:5173,http://localhost:3000',
+    fallbackLanguage: process.env.APP_FALLBACK_LANGUAGE || 'en',
+    debug: process.env.APP_DEBUG === 'true',
   };
 });
