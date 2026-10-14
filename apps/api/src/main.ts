@@ -1,12 +1,73 @@
-import { NestFactory } from '@nestjs/core';
+import {
+  ClassSerializerInterceptor,
+  HttpStatus,
+  RequestMethod,
+  ValidationPipe,
+  VersioningType,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { NestFactory, Reflector } from '@nestjs/core';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { AllConfigType } from './config/config.type';
+import { setupSwagger } from './utils/setup-swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
-  const port = process.env.APP_PORT ?? 8000;
+
+  app.enableShutdownHooks();
+
+  const configService = app.get(ConfigService<AllConfigType>);
+  const port = configService.getOrThrow('app.port', { infer: true });
+  const corsOrigin = configService.getOrThrow('app.corsOrigin', {
+    infer: true,
+  });
+
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false, // Allow Swagger UI assets
+    }),
+  );
+
+  app.enableCors({
+    origin: corsOrigin.split(',').map((origin) => origin.trim()),
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
+  });
+
+  app.setGlobalPrefix('api', {
+    exclude: [
+      { method: RequestMethod.GET, path: '/' },
+      { method: RequestMethod.GET, path: 'health' },
+      { method: RequestMethod.GET, path: 'health/(.*)' },
+      { method: RequestMethod.GET, path: 'docs' },
+      { method: RequestMethod.GET, path: 'docs/(.*)' },
+    ],
+  });
+
+  app.enableVersioning({
+    type: VersioningType.URI,
+    defaultVersion: '1',
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+    }),
+  );
+
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
+
+  setupSwagger(app);
+
   await app.listen(port);
   console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`Swagger documentation: http://localhost:${port}/docs`);
 }
 
 void bootstrap();
