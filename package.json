@@ -9,7 +9,11 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "check-types": "turbo run check-types",
     "preinstall": "npx only-allow pnpm",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:infra": "docker compose up -d",
+    "docker:infra:down": "docker compose down",
+    "docker:tools": "docker compose --profile tools up -d",
+    "docker:clean": "docker compose down -v"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
