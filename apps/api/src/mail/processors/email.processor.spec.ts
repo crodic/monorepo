@@ -6,11 +6,11 @@ import { EmailProcessor } from './email.processor';
 
 describe('EmailProcessor', () => {
   let processor: EmailProcessor;
-  let mailService: { sendDirectMail: jest.Mock };
+  let mailService: { sendDirectMail: any };
 
   beforeEach(async () => {
     mailService = {
-      sendDirectMail: jest.fn().mockResolvedValue({ html: '<p>test</p>' }),
+      sendDirectMail: jest.fn(() => Promise.resolve({ html: '<p>test</p>' })),
     };
 
     const module: TestingModule = await Test.createTestingModule({

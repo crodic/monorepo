@@ -5,7 +5,7 @@ import * as fs from 'node:fs';
 import { MailService } from './mail.service';
 
 jest.mock('node:fs', () => {
-  const actualFs = jest.requireActual('node:fs');
+  const actualFs = jest.requireActual<Record<string, unknown>>('node:fs');
   return {
     ...actualFs,
     existsSync: jest.fn(),
@@ -15,11 +15,11 @@ jest.mock('node:fs', () => {
 
 describe('MailService', () => {
   let service: MailService;
-  let mailerService: { sendMail: jest.Mock };
+  let mailerService: { sendMail: any };
 
   beforeEach(async () => {
     mailerService = {
-      sendMail: jest.fn().mockResolvedValue({ messageId: 'test-123' }),
+      sendMail: jest.fn(() => Promise.resolve({ messageId: 'test-123' })),
     };
 
     const module: TestingModule = await Test.createTestingModule({

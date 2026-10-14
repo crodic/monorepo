@@ -5,11 +5,11 @@ import { MailQueueService } from './mail-queue.service';
 
 describe('MailQueueService', () => {
   let service: MailQueueService;
-  let queueMock: { add: jest.Mock };
+  let queueMock: { add: any };
 
   beforeEach(async () => {
     queueMock = {
-      add: jest.fn().mockResolvedValue({ id: 'job-1' }),
+      add: jest.fn(() => Promise.resolve({ id: 'job-1' })),
     };
 
     const module: TestingModule = await Test.createTestingModule({
