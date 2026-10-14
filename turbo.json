@@ -3,19 +3,23 @@
   "ui": "tui",
   "tasks": {
     "build": {
+      "description": "Compiles TypeScript and bundles the application",
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
     },
     "lint": {
+      "description": "Checks code style and catches common errors", 
       "dependsOn": ["^lint"]
     },
     "check-types": {
+      "description": "Runs type checks",
       "dependsOn": ["^check-types"]
     },
     "dev": {
       "cache": false,
       "persistent": true
     }
-  }
+  },
+  "agentGuidance": true
 }
