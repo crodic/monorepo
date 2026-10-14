@@ -10,7 +10,7 @@
     "./nest": "./nest.js",
     "./nestjs": "./nest.js"
   },
-  "devDependencies": {
+  "dependencies": {
     "@babel/core": "8.0.1",
     "@babel/eslint-parser": "8.0.1",
     "@babel/plugin-proposal-decorators": "^8.0.2",

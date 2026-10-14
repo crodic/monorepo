@@ -14,7 +14,12 @@
     "test:watch": "jest --watch",
     "test:debug": "node --inspect-brk node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "db:create": "ts-node ./src/database/create-database.ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "pnpm typeorm --dataSource=src/database/data-source.ts migration:generate",
+    "migration:run": "pnpm typeorm --dataSource=src/database/data-source.ts migration:run",
+    "migration:revert": "pnpm typeorm --dataSource=src/database/data-source.ts migration:revert"
   },
   "dependencies": {
     "@nestjs/bullmq": "^12.0.0",

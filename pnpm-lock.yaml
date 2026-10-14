@@ -224,7 +224,7 @@ importers:
         version: 20.5.3
 
   packages/eslint-config:
-    devDependencies:
+    dependencies:
       "@babel/core":
         specifier: 8.0.1
         version: 8.0.1
