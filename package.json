@@ -12,7 +12,6 @@
     "prepare": "husky",
     "docker:infra": "docker compose up -d",
     "docker:infra:down": "docker compose down",
-    "docker:tools": "docker compose --profile tools up -d",
     "docker:clean": "docker compose down -v"
   },
   "devDependencies": {

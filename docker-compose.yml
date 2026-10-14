@@ -94,30 +94,10 @@ services:
     networks:
       - app-network
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: monorepo_pgadmin
-    restart: unless-stopped
-    profiles:
-      - tools
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change-me}
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - app-network
-
 volumes:
   postgres_data:
   redis_data:
   minio_data:
-  pgadmin_data:
 
 networks:
   app-network:
