@@ -1,5 +1,4 @@
-export const MAIL_QUEUE_NAME = 'email';
-export const SEND_MAIL_JOB = 'send-email';
+export * from '../../background/queues/email-queue/constants/email-queue.constant';
 
 export interface ISendMailOptions {
   to: string | string[];

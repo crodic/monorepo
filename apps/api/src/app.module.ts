@@ -4,8 +4,6 @@ import { APP_GUARD } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import appConfig from './config/app.config';
 import { AllConfigType } from './config/config.type';
 import databaseConfig from './database/config/database.config';
@@ -15,6 +13,7 @@ import { MailModule } from './mail/mail.module';
 import mailConfig from './mail/config/mail.config';
 import redisConfig from './redis/config/redis.config';
 import { RedisModule } from './redis/redis.module';
+import { BackgroundModule } from './background/background.module';
 import { ApiModule } from './api/api.module';
 
 @Module({
@@ -24,20 +23,16 @@ import { ApiModule } from './api/api.module';
       load: [appConfig, databaseConfig, redisConfig, mailConfig],
       envFilePath: ['.env'],
     }),
-
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
     }),
-
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
         limit: 100,
       },
     ]),
-
     RedisModule,
-
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -55,14 +50,12 @@ import { ApiModule } from './api/api.module';
         },
       }),
     }),
-
     HealthModule,
     MailModule,
+    BackgroundModule,
     ApiModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

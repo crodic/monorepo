@@ -1,14 +1,14 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { ISendMailOptions } from '../../../mail/constants/mail.constant';
+import { MailService } from '../../../mail/mail.service';
 import {
-  ISendMailOptions,
-  MAIL_QUEUE_NAME,
-  SEND_MAIL_JOB,
-} from '../constants/mail.constant';
-import { MailService } from '../mail.service';
+  EMAIL_QUEUE_NAME,
+  SEND_EMAIL_JOB,
+} from './constants/email-queue.constant';
 
-@Processor(MAIL_QUEUE_NAME, {
+@Processor(EMAIL_QUEUE_NAME, {
   concurrency: 1,
   limiter: {
     max: 1,
@@ -27,7 +27,7 @@ export class EmailProcessor extends WorkerHost {
       `Processing email job ${job.id} (name: ${job.name}) to ${Array.isArray(job.data.to) ? job.data.to.join(', ') : job.data.to}`,
     );
 
-    if (job.name === SEND_MAIL_JOB) {
+    if (job.name === SEND_EMAIL_JOB) {
       return this.mailService.sendDirectMail(job.data);
     }
 

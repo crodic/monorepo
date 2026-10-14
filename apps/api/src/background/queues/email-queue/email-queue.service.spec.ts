@@ -1,10 +1,13 @@
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MAIL_QUEUE_NAME, SEND_MAIL_JOB } from '../constants/mail.constant';
-import { MailQueueService } from './mail-queue.service';
+import {
+  EMAIL_QUEUE_NAME,
+  SEND_EMAIL_JOB,
+} from './constants/email-queue.constant';
+import { EmailQueueService } from './email-queue.service';
 
-describe('MailQueueService', () => {
-  let service: MailQueueService;
+describe('EmailQueueService', () => {
+  let service: EmailQueueService;
   let queueMock: { add: any };
 
   beforeEach(async () => {
@@ -14,15 +17,15 @@ describe('MailQueueService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        MailQueueService,
+        EmailQueueService,
         {
-          provide: getQueueToken(MAIL_QUEUE_NAME),
+          provide: getQueueToken(EMAIL_QUEUE_NAME),
           useValue: queueMock,
         },
       ],
     }).compile();
 
-    service = module.get<MailQueueService>(MailQueueService);
+    service = module.get<EmailQueueService>(EmailQueueService);
   });
 
   it('should be defined', () => {
@@ -41,7 +44,7 @@ describe('MailQueueService', () => {
 
     expect(result).toEqual({ id: 'job-1' });
     expect(queueMock.add).toHaveBeenCalledWith(
-      SEND_MAIL_JOB,
+      SEND_EMAIL_JOB,
       mailOptions,
       expect.objectContaining({
         attempts: 3,

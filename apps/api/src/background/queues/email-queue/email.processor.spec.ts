@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Job } from 'bullmq';
-import { ISendMailOptions, SEND_MAIL_JOB } from '../constants/mail.constant';
-import { MailService } from '../mail.service';
+import { ISendMailOptions } from '../../../mail/constants/mail.constant';
+import { MailService } from '../../../mail/mail.service';
+import { SEND_EMAIL_JOB } from './constants/email-queue.constant';
 import { EmailProcessor } from './email.processor';
 
 describe('EmailProcessor', () => {
@@ -40,7 +41,7 @@ describe('EmailProcessor', () => {
 
     const job = {
       id: 'job-1',
-      name: SEND_MAIL_JOB,
+      name: SEND_EMAIL_JOB,
       data: jobData,
     } as unknown as Job<ISendMailOptions, unknown, string>;
 
