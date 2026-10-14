@@ -11,6 +11,8 @@ import { AllConfigType } from './config/config.type';
 import databaseConfig from './database/config/database.config';
 import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { HealthModule } from './health/health.module';
+import { MailModule } from './mail/mail.module';
+import mailConfig from './mail/config/mail.config';
 import redisConfig from './redis/config/redis.config';
 import { RedisModule } from './redis/redis.module';
 import { UserModule } from './api/user/user.module';
@@ -19,7 +21,7 @@ import { UserModule } from './api/user/user.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig],
+      load: [appConfig, databaseConfig, redisConfig, mailConfig],
       envFilePath: ['.env'],
     }),
 
@@ -55,6 +57,7 @@ import { UserModule } from './api/user/user.module';
     }),
 
     HealthModule,
+    MailModule,
     UserModule,
   ],
   controllers: [AppController],

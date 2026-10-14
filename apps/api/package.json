@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm build && concurrently -k \"swc src -d dist --strip-leading-paths --watch\" \"node --watch dist/main.js\"",
-    "build": "swc src -d dist --strip-leading-paths",
+    "build": "swc src -d dist --strip-leading-paths && node -e \"const fs=require('fs'); if(fs.existsSync('src/mail/templates')) fs.cpSync('src/mail/templates', 'dist/mail/templates', {recursive: true});\"",
     "check-types": "tsc --noEmit -p tsconfig.build.json",
     "start": "node dist/main",
     "start:dev": "nest start --watch",
@@ -22,6 +22,7 @@
     "migration:revert": "pnpm typeorm --dataSource=src/database/data-source.ts migration:revert"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^3.0.2",
     "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^12.0.2",
     "@nestjs/config": "^12.0.1",
@@ -39,8 +40,10 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "dotenv": "^17.4.2",
+    "handlebars": "^4.7.10",
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
+    "nodemailer": "^10.1.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pg": "^8.23.1",
@@ -61,6 +64,7 @@
     "@swc/jest": "^0.2.39",
     "@types/express": "^5.0.6",
     "@types/node": "^26.5.1",
+    "@types/nodemailer": "^8.0.2",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",

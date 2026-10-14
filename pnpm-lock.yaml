@@ -31,6 +31,9 @@ importers:
 
   apps/api:
     dependencies:
+      "@nestjs-modules/mailer":
+        specifier: ^3.0.2
+        version: 3.0.2(@nestjs/common@12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.3)(@nestjs/terminus@12.1.0(eb4dcfbeb9f551d811210251e99d145e))(bullmq@5.81.5(supports-color@10.2.2))(handlebars@4.7.10)(nodemailer@10.1.0)
       "@nestjs/bullmq":
         specifier: ^12.0.0
         version: 12.0.0(@nestjs/common@12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.3)(bullmq@5.81.5(supports-color@10.2.2))
@@ -82,12 +85,18 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      handlebars:
+        specifier: ^4.7.10
+        version: 4.7.10
       helmet:
         specifier: ^8.3.0
         version: 8.3.0
       ioredis:
         specifier: ^6.0.0
         version: 6.0.0(supports-color@10.2.2)
+      nodemailer:
+        specifier: ^10.1.0
+        version: 10.1.0
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -115,7 +124,7 @@ importers:
         version: 30.5.2(supports-color@10.2.2)
       "@nestjs/cli":
         specifier: ^12.0.1
-        version: 12.0.8(@swc/cli@0.8.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@10.2.2))(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(prettier@3.9.6)(ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)))
+        version: 12.0.8(@swc/cli@0.8.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@10.2.2))(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(prettier@3.9.6)(ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3))
       "@nestjs/schematics":
         specifier: ^12.0.2
         version: 12.0.7(chokidar@5.0.0)(prettier@3.9.6)(typescript@5.9.3)
@@ -143,6 +152,9 @@ importers:
       "@types/node":
         specifier: ^26.5.1
         version: 26.6.5
+      "@types/nodemailer":
+        specifier: ^8.0.2
+        version: 8.0.2
       "@types/passport-jwt":
         specifier: ^4.0.1
         version: 4.0.1
@@ -169,7 +181,7 @@ importers:
         version: 7.3.1(supports-color@10.2.2)
       ts-loader:
         specifier: ^9.6.2
-        version: 9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)))
+        version: 9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3))
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3)
@@ -1023,6 +1035,116 @@ packages:
         integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==,
       }
     engines: { node: ">=12" }
+
+  "@css-inline/css-inline-android-arm-eabi@0.22.0":
+    resolution:
+      {
+        integrity: sha512-SAKnj3t5SpO5WOP6mSt+LQ+bANcXgx05oS/pEjWugfA5yM4Gcfsu6vqqZIljZSgfwxomGj9KJZvyUCvUzcL88w==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm]
+    os: [android]
+
+  "@css-inline/css-inline-android-arm64@0.22.0":
+    resolution:
+      {
+        integrity: sha512-MGCtmZXsM1zqR16LLKYrCQHrrDLEMBPiFaImGFKHZpUgH7LF/wH94QjD0LyryPDbkbEz2qbJ8CCkIx1oQN1jAQ==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm64]
+    os: [android]
+
+  "@css-inline/css-inline-darwin-arm64@0.22.0":
+    resolution:
+      {
+        integrity: sha512-/1536wbgC3ajWE/wQpQMrO+es+dCZ6ApYusjSTu+D4wA9c+WQTmc5wT1og09P8FTGzP0y/N2Mec9AsYB2yL1FA==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm64]
+    os: [darwin]
+
+  "@css-inline/css-inline-darwin-x64@0.22.0":
+    resolution:
+      {
+        integrity: sha512-99PM7DCxDQ6yzmlM7BrsTJKauGx0D5WGm70DEIBlhI87it7rax0i2kyykV/xgojOihttR4EbzF1jv9opvKpn+A==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [x64]
+    os: [darwin]
+
+  "@css-inline/css-inline-linux-arm-gnueabihf@0.22.0":
+    resolution:
+      {
+        integrity: sha512-5QBP5gunVeQvM2dcirBgSPgeS7hxN5fZO+VGtp1meVw8zArP40MFhnC0yPqt6kCVUjVgchBmYy8PmA/iLS4a+w==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm]
+    os: [linux]
+
+  "@css-inline/css-inline-linux-arm64-gnu@0.22.0":
+    resolution:
+      {
+        integrity: sha512-UMmZr5kJOZ67LbBZZsGdD2mPhCDGwfCj3/Aaw2srY3lc99HiGAqQ4qgjd9sOI7W85kmBmUEqnf/X60JOJsAhWw==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  "@css-inline/css-inline-linux-arm64-musl@0.22.0":
+    resolution:
+      {
+        integrity: sha512-QgeTwJtVibEE4NN1vDu5xRPrQNWedUyfQyCHxlsh6vdXY8nZ9cd9iFa4aguqaAi7ljr6gkjAFuERHULSjynLJg==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  "@css-inline/css-inline-linux-x64-gnu@0.22.0":
+    resolution:
+      {
+        integrity: sha512-l8QAh5/zEdYNlS1Ctqi/0D9tDXhEic9w9ou7FTxmQjMirAg2+oUmiraqWNnZr0YeYySPN500XHbCKDGq9ACYRg==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  "@css-inline/css-inline-linux-x64-musl@0.22.0":
+    resolution:
+      {
+        integrity: sha512-9LcUU2ZJl7VGfcCa6LGCeGQsnUomLgcxJvbnCWiSH7A8iP1O5tZ2HWIj9j8zpCEHciBwn9WklWewZ4gP0ZlB9A==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  "@css-inline/css-inline-win32-arm64-msvc@0.22.0":
+    resolution:
+      {
+        integrity: sha512-Sn2F+N3NiMFkho6r4JGgdkiwGmjR9tzUY+pSQ3Jtosruos7rF0qtCBSycu2O3Kceuf/rWaKi3H0q0TnjrSYRVw==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [arm64]
+    os: [win32]
+
+  "@css-inline/css-inline-win32-x64-msvc@0.22.0":
+    resolution:
+      {
+        integrity: sha512-3K87N3QCyznTOuU4gZA3kkVlDSp5niKHTVL/7GtlkSLJQYb6s0ZfKxxBD8AUrOyajd4iYWyWsr8HM/Rs+BdUlg==,
+      }
+    engines: { node: ">= 10" }
+    cpu: [x64]
+    os: [win32]
+
+  "@css-inline/css-inline@0.22.0":
+    resolution:
+      {
+        integrity: sha512-C1vALHUS02Vv8dBoH07A1fQG7F0Mf/SG7cfQw2BX0eHmUgw+rjWrW/hedP1CGNoBLjGVvBDyjYfVOSjgLdm18w==,
+      }
+    engines: { node: ">= 10" }
 
   "@emnapi/core@1.10.0":
     resolution:
@@ -2039,6 +2161,56 @@ packages:
       "@emnapi/core": ^1.7.1 || ^2.0.0-alpha.4
       "@emnapi/runtime": ^1.7.1 || ^2.0.0-alpha.4
 
+  "@nestjs-modules/mailer@3.0.2":
+    resolution:
+      {
+        integrity: sha512-029fQd7UrTGNr+WogAgTUw5UHYCSLpnbQW7y5Ueyp6LZtAZssOjwqGcDqfYijNdxNKI8wdcBUfhVoOh39L+Z5w==,
+      }
+    peerDependencies:
+      "@nestjs/common": ">=7.0.9"
+      "@nestjs/core": ">=7.0.9"
+      "@nestjs/event-emitter": ">=2.0.0"
+      "@nestjs/terminus": ">=10.0.0"
+      "@types/ejs": ">=3.0.3"
+      "@types/mjml": ">=4.7.4"
+      "@types/pug": ">=2.0.6"
+      bullmq: ">=4.0.0"
+      ejs: ">=3.1.10"
+      handlebars: ">=4.7.9"
+      liquidjs: ">=10.25.5"
+      mjml: ">=4.15.3"
+      nodemailer: ">=8.0.5"
+      nunjucks: ">=3.2.0"
+      preview-email: ">=3.0.19"
+      pug: ">=3.0.3"
+    peerDependenciesMeta:
+      "@nestjs/event-emitter":
+        optional: true
+      "@nestjs/terminus":
+        optional: true
+      "@types/ejs":
+        optional: true
+      "@types/mjml":
+        optional: true
+      "@types/pug":
+        optional: true
+      bullmq:
+        optional: true
+      ejs:
+        optional: true
+      handlebars:
+        optional: true
+      liquidjs:
+        optional: true
+      mjml:
+        optional: true
+      nunjucks:
+        optional: true
+      preview-email:
+        optional: true
+      pug:
+        optional: true
+
   "@nestjs/bull-shared@12.0.0":
     resolution:
       {
@@ -3047,6 +3219,12 @@ packages:
     resolution:
       {
         integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==,
+      }
+
+  "@types/nodemailer@8.0.2":
+    resolution:
+      {
+        integrity: sha512-c7M5ox8p0nEOfbJ2E9Qcmt8/QCu/VzsiAhzBiZbvky2PhKZDHpKB3sQHBM5MEZNkCfBOaS6S9//AGPRTNB7IaA==,
       }
 
   "@types/passport-jwt@4.0.1":
@@ -5388,6 +5566,14 @@ packages:
         integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==,
       }
 
+  handlebars@4.7.10:
+    resolution:
+      {
+        integrity: sha512-P5VJMVM7qgBn6vjXMw8WG9uVI+ncf2pi72j4de4yz5ZULLj2RGqLYaKOYGsgyrViQ0tePOVlN1tDCCXXtFqXKg==,
+      }
+    engines: { node: ">=0.4.7" }
+    hasBin: true
+
   has-flag@4.0.0:
     resolution:
       {
@@ -6544,6 +6730,12 @@ packages:
       }
     engines: { node: ">=18" }
 
+  neo-async@2.6.2:
+    resolution:
+      {
+        integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==,
+      }
+
   next@16.3.4:
     resolution:
       {
@@ -6620,6 +6812,13 @@ packages:
         integrity: sha512-D9UOmYG3UH1V+ENW56t5QXBwJw1YEY18ruVeus89Rw+SyIgjPkCO84bRzO3uNIYosJbNwiabWVn48o3uJLjxFQ==,
       }
     engines: { node: ">=18" }
+
+  nodemailer@10.1.0:
+    resolution:
+      {
+        integrity: sha512-fXW8AulB25aOTuwfRYV6lqHyfz2VM4rr4SGXH03mE7x5znEUpzL5mu6anARUpZN7744Ziwkmr4AxSLPJsBQspg==,
+      }
+    engines: { node: ">=20.0.0" }
 
   normalize-path@3.0.0:
     resolution:
@@ -8002,6 +8201,14 @@ packages:
       }
     engines: { node: ">=16.20.0" }
 
+  uglify-js@3.19.3:
+    resolution:
+      {
+        integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==,
+      }
+    engines: { node: ">=0.8.0" }
+    hasBin: true
+
   uid@2.0.2:
     resolution:
       {
@@ -8164,6 +8371,12 @@ packages:
         integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==,
       }
     engines: { node: ">=0.10.0" }
+
+  wordwrap@1.0.0:
+    resolution:
+      {
+        integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==,
+      }
 
   wrap-ansi@7.0.0:
     resolution:
@@ -8847,6 +9060,53 @@ snapshots:
     dependencies:
       "@jridgewell/trace-mapping": 0.3.9
 
+  "@css-inline/css-inline-android-arm-eabi@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-android-arm64@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-darwin-arm64@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-darwin-x64@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-linux-arm-gnueabihf@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-linux-arm64-gnu@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-linux-arm64-musl@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-linux-x64-gnu@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-linux-x64-musl@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-win32-arm64-msvc@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline-win32-x64-msvc@0.22.0":
+    optional: true
+
+  "@css-inline/css-inline@0.22.0":
+    optionalDependencies:
+      "@css-inline/css-inline-android-arm-eabi": 0.22.0
+      "@css-inline/css-inline-android-arm64": 0.22.0
+      "@css-inline/css-inline-darwin-arm64": 0.22.0
+      "@css-inline/css-inline-darwin-x64": 0.22.0
+      "@css-inline/css-inline-linux-arm-gnueabihf": 0.22.0
+      "@css-inline/css-inline-linux-arm64-gnu": 0.22.0
+      "@css-inline/css-inline-linux-arm64-musl": 0.22.0
+      "@css-inline/css-inline-linux-x64-gnu": 0.22.0
+      "@css-inline/css-inline-linux-x64-musl": 0.22.0
+      "@css-inline/css-inline-win32-arm64-msvc": 0.22.0
+      "@css-inline/css-inline-win32-x64-msvc": 0.22.0
+
   "@emnapi/core@1.10.0":
     dependencies:
       "@emnapi/wasi-threads": 1.2.1
@@ -9181,7 +9441,7 @@ snapshots:
       "@jest/test-result": 30.5.2
       "@jest/transform": 30.5.2(supports-color@10.2.2)
       "@jest/types": 30.5.1
-      "@types/node": 26.4.1
+      "@types/node": 26.6.5
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       ci-info: 4.4.0
@@ -9189,7 +9449,7 @@ snapshots:
       fast-json-stable-stringify: 2.1.0
       graceful-fs: 4.2.11
       jest-changed-files: 30.5.1
-      jest-config: 30.5.2(@types/node@26.4.1)(supports-color@10.2.2)(ts-node@10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3))
+      jest-config: 30.5.2(@types/node@26.6.5)(supports-color@10.2.2)(ts-node@10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3))
       jest-haste-map: 30.5.1
       jest-message-util: 30.5.1
       jest-regex-util: 30.5.0
@@ -9481,6 +9741,19 @@ snapshots:
       "@tybys/wasm-util": 0.10.4
     optional: true
 
+  "@nestjs-modules/mailer@3.0.2(@nestjs/common@12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.3)(@nestjs/terminus@12.1.0(eb4dcfbeb9f551d811210251e99d145e))(bullmq@5.81.5(supports-color@10.2.2))(handlebars@4.7.10)(nodemailer@10.1.0)":
+    dependencies:
+      "@css-inline/css-inline": 0.22.0
+      "@nestjs/common": 12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
+      "@nestjs/core": 12.1.3(@nestjs/common@12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/platform-express@12.1.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      glob: 13.0.6
+      nodemailer: 10.1.0
+      tslib: 2.8.1
+    optionalDependencies:
+      "@nestjs/terminus": 12.1.0(eb4dcfbeb9f551d811210251e99d145e)
+      bullmq: 5.81.5(supports-color@10.2.2)
+      handlebars: 4.7.10
+
   "@nestjs/bull-shared@12.0.0(@nestjs/common@12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2))(@nestjs/core@12.1.3)":
     dependencies:
       "@nestjs/common": 12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
@@ -9495,7 +9768,7 @@ snapshots:
       bullmq: 5.81.5(supports-color@10.2.2)
       tslib: 2.8.1
 
-  "@nestjs/cli@12.0.8(@swc/cli@0.8.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@10.2.2))(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(prettier@3.9.6)(ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)))":
+  "@nestjs/cli@12.0.8(@swc/cli@0.8.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@10.2.2))(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(prettier@3.9.6)(ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3))":
     dependencies:
       "@angular-devkit/core": 22.2.0(chokidar@5.0.0)
       "@angular-devkit/schematics": 22.2.0(chokidar@5.0.0)
@@ -9515,8 +9788,8 @@ snapshots:
     optionalDependencies:
       "@swc/cli": 0.8.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(chokidar@5.0.0)(supports-color@10.2.2)
       "@swc/core": 1.16.18(@swc/helpers@0.5.23)
-      ts-loader: 9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)))
-      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))
+      ts-loader: 9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3))
+      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)
     transitivePeerDependencies:
       - "@types/node"
       - prettier
@@ -10024,6 +10297,10 @@ snapshots:
   "@types/node@26.6.5":
     dependencies:
       undici-types: 8.9.0
+
+  "@types/nodemailer@8.0.2":
+    dependencies:
+      "@types/node": 26.6.5
 
   "@types/passport-jwt@4.0.1":
     dependencies:
@@ -11392,6 +11669,15 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
+  handlebars@4.7.10:
+    dependencies:
+      minimist: 1.2.8
+      neo-async: 2.6.2
+      source-map: 0.6.1
+      wordwrap: 1.0.0
+    optionalDependencies:
+      uglify-js: 3.19.3
+
   has-flag@4.0.0: {}
 
   has-property-descriptors@1.0.2:
@@ -11631,38 +11917,6 @@ snapshots:
       - esbuild-register
       - supports-color
       - ts-node
-
-  jest-config@30.5.2(@types/node@26.4.1)(supports-color@10.2.2)(ts-node@10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3)):
-    dependencies:
-      "@babel/core": 7.29.7(supports-color@10.2.2)
-      "@jest/get-type": 30.5.0
-      "@jest/pattern": 30.5.0
-      "@jest/test-sequencer": 30.5.2
-      "@jest/types": 30.5.1
-      babel-jest: 30.5.2(@babel/core@7.29.7(supports-color@10.2.2))(supports-color@10.2.2)
-      chalk: 4.1.2
-      ci-info: 4.4.0
-      deepmerge: 4.3.1
-      glob: 13.0.6
-      graceful-fs: 4.2.11
-      jest-circus: 30.5.2(supports-color@10.2.2)
-      jest-docblock: 30.5.0
-      jest-environment-node: 30.5.2
-      jest-regex-util: 30.5.0
-      jest-resolve: 30.5.1
-      jest-runner: 30.5.2(supports-color@10.2.2)
-      jest-util: 30.5.1
-      jest-validate: 30.5.1
-      parse-json: 5.2.0
-      pretty-format: 30.5.1
-      slash: 3.0.0
-      strip-json-comments: 3.1.1
-    optionalDependencies:
-      "@types/node": 26.4.1
-      ts-node: 10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3)
-    transitivePeerDependencies:
-      - babel-plugin-macros
-      - supports-color
 
   jest-config@30.5.2(@types/node@26.6.5)(supports-color@10.2.2)(ts-node@10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3)):
     dependencies:
@@ -12144,17 +12398,18 @@ snapshots:
 
   minimist@1.2.8: {}
 
-  minimizer-webpack-plugin@5.13.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))):
+  minimizer-webpack-plugin@5.13.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)):
     dependencies:
       "@jridgewell/trace-mapping": 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.5.0
       terser: 5.51.2
-      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))
+      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)
     optionalDependencies:
       "@swc/core": 1.16.18(@swc/helpers@0.5.23)
       postcss: 8.5.23
       sharp: 0.35.4(@types/node@26.6.5)
+      uglify-js: 3.19.3
 
   minipass@7.1.3: {}
 
@@ -12193,6 +12448,8 @@ snapshots:
   negotiator@1.1.0:
     dependencies:
       content-type: 2.1.0
+
+  neo-async@2.6.2: {}
 
   next@16.3.4(@babel/core@8.0.1)(@types/node@26.4.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -12242,6 +12499,8 @@ snapshots:
   node-int64@0.4.0: {}
 
   node-releases@2.0.53: {}
+
+  nodemailer@10.1.0: {}
 
   normalize-path@3.0.0: {}
 
@@ -12968,13 +13227,13 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))):
+  ts-loader@9.6.2(typescript@5.9.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)):
     dependencies:
       chalk: 4.1.2
       picomatch: 4.0.7
       source-map: 0.7.6
       typescript: 5.9.3
-      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))
+      webpack: 5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)
 
   ts-node@10.9.2(@swc/core@1.16.18(@swc/helpers@0.5.23))(@types/node@26.6.5)(typescript@5.9.3):
     dependencies:
@@ -13092,6 +13351,9 @@ snapshots:
       "@typescript/typescript-win32-arm64": 7.0.2
       "@typescript/typescript-win32-x64": 7.0.2
 
+  uglify-js@3.19.3:
+    optional: true
+
   uid@2.0.2:
     dependencies:
       "@lukeed/csprng": 1.1.0
@@ -13172,7 +13434,7 @@ snapshots:
 
   webpack-sources@3.6.0: {}
 
-  webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)):
+  webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3):
     dependencies:
       "@types/estree": 1.0.8
       "@types/json-schema": 7.0.15
@@ -13186,7 +13448,7 @@ snapshots:
       events: 3.3.0
       graceful-fs: 4.2.11
       mime-db: 1.54.0
-      minimizer-webpack-plugin: 5.13.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5)))
+      minimizer-webpack-plugin: 5.13.0(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3)(webpack@5.111.1(@swc/core@1.16.18(@swc/helpers@0.5.23))(postcss@8.5.23)(sharp@0.35.4(@types/node@26.6.5))(uglify-js@3.19.3))
       schema-utils: 4.5.0
       tapable: 2.3.3
       watchpack: 2.5.2
@@ -13224,6 +13486,8 @@ snapshots:
       isexe: 2.0.0
 
   word-wrap@1.2.5: {}
+
+  wordwrap@1.0.0: {}
 
   wrap-ansi@7.0.0:
     dependencies:
