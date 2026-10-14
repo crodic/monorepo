@@ -2,7 +2,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Handlebars from 'handlebars';
-import { existsSync, readFileSync } from 'node:fs';
+import * as fs from 'node:fs';
 import { join } from 'node:path';
 import { AllConfigType } from '../config/config.type';
 import { ISendMailOptions } from './constants/mail.constant';
@@ -26,14 +26,14 @@ export class MailService {
       join(process.cwd(), 'dist/mail/templates', `${templateName}.hbs`),
     ];
 
-    const templatePath = candidatePaths.find((path) => existsSync(path));
+    const templatePath = candidatePaths.find((path) => fs.existsSync(path));
     if (!templatePath) {
       throw new Error(
         `Email template "${templateName}" not found. Searched paths:\n${candidatePaths.join('\n')}`,
       );
     }
 
-    const template = readFileSync(templatePath, 'utf8');
+    const template = fs.readFileSync(templatePath, 'utf8');
     return Handlebars.compile(template, { strict: false })(context);
   }
 

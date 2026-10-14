@@ -1,7 +1,17 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as fs from 'node:fs';
 import { MailService } from './mail.service';
+
+jest.mock('node:fs', () => {
+  const actualFs = jest.requireActual('node:fs');
+  return {
+    ...actualFs,
+    existsSync: jest.fn(),
+    readFileSync: jest.fn(),
+  };
+});
 
 describe('MailService', () => {
   let service: MailService;
@@ -35,48 +45,58 @@ describe('MailService', () => {
     service = module.get<MailService>(MailService);
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  it('should render email-verification template with context', () => {
-    const html = service.renderTemplate('email-verification', {
-      email: 'user@example.com',
-      url: 'https://example.com/verify?token=123',
+  it('should render a template when template file exists', () => {
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest
+      .spyOn(fs, 'readFileSync')
+      .mockReturnValue('Hello, {{name}}! Code: {{code}}');
+
+    const html = service.renderTemplate('sample', {
+      name: 'Alice',
+      code: '123456',
     });
 
-    expect(html).toContain('user@example.com');
-    expect(html).toContain('https://example.com/verify?token=123');
-    expect(html).toContain('Verify your email address');
+    expect(html).toBe('Hello, Alice! Code: 123456');
   });
 
-  it('should render reset-password template with context', () => {
-    const html = service.renderTemplate('reset-password', {
-      email: 'user@example.com',
-      url: 'https://example.com/reset?token=abc',
-    });
+  it('should throw an error when template file is not found', () => {
+    jest.spyOn(fs, 'existsSync').mockReturnValue(false);
 
-    expect(html).toContain('user@example.com');
-    expect(html).toContain('https://example.com/reset?token=abc');
-    expect(html).toContain('Reset your password');
+    expect(() => service.renderTemplate('non-existent', {})).toThrow(
+      /Email template "non-existent" not found/,
+    );
   });
 
   it('should send direct mail and call mailerService', async () => {
+    jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+    jest
+      .spyOn(fs, 'readFileSync')
+      .mockReturnValue('<p>Message for {{name}}</p>');
+
     const result = await service.sendDirectMail({
       to: 'user@example.com',
-      subject: 'Verify your account',
-      template: 'email-verification',
+      subject: 'Notification',
+      template: 'sample',
       context: {
-        email: 'user@example.com',
-        url: 'https://example.com/verify',
+        name: 'Alice',
       },
     });
 
-    expect(result.html).toContain('user@example.com');
+    expect(result.html).toBe('<p>Message for Alice</p>');
     expect(mailerService.sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
+        from: '"No Reply" <noreply@example.com>',
         to: 'user@example.com',
-        subject: 'Verify your account',
+        subject: 'Notification',
+        html: '<p>Message for Alice</p>',
       }),
     );
   });
