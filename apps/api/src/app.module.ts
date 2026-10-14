@@ -15,7 +15,7 @@ import { MailModule } from './mail/mail.module';
 import mailConfig from './mail/config/mail.config';
 import redisConfig from './redis/config/redis.config';
 import { RedisModule } from './redis/redis.module';
-import { UserModule } from './api/user/user.module';
+import { ApiModule } from './api/api.module';
 
 @Module({
   imports: [
@@ -58,7 +58,7 @@ import { UserModule } from './api/user/user.module';
 
     HealthModule,
     MailModule,
-    UserModule,
+    ApiModule,
   ],
   controllers: [AppController],
   providers: [
