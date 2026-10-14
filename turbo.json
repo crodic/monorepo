@@ -8,6 +8,7 @@
     "API_*",
     "REDIS_*",
     "MAIL_*",
+    "FILESYSTEM_*",
     "AWS_*",
     "AUTH_*",
     "USER_AUTH_*",

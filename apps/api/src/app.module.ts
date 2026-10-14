@@ -14,13 +14,15 @@ import mailConfig from './mail/config/mail.config';
 import redisConfig from './redis/config/redis.config';
 import { RedisModule } from './redis/redis.module';
 import { BackgroundModule } from './background/background.module';
+import storageConfig from './filesystem/config/storage.config';
+import { FilesystemModule } from './filesystem/filesystem.module';
 import { ApiModule } from './api/api.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig, mailConfig],
+      load: [appConfig, databaseConfig, redisConfig, mailConfig, storageConfig],
       envFilePath: ['.env'],
     }),
     TypeOrmModule.forRootAsync({
@@ -53,6 +55,7 @@ import { ApiModule } from './api/api.module';
     HealthModule,
     MailModule,
     BackgroundModule,
+    FilesystemModule,
     ApiModule,
   ],
   providers: [
