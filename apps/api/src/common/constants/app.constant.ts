@@ -1,5 +1,13 @@
 export const IS_PUBLIC = 'isPublic';
 export const IS_AUTH_OPTIONAL = 'isAuthOptional';
+export const SKIP_POLICIES = 'skipPolicies';
+export const REQUIRE_VERIFIED_EMAIL = 'requireVerifiedEmail';
+export const SYSTEM_USER_ID = 'system';
+export const SYSTEM_ROLE_NAME = 'SUPER ADMIN';
+export const SUPER_ADMIN_ACCOUNT = {
+  email: 'admin@email.com',
+  password: 'admin@2025',
+};
 
 export enum Environment {
   LOCAL = 'local',

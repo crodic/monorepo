@@ -30,6 +30,7 @@ import sentryConfig from './config/sentry.config';
 import { FilesystemModule } from './filesystem/filesystem.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { ApiModule } from './api/api.module';
+import { SharedModule } from './shared/shared.module';
 import { RequestContextInterceptor } from './interceptors/request-context.interceptor';
 import { RequestIdMiddleware } from './middlewares/request-id.middleware';
 import loggerFactory from './utils/logger-factory';
@@ -124,6 +125,7 @@ import loggerFactory from './utils/logger-factory';
     BackgroundModule,
     FilesystemModule,
     ApiModule,
+    SharedModule,
   ],
   providers: [
     {
