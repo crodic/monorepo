@@ -315,13 +315,13 @@ Hỗ trợ 2 định dạng:
 
 ## Phân trang (`paginate`)
 
-Tích hợp trực tiếp với DTO phân trang chuẩn `OffsetPaginatedDto`:
+Phân trang theo offset tuân thủ chuẩn **`nestjs-paginate`** (`{ data, meta, links }`), đảm bảo tương thích 100% với frontend React Table (`apps/web`) và Zod validation schemas (`apiMetaSchema` & `apiLinksSchema`):
 
 ```typescript
 const result = await QueryBuilder.for(this.userRepo, query)
-  .allowedSorts(["createdAt"])
+  .allowedSorts(["createdAt", "name"])
   .setLimit(20, 100) // (defaultLimit, maxLimit)
-  .paginate();
+  .paginate({ path: "/api/v1/users" });
 ```
 
 Cấu trúc JSON trả về:
@@ -329,15 +329,27 @@ Cấu trúc JSON trả về:
 ```json
 {
   "data": [...],
-  "pagination": {
-    "totalRecords": 105,
+  "meta": {
+    "itemsPerPage": 20,
+    "totalItems": 105,
     "currentPage": 1,
     "totalPages": 6,
-    "nextPage": 2,
-    "prevPage": null
+    "sortBy": [["createdAt", "DESC"]],
+    "search": "john",
+    "filter": { "status": "active" }
+  },
+  "links": {
+    "first": "/api/v1/users?page=1&limit=20&sort=-createdAt",
+    "previous": null,
+    "current": "/api/v1/users?page=1&limit=20&sort=-createdAt",
+    "next": "/api/v1/users?page=2&limit=20&sort=-createdAt",
+    "last": "/api/v1/users?page=6&limit=20&sort=-createdAt"
   }
 }
 ```
+
+> [!NOTE]
+> Nhằm duy trì tính tương thích ngược với các code consumer trước đây, thuộc tính `result.pagination` vẫn được hỗ trợ dưới dạng getter gồm `limit`, `currentPage`, `totalRecords`, `totalPages`, `nextPage`, và `previousPage`.
 
 ---
 

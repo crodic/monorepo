@@ -5,7 +5,12 @@ import {
   ApiQuery,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { OffsetPaginatedDto } from '../dto/offset-pagination/paginated.dto';
+import {
+  OffsetPaginatedDto,
+  Paginated,
+  PaginatedLinks,
+  PaginatedMeta,
+} from '../dto/offset-pagination/paginated.dto';
 import { AllowedFilter, FilterOperator } from './allowed-filter';
 import { AllowedInclude } from './allowed-include';
 import { AllowedSort } from './allowed-sort';
@@ -114,12 +119,18 @@ export function ApiQueryBuilderDocs<T extends Type<any>>(
 
   // 1. Extra models and Paginated Response Schema
   decorators.push(
-    ApiExtraModels(OffsetPaginatedDto, options.entity),
+    ApiExtraModels(
+      Paginated,
+      PaginatedMeta,
+      PaginatedLinks,
+      OffsetPaginatedDto,
+      options.entity,
+    ),
     ApiOkResponse({
       description: options.description ?? 'Paginated list of results',
       schema: {
         allOf: [
-          { $ref: getSchemaPath(OffsetPaginatedDto) },
+          { $ref: getSchemaPath(Paginated) },
           {
             properties: {
               data: {

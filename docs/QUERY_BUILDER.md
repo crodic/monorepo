@@ -316,13 +316,13 @@ Supported formats:
 
 ## Pagination
 
-Offset pagination integrates directly with standard DTOs:
+Offset pagination adheres strictly to the **`nestjs-paginate` standard** (`{ data, meta, links }`), ensuring 100% compatibility with frontend data tables and Zod validation schemas (`apiMetaSchema` & `apiLinksSchema`):
 
 ```typescript
 const result = await QueryBuilder.for(this.userRepo, query)
-  .allowedSorts(["createdAt"])
+  .allowedSorts(["createdAt", "name"])
   .setLimit(20, 100) // (defaultLimit, maxLimit)
-  .paginate();
+  .paginate({ path: "/api/v1/users" });
 ```
 
 Response structure:
@@ -330,15 +330,27 @@ Response structure:
 ```json
 {
   "data": [...],
-  "pagination": {
-    "totalRecords": 105,
+  "meta": {
+    "itemsPerPage": 20,
+    "totalItems": 105,
     "currentPage": 1,
     "totalPages": 6,
-    "nextPage": 2,
-    "prevPage": null
+    "sortBy": [["createdAt", "DESC"]],
+    "search": "john",
+    "filter": { "status": "active" }
+  },
+  "links": {
+    "first": "/api/v1/users?page=1&limit=20&sort=-createdAt",
+    "previous": null,
+    "current": "/api/v1/users?page=1&limit=20&sort=-createdAt",
+    "next": "/api/v1/users?page=2&limit=20&sort=-createdAt",
+    "last": "/api/v1/users?page=6&limit=20&sort=-createdAt"
   }
 }
 ```
+
+> [!NOTE]
+> For backwards compatibility with existing backend DTO consumers, `result.pagination` is also accessible as a getter exposing `limit`, `currentPage`, `totalRecords`, `totalPages`, `nextPage`, and `previousPage`.
 
 ---
 

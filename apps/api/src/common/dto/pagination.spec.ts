@@ -56,13 +56,16 @@ describe('Pagination DTOs', () => {
       expect(meta.nextPage).toBe(2);
     });
 
-    it('should wrap in OffsetPaginatedDto', () => {
+    it('should wrap in OffsetPaginatedDto with meta, links, and pagination getter', () => {
       const pageOptions = new OffsetPageOptionsDto();
       const meta = new OffsetPaginationDto(1, pageOptions);
       const paginated = new OffsetPaginatedDto([{ id: 1 }], meta);
 
       expect(paginated.data).toHaveLength(1);
-      expect(paginated.pagination).toBe(meta);
+      expect(paginated.meta.totalItems).toBe(1);
+      expect(paginated.meta.itemsPerPage).toBe(10);
+      expect(paginated.pagination.totalRecords).toBe(1);
+      expect(paginated.pagination.currentPage).toBe(1);
     });
   });
 

@@ -1,7 +1,10 @@
 import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
-import { OffsetPaginatedDto } from '../dto/offset-pagination/paginated.dto';
-import { OffsetPaginationDto } from '../dto/offset-pagination/offset-pagination.dto';
-import { PageOptionsDto } from '../dto/offset-pagination/page-options.dto';
+import qs from 'qs';
+import {
+  Paginated,
+  PaginatedLinks,
+  PaginatedMeta,
+} from '../dto/offset-pagination/paginated.dto';
 import { AllowedFilter } from './allowed-filter';
 import { AllowedInclude } from './allowed-include';
 import { AllowedSort } from './allowed-sort';
@@ -199,12 +202,20 @@ export class QueryBuilder<T extends ObjectLiteral> {
   // ─── TERMINAL METHODS (Execute) ─────────────────────────
 
   /**
-   * Execute the query with offset pagination.
+   * Execute the query with offset pagination adhering to the nestjs-paginate standard.
+   *
+   * Returns a response matching `{ data: T[], meta: PaginatedMeta, links: PaginatedLinks }`.
+   *
+   * @param options - Default limit or pagination options { defaultLimit?: number; path?: string }
    */
-  async paginate(defaultLimit?: number): Promise<OffsetPaginatedDto<T>> {
+  async paginate(
+    options?: number | { defaultLimit?: number; path?: string },
+  ): Promise<Paginated<T>> {
     this.build();
 
-    const limit = this.resolveLimit(defaultLimit);
+    const overrideDefault =
+      typeof options === 'number' ? options : options?.defaultLimit;
+    const limit = this.resolveLimit(overrideDefault);
     const page = this.resolvePage();
     const offset = (page - 1) * limit;
 
@@ -212,10 +223,69 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
     const [entities, totalRecords] = await this.qb.getManyAndCount();
 
-    const pageOptions = Object.assign(new PageOptionsDto(), { limit, page });
-    const meta = new OffsetPaginationDto(totalRecords, pageOptions);
+    const totalPages = limit > 0 ? Math.ceil(totalRecords / limit) : 1;
+    const currentPage = Math.max(1, Math.min(page, totalPages || 1));
+    const sortBy = this.resolveSortBy();
+    const search =
+      typeof this.query.search === 'string' && this.query.search.trim()
+        ? this.query.search.trim()
+        : undefined;
+    const select = this.resolveSelectFields();
+    const filter =
+      typeof this.query[this.config.parameters.filter] === 'object' &&
+      this.query[this.config.parameters.filter] !== null
+        ? (this.query[this.config.parameters.filter] as Record<
+            string,
+            string | string[]
+          >)
+        : undefined;
 
-    return new OffsetPaginatedDto(entities, meta);
+    const meta: PaginatedMeta<T> = {
+      itemsPerPage: limit,
+      totalItems: totalRecords,
+      currentPage,
+      totalPages,
+      sortBy,
+      search,
+      select,
+      filter,
+    };
+
+    const basePath =
+      typeof this.query.path === 'string'
+        ? this.query.path
+        : typeof options === 'object' && options?.path
+          ? options.path
+          : '';
+
+    const buildLink = (targetPage: number): string => {
+      const q: Record<string, any> = { ...this.query };
+      delete q.path;
+      q[this.config.parameters.page] = targetPage;
+      q[this.config.parameters.limit] = limit;
+
+      const queryString = qs.stringify(q, {
+        encode: false,
+        arrayFormat: 'brackets',
+        filter: (_prefix, value) => (value === undefined ? undefined : value),
+      });
+
+      return basePath ? `${basePath}?${queryString}` : `?${queryString}`;
+    };
+
+    const links: PaginatedLinks = {
+      first: currentPage === 1 ? undefined : buildLink(1),
+      previous: currentPage - 1 < 1 ? undefined : buildLink(currentPage - 1),
+      current: buildLink(currentPage),
+      next:
+        currentPage + 1 > totalPages ? undefined : buildLink(currentPage + 1),
+      last:
+        currentPage === totalPages || totalRecords === 0
+          ? undefined
+          : buildLink(totalPages),
+    };
+
+    return new Paginated<T>(entities, meta, links);
   }
 
   /** Execute the query and return all matching entities. */
@@ -450,6 +520,49 @@ export class QueryBuilder<T extends ObjectLiteral> {
         this.config.countSuffix,
       );
     }
+  }
+
+  private resolveSortBy(): [string, 'ASC' | 'DESC'][] {
+    const sortParam = this.query[this.config.parameters.sort];
+    if (typeof sortParam === 'string' && sortParam.trim()) {
+      return sortParam
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((part) => {
+          const isDesc = part.startsWith('-');
+          const col = isDesc ? part.slice(1) : part;
+          return [col, isDesc ? 'DESC' : 'ASC'];
+        });
+    }
+
+    if (this._defaultSortStr) {
+      return this._defaultSortStr
+        .split(',')
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((part) => {
+          const isDesc = part.startsWith('-');
+          const col = isDesc ? part.slice(1) : part;
+          return [col, isDesc ? 'DESC' : 'ASC'];
+        });
+    }
+
+    return [];
+  }
+
+  private resolveSelectFields(): string[] | undefined {
+    const fieldsParam = this.query[this.config.parameters.fields];
+    if (typeof fieldsParam === 'string') {
+      return fieldsParam
+        .split(',')
+        .map((f) => f.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(fieldsParam)) {
+      return fieldsParam.map(String).filter(Boolean);
+    }
+    return undefined;
   }
 
   private resolveLimit(overrideDefault?: number): number {

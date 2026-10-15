@@ -471,16 +471,66 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.skip).toHaveBeenCalledWith(0);
       expect(qb.take).toHaveBeenCalledWith(10); // DEFAULT_PAGE_LIMIT
       expect(result.data).toEqual(mockUsers);
+
+      // nestjs-paginate standard meta
+      expect(result.meta.totalItems).toBe(1);
+      expect(result.meta.itemsPerPage).toBe(10);
+      expect(result.meta.currentPage).toBe(1);
+      expect(result.meta.totalPages).toBe(1);
+      expect(result.meta.sortBy).toEqual([]);
+
+      // nestjs-paginate standard links
+      expect(result.links.current).toBe('?page=1&limit=10');
+      expect(result.links.first).toBeUndefined();
+      expect(result.links.previous).toBeUndefined();
+      expect(result.links.next).toBeUndefined();
+      expect(result.links.last).toBeUndefined();
+
+      // backwards-compatible pagination getter
       expect(result.pagination.totalRecords).toBe(1);
       expect(result.pagination.currentPage).toBe(1);
     });
 
-    it('should respect page and limit from query parameters', async () => {
+    it('should respect page and limit from query parameters and generate multi-page links', async () => {
       const qb = createMockQb();
-      await QueryBuilder.for(qb, { page: 3, limit: 15 }).paginate();
+      (qb.getManyAndCount as jest.Mock).mockResolvedValue([[], 50]);
 
-      expect(qb.skip).toHaveBeenCalledWith(30); // (3 - 1) * 15
-      expect(qb.take).toHaveBeenCalledWith(15);
+      const result = await QueryBuilder.for(qb, {
+        page: 2,
+        limit: 10,
+        sort: '-createdAt,name',
+        filter: { status: 'active' },
+      }).paginate({ path: '/api/v1/users' });
+
+      expect(qb.skip).toHaveBeenCalledWith(10); // (2 - 1) * 10
+      expect(qb.take).toHaveBeenCalledWith(10);
+
+      expect(result.meta.totalItems).toBe(50);
+      expect(result.meta.totalPages).toBe(5);
+      expect(result.meta.currentPage).toBe(2);
+      expect(result.meta.itemsPerPage).toBe(10);
+      expect(result.meta.sortBy).toEqual([
+        ['createdAt', 'DESC'],
+        ['name', 'ASC'],
+      ]);
+      expect(result.meta.filter).toEqual({ status: 'active' });
+
+      // Links navigation
+      expect(result.links.first).toBe(
+        '/api/v1/users?page=1&limit=10&sort=-createdAt,name&filter[status]=active',
+      );
+      expect(result.links.previous).toBe(
+        '/api/v1/users?page=1&limit=10&sort=-createdAt,name&filter[status]=active',
+      );
+      expect(result.links.current).toBe(
+        '/api/v1/users?page=2&limit=10&sort=-createdAt,name&filter[status]=active',
+      );
+      expect(result.links.next).toBe(
+        '/api/v1/users?page=3&limit=10&sort=-createdAt,name&filter[status]=active',
+      );
+      expect(result.links.last).toBe(
+        '/api/v1/users?page=5&limit=10&sort=-createdAt,name&filter[status]=active',
+      );
     });
 
     it('should clamp limit to maxLimit', async () => {
