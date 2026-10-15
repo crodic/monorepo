@@ -27,7 +27,7 @@ export class HealthController {
   async check(): Promise<HealthCheckResult> {
     return this.health.check([
       () => this.db.pingCheck('database'),
-      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
+      () => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024),
       () =>
         this.disk.checkStorage('storage_disk', {
           thresholdPercent: 0.95,
