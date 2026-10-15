@@ -10,6 +10,7 @@ import {
   InvalidIncludeQueryException,
   InvalidSortQueryException,
 } from './exceptions';
+import { FilterInterface, SortInterface, IncludeInterface } from './types';
 
 interface TestUser extends ObjectLiteral {
   id: string;
@@ -223,6 +224,36 @@ describe('Spatie-style QueryBuilder', () => {
       );
     });
 
+    it('should apply AllowedFilter.custom with a closure and a FilterInterface class', () => {
+      const qb = createMockQb();
+      const closureFn = jest.fn((builder, value, alias) => {
+        builder.andWhere(`${alias}.customField = :val`, { val: value });
+      });
+
+      class MyFilter implements FilterInterface {
+        apply(builder: SelectQueryBuilder<any>, value: any, alias: string) {
+          builder.andWhere(`${alias}.classField = :cVal`, { cVal: value });
+        }
+      }
+
+      QueryBuilder.for(qb, {
+        filter: { customKey: 'foo', classKey: 'bar' },
+      })
+        .allowedFilters([
+          AllowedFilter.custom('customKey', closureFn),
+          AllowedFilter.custom('classKey', new MyFilter()),
+        ])
+        .getQueryBuilder();
+
+      expect(closureFn).toHaveBeenCalledWith(qb, 'foo', 'user');
+      expect(qb.andWhere).toHaveBeenCalledWith('user.customField = :val', {
+        val: 'foo',
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith('user.classField = :cVal', {
+        cVal: 'bar',
+      });
+    });
+
     it('should ignore filters not present in allowedFilters when strict mode is false', () => {
       const qb = createMockQb();
       QueryBuilder.for(qb, { filter: { unallowed: 'malicious', name: 'safe' } })
@@ -319,6 +350,36 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.addOrderBy).toHaveBeenCalledWith('user.name', 'ASC');
     });
 
+    it('should apply AllowedSort.custom with a closure and a SortInterface class', () => {
+      const qb = createMockQb();
+      const sortFn = jest.fn((builder, direction, alias) => {
+        builder.addOrderBy(`${alias}.score`, direction);
+      });
+
+      class CustomPopularitySort implements SortInterface {
+        apply(
+          builder: SelectQueryBuilder<any>,
+          direction: 'ASC' | 'DESC',
+          alias: string,
+        ) {
+          builder.addOrderBy(`${alias}.views + ${alias}.likes`, direction);
+        }
+      }
+
+      QueryBuilder.for(qb, { sort: '-score,popularity' })
+        .allowedSorts([
+          AllowedSort.custom('score', sortFn),
+          AllowedSort.custom('popularity', new CustomPopularitySort()),
+        ])
+        .getQueryBuilder();
+
+      expect(sortFn).toHaveBeenCalledWith(qb, 'DESC', 'user');
+      expect(qb.addOrderBy).toHaveBeenCalledWith(
+        'user.views + user.likes',
+        'ASC',
+      );
+    });
+
     it('should throw InvalidSortQueryException in strict mode for unallowed sorts', () => {
       const qb = createMockQb();
       const builder = QueryBuilder.for(qb, { sort: 'unallowedSort' })
@@ -364,6 +425,37 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.loadRelationCountAndMap).toHaveBeenCalledWith(
         'user.comments_count',
         'user.comments',
+      );
+    });
+
+    it('should apply AllowedInclude.custom with a closure and an IncludeInterface class', () => {
+      const qb = createMockQb();
+      const includeFn = jest.fn((builder, alias) => {
+        builder.leftJoinAndSelect(`${alias}.customRel`, 'customRel');
+      });
+
+      class ActiveRolesInclude implements IncludeInterface {
+        apply(builder: SelectQueryBuilder<any>, alias: string) {
+          builder.leftJoinAndSelect(
+            `${alias}.activeRoles`,
+            'activeRoles',
+            'activeRoles.isActive = true',
+          );
+        }
+      }
+
+      QueryBuilder.for(qb, { include: 'customRel,activeRoles' })
+        .allowedIncludes([
+          AllowedInclude.custom('customRel', includeFn),
+          AllowedInclude.custom('activeRoles', new ActiveRolesInclude()),
+        ])
+        .getQueryBuilder();
+
+      expect(includeFn).toHaveBeenCalledWith(qb, 'user');
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'user.activeRoles',
+        'activeRoles',
+        'activeRoles.isActive = true',
       );
     });
 

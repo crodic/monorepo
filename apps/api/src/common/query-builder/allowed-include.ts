@@ -1,5 +1,5 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { IncludeApplyFn } from './types';
+import { IncludeApplyFn, IncludeInterface } from './types';
 
 export class AllowedInclude<T extends ObjectLiteral = any> {
   private constructor(
@@ -51,18 +51,47 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
   }
 
   /**
-   * Create a custom include with full control.
+   * Create a custom include using a callback function or a class implementing IncludeInterface.
+   * Matches Spatie's `AllowedInclude::custom(...)`.
+   *
+   * @param name - Include name in query string
+   * @param includeClassOrFn - Function callback or IncludeInterface instance
    *
    * @example
-   * AllowedInclude.callback('activeRoles', (qb, alias) => {
+   * // Function callback:
+   * AllowedInclude.custom('activeRoles', (qb, alias) => {
    *   qb.leftJoinAndSelect(`${alias}.roles`, 'role', 'role.isActive = true');
    * })
+   *
+   * // Class-based (Spatie style):
+   * class ActiveRolesInclude implements IncludeInterface {
+   *   apply(qb, alias) {
+   *     qb.leftJoinAndSelect(`${alias}.roles`, 'role', 'role.isActive = true');
+   *   }
+   * }
+   * AllowedInclude.custom('activeRoles', new ActiveRolesInclude())
+   */
+  static custom<T extends ObjectLiteral = any>(
+    name: string,
+    includeClassOrFn: IncludeApplyFn<T> | IncludeInterface<T>,
+  ): AllowedInclude<T> {
+    const fn: IncludeApplyFn<T> =
+      typeof includeClassOrFn === 'function'
+        ? (includeClassOrFn as IncludeApplyFn<T>)
+        : (qb, alias) => includeClassOrFn.apply(qb, alias, name);
+
+    return new AllowedInclude(name, name, fn);
+  }
+
+  /**
+   * Create a custom include with full control.
+   * Alias for custom().
    */
   static callback<T extends ObjectLiteral = any>(
     name: string,
     fn: IncludeApplyFn<T>,
   ): AllowedInclude<T> {
-    return new AllowedInclude(name, name, fn);
+    return AllowedInclude.custom(name, fn);
   }
 
   /**

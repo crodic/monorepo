@@ -1,5 +1,5 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { SortApplyFn } from './types';
+import { SortApplyFn, SortInterface } from './types';
 
 export class AllowedSort<T extends ObjectLiteral = any> {
   private constructor(
@@ -30,18 +30,47 @@ export class AllowedSort<T extends ObjectLiteral = any> {
   }
 
   /**
-   * Create a custom sort with full control over the query.
+   * Create a custom sort using a callback function or a class implementing SortInterface.
+   * Matches Spatie's `AllowedSort::custom(...)`.
+   *
+   * @param name - Sort name in query string
+   * @param sortClassOrFn - Function callback or SortInterface instance
    *
    * @example
-   * AllowedSort.callback('popularity', (qb, dir, alias) => {
+   * // Function callback:
+   * AllowedSort.custom('popularity', (qb, dir, alias) => {
    *   qb.addOrderBy(`${alias}.viewCount + ${alias}.likeCount`, dir);
    * })
+   *
+   * // Class-based (Spatie style):
+   * class PopularitySort implements SortInterface {
+   *   apply(qb, dir, alias) {
+   *     qb.addOrderBy(`${alias}.views + ${alias}.likes`, dir);
+   *   }
+   * }
+   * AllowedSort.custom('popularity', new PopularitySort())
+   */
+  static custom<T extends ObjectLiteral = any>(
+    name: string,
+    sortClassOrFn: SortApplyFn<T> | SortInterface<T>,
+  ): AllowedSort<T> {
+    const fn: SortApplyFn<T> =
+      typeof sortClassOrFn === 'function'
+        ? (sortClassOrFn as SortApplyFn<T>)
+        : (qb, dir, alias) => sortClassOrFn.apply(qb, dir, alias, name);
+
+    return new AllowedSort(name, name, fn);
+  }
+
+  /**
+   * Create a custom sort with full control over the query.
+   * Alias for custom().
    */
   static callback<T extends ObjectLiteral = any>(
     name: string,
     fn: SortApplyFn<T>,
   ): AllowedSort<T> {
-    return new AllowedSort(name, name, fn);
+    return AllowedSort.custom(name, fn);
   }
 
   /**

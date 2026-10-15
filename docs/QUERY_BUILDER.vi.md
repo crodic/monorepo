@@ -212,15 +212,39 @@ AllowedFilter.trashed(); // mặc định tên param 'trashed' và cột 'delete
 - `GET /users?filter[trashed]=only` ➔ chỉ lấy bản ghi đã xóa tạm (`withDeleted()` và `deletedAt IS NOT NULL`)
 - `GET /users?filter[trashed]=without` ➔ loại trừ các bản ghi đã xóa (mặc định)
 
-### Custom Scope Callback
+### Custom Filters (`AllowedFilter.custom`)
+
+Hoàn toàn tương đồng với chuẩn `AllowedFilter::custom()` của Spatie Laravel. Hỗ trợ cả hàm closure lẫn class triển khai `FilterInterface`:
+
+#### 1. Dùng hàm Closure
 
 ```typescript
-AllowedFilter.scope("search", (qb, value, alias) => {
+AllowedFilter.custom("search", (qb, value, alias) => {
   qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, {
     s: `%${value}%`,
   });
 });
 ```
+
+#### 2. Dùng Class độc lập (chuẩn Spatie Laravel)
+
+```typescript
+import { FilterInterface } from "./common/query-builder";
+import { SelectQueryBuilder } from "typeorm";
+
+export class FuzzySearchFilter implements FilterInterface {
+  apply(qb: SelectQueryBuilder<any>, value: any, alias: string) {
+    qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, {
+      s: `%${value}%`,
+    });
+  }
+}
+
+AllowedFilter.custom("search", new FuzzySearchFilter());
+```
+
+> [!TIP]
+> Bạn cũng có thể dùng `AllowedFilter.scope("search", callback)` như một alias quen thuộc theo phong cách model scope của Laravel.
 
 ---
 
@@ -244,12 +268,23 @@ AllowedSort.field("role", "roles.name");
 
 - `GET /users?sort=-role` ➔ `ORDER BY roles.name DESC`
 
-### Custom Sort Callback
+### Custom Sorts (`AllowedSort.custom`)
+
+Hỗ trợ cả closure lẫn class triển khai `SortInterface`:
 
 ```typescript
-AllowedSort.callback("popularity", (qb, direction, alias) => {
+// Closure:
+AllowedSort.custom("popularity", (qb, direction, alias) => {
   qb.addOrderBy(`${alias}.viewCount + ${alias}.likeCount`, direction);
 });
+
+// Class-based (Spatie style):
+class PopularitySort implements SortInterface {
+  apply(qb: SelectQueryBuilder<any>, direction: "ASC" | "DESC", alias: string) {
+    qb.addOrderBy(`${alias}.viewCount + ${alias}.likeCount`, direction);
+  }
+}
+AllowedSort.custom("popularity", new PopularitySort());
 ```
 
 ### Sắp xếp mặc định (`defaultSort`)
@@ -288,12 +323,23 @@ AllowedInclude.count("comments");
 
 - `GET /users?include=comments` ➔ nạp số lượng bản ghi quan hệ vào thuộc tính `entity.commentsCount` qua `loadRelationCountAndMap`.
 
-### Custom Include Callback
+### Custom Includes (`AllowedInclude.custom`)
+
+Hỗ trợ cả closure lẫn class triển khai `IncludeInterface`:
 
 ```typescript
-AllowedInclude.callback("activeRoles", (qb, alias) => {
+// Closure:
+AllowedInclude.custom("activeRoles", (qb, alias) => {
   qb.leftJoinAndSelect(`${alias}.roles`, "role", "role.isActive = true");
 });
+
+// Class-based (Spatie style):
+class ActiveRolesInclude implements IncludeInterface {
+  apply(qb: SelectQueryBuilder<any>, alias: string) {
+    qb.leftJoinAndSelect(`${alias}.roles`, "role", "role.isActive = true");
+  }
+}
+AllowedInclude.custom("activeRoles", new ActiveRolesInclude());
 ```
 
 ---

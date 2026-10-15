@@ -29,6 +29,9 @@ export {
 export type {
   QueryParams,
   FilterApplyFn,
+  FilterInterface,
   SortApplyFn,
+  SortInterface,
   IncludeApplyFn,
+  IncludeInterface,
 } from './types';

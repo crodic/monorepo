@@ -213,15 +213,39 @@ AllowedFilter.trashed(); // defaults to 'trashed' query param and 'deletedAt' co
 - `GET /users?filter[trashed]=only` ➔ only soft-deleted records (`withDeleted()` AND `deletedAt IS NOT NULL`)
 - `GET /users?filter[trashed]=without` ➔ excludes soft-deleted records (default)
 
-### Custom Scope Functions
+### Custom Filters (`AllowedFilter.custom`)
+
+Matches Spatie's `AllowedFilter::custom()` semantics. Supports both closure callbacks and class-based filters implementing `FilterInterface`:
+
+#### 1. Closure style
 
 ```typescript
-AllowedFilter.scope("search", (qb, value, alias) => {
+AllowedFilter.custom("search", (qb, value, alias) => {
   qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, {
     s: `%${value}%`,
   });
 });
 ```
+
+#### 2. Class-based style (Spatie Laravel pattern)
+
+```typescript
+import { FilterInterface } from "./common/query-builder";
+import { SelectQueryBuilder } from "typeorm";
+
+export class FuzzySearchFilter implements FilterInterface {
+  apply(qb: SelectQueryBuilder<any>, value: any, alias: string) {
+    qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, {
+      s: `%${value}%`,
+    });
+  }
+}
+
+AllowedFilter.custom("search", new FuzzySearchFilter());
+```
+
+> [!TIP]
+> `AllowedFilter.scope("search", callback)` is also supported as an alias for Laravel scope semantics.
 
 ---
 
@@ -245,12 +269,23 @@ AllowedSort.field("role", "roles.name");
 
 - `GET /users?sort=-role` ➔ `ORDER BY roles.name DESC`
 
-### Custom Sort Callbacks
+### Custom Sorts (`AllowedSort.custom`)
+
+Supports both closure callbacks and class-based sorts implementing `SortInterface`:
 
 ```typescript
-AllowedSort.callback("popularity", (qb, direction, alias) => {
+// Closure:
+AllowedSort.custom("popularity", (qb, direction, alias) => {
   qb.addOrderBy(`${alias}.viewCount + ${alias}.likeCount`, direction);
 });
+
+// Class-based (Spatie style):
+class PopularitySort implements SortInterface {
+  apply(qb: SelectQueryBuilder<any>, direction: "ASC" | "DESC", alias: string) {
+    qb.addOrderBy(`${alias}.viewCount + ${alias}.likeCount`, direction);
+  }
+}
+AllowedSort.custom("popularity", new PopularitySort());
 ```
 
 ### Default Sort
@@ -289,12 +324,23 @@ AllowedInclude.count("comments");
 
 - `GET /users?include=comments` ➔ loads relation count into `entity.commentsCount` via `loadRelationCountAndMap`.
 
-### Custom Include Callbacks
+### Custom Includes (`AllowedInclude.custom`)
+
+Supports both closure callbacks and class-based includes implementing `IncludeInterface`:
 
 ```typescript
-AllowedInclude.callback("activeRoles", (qb, alias) => {
+// Closure:
+AllowedInclude.custom("activeRoles", (qb, alias) => {
   qb.leftJoinAndSelect(`${alias}.roles`, "role", "role.isActive = true");
 });
+
+// Class-based (Spatie style):
+class ActiveRolesInclude implements IncludeInterface {
+  apply(qb: SelectQueryBuilder<any>, alias: string) {
+    qb.leftJoinAndSelect(`${alias}.roles`, "role", "role.isActive = true");
+  }
+}
+AllowedInclude.custom("activeRoles", new ActiveRolesInclude());
 ```
 
 ---

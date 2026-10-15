@@ -1,5 +1,5 @@
 import { ObjectLiteral, SelectQueryBuilder } from 'typeorm';
-import { FilterApplyFn } from './types';
+import { FilterApplyFn, FilterInterface } from './types';
 
 export enum FilterOperator {
   EXACT = 'exact',
@@ -8,6 +8,7 @@ export enum FilterOperator {
   ENDS_WITH = 'ends_with',
   OPERATOR = 'operator',
   SCOPE = 'scope',
+  CUSTOM = 'custom',
   TRASHED = 'trashed',
 }
 
@@ -122,21 +123,53 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
   }
 
   /**
+   * Create a custom filter using a callback function or a class implementing FilterInterface.
+   * Matches Spatie's `AllowedFilter::custom(...)`.
+   *
+   * @param name - Filter name in query string
+   * @param filterClassOrFn - Function callback or FilterInterface instance
+   * @param column - Optional database column/property name (defaults to name)
+   *
+   * @example
+   * // Function callback:
+   * AllowedFilter.custom('search', (qb, value, alias) => {
+   *   qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, { s: `%${value}%` });
+   * })
+   *
+   * // Class-based (Spatie style):
+   * class FullNameFilter implements FilterInterface {
+   *   apply(qb, value, alias) {
+   *     qb.andWhere(`CONCAT(${alias}.firstName, ' ', ${alias}.lastName) ILIKE :val`, { val: `%${value}%` });
+   *   }
+   * }
+   * AllowedFilter.custom('name', new FullNameFilter())
+   */
+  static custom<T extends ObjectLiteral = any>(
+    name: string,
+    filterClassOrFn: FilterApplyFn<T> | FilterInterface<T>,
+    column?: string,
+  ): AllowedFilter<T> {
+    const fn: FilterApplyFn<T> =
+      typeof filterClassOrFn === 'function'
+        ? (filterClassOrFn as FilterApplyFn<T>)
+        : (qb, val, alias) =>
+            filterClassOrFn.apply(qb, val, alias, column ?? name);
+
+    return new AllowedFilter(name, column ?? name, FilterOperator.CUSTOM, fn);
+  }
+
+  /**
    * Create a custom scope filter with full control over the query.
+   * Alias for custom() matching Laravel scope semantics.
    *
    * @param name - Filter name in query string
    * @param fn - Custom filter function
-   *
-   * @example
-   * AllowedFilter.scope('search', (qb, value, alias) => {
-   *   qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, { s: `%${value}%` });
-   * })
    */
   static scope<T extends ObjectLiteral = any>(
     name: string,
     fn: FilterApplyFn<T>,
   ): AllowedFilter<T> {
-    return new AllowedFilter(name, name, FilterOperator.SCOPE, fn);
+    return AllowedFilter.custom(name, fn);
   }
 
   /**
@@ -230,6 +263,7 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
         break;
       }
 
+      case FilterOperator.CUSTOM:
       case FilterOperator.SCOPE: {
         this.scopeFn?.(qb, value, alias);
         break;
