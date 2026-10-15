@@ -16,42 +16,13 @@ import {
 import { ActivityLogEntity } from '../entities/activity-log.entity';
 import { LogOptions } from '../interfaces/logs-activity.interface';
 
-const FIELD_LABELS: Record<string, string> = {
-  firstName: 'First Name',
-  lastName: 'Last Name',
-  fullName: 'Full Name',
-  first_name: 'First Name',
-  last_name: 'Last Name',
-  full_name: 'Full Name',
-  email: 'Email',
-  phone: 'Phone',
-  bio: 'Bio',
-  avatar: 'Avatar',
-  birthday: 'Birthday',
-  name: 'Name',
-  description: 'Description',
-  isSystem: 'System Flag',
-  is_system: 'System Flag',
-  group: 'Group',
-  key: 'Key',
-  roleIds: 'Roles',
-  permissionIds: 'Permissions',
-  status: 'Status',
-  title: 'Title',
-  slug: 'Slug',
-  content: 'Content',
-  locale: 'Locale',
-  target: 'Target',
-  brandName: 'Brand Name',
-  siteTitle: 'Site Title',
-  isActive: 'Active Status',
-  is_active: 'Active Status',
-  notifications: 'Notification Settings',
-  twoFactorEnabled: 'Two-Factor Authentication',
-  two_factor_enabled: 'Two-Factor Authentication',
-  verifiedAt: 'Verified At',
-  verified_at: 'Verified At',
-};
+function formatFieldLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
 
 function formatValueForUser(value: any): string {
   if (value === null || value === undefined) return '(Empty)';
@@ -277,7 +248,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
           changedFields.push(key);
           changes.push({
             field: key,
-            label: FIELD_LABELS[key] || key,
+            label: formatFieldLabel(key),
             from: formatValueForUser(oldVal),
             to: formatValueForUser(newVal),
           });
