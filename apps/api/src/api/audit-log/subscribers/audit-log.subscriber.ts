@@ -1,5 +1,6 @@
 import { AdminSessionEntity } from '../../auth/entities/admin-session.entity';
 import { UserSessionEntity } from '../../auth/entities/user-session.entity';
+import { EmailLogEntity } from '../../email/entities/email-log.entity';
 import { Logger } from '@nestjs/common';
 import { ClsServiceManager } from 'nestjs-cls';
 import {
@@ -13,6 +14,7 @@ import {
   UpdateEvent,
 } from 'typeorm';
 import { ActivityLogEntity } from '../entities/activity-log.entity';
+import { LogOptions } from '../interfaces/logs-activity.interface';
 
 const FIELD_LABELS: Record<string, string> = {
   firstName: 'First Name',
@@ -73,7 +75,19 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     ActivityLogEntity.name,
     AdminSessionEntity.name,
     UserSessionEntity.name,
-    'EmailLogEntity',
+    EmailLogEntity.name,
+  ];
+
+  private readonly defaultExcept = [
+    'password',
+    'previousPassword',
+    'twoFactorSecret',
+    'twoFactorBackupCodes',
+    'hash',
+    'token',
+    'salt',
+    'rememberToken',
+    'remember_token',
   ];
 
   constructor(private dataSource: DataSource) {
@@ -100,6 +114,106 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     await this.saveLog('RESTORE', event);
   }
 
+  private resolveModelKey(modelBaseName: string): string {
+    const keyMap: Record<string, string> = {
+      AdminUser: 'fullName',
+      User: 'fullName',
+      Member: 'fullName',
+      AdminRole: 'name',
+      Role: 'name',
+      AdminPermission: 'name',
+      Permission: 'name',
+      CmsPage: 'title',
+      CmsPageTranslation: 'title',
+      WhiteLabel: 'brandName',
+      File: 'originalName',
+      FileFolder: 'name',
+      Country: 'name',
+      State: 'name',
+      City: 'name',
+      Region: 'name',
+      Setting: 'key',
+    };
+    return keyMap[modelBaseName] || 'id';
+  }
+
+  private mapActionToEventName(
+    action: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'SOFT_DELETE',
+  ): string {
+    switch (action) {
+      case 'INSERT':
+        return 'created';
+      case 'UPDATE':
+        return 'updated';
+      case 'DELETE':
+        return 'deleted';
+      case 'SOFT_DELETE':
+        return 'soft_deleted';
+      case 'RESTORE':
+        return 'restored';
+      default:
+        return String(action).toLowerCase();
+    }
+  }
+
+  private defaultTapActivity(
+    activity: ActivityLogEntity,
+    eventName: string,
+    modelBaseName: string,
+    targetEntity: any,
+    oldValue: Record<string, any>,
+    newValue: Record<string, any>,
+    actorName: string,
+    causerType: string | null,
+  ) {
+    const key = this.resolveModelKey(modelBaseName);
+
+    const oldAttributes = activity.properties?.old ?? {};
+    const newAttributes = activity.properties?.attributes ?? {};
+
+    const targetIdentifier =
+      newAttributes[key] ??
+      oldAttributes[key] ??
+      targetEntity?.[key] ??
+      targetEntity?.name ??
+      targetEntity?.fullName ??
+      targetEntity?.title ??
+      targetEntity?.id ??
+      activity.subjectId;
+
+    switch (eventName) {
+      case 'created':
+        activity.description = `${modelBaseName}: ${targetIdentifier}`;
+        activity.event = 'create';
+        break;
+      case 'updated':
+        activity.description = `${modelBaseName}: ${targetIdentifier}`;
+        activity.event = 'update';
+        break;
+      case 'deleted':
+      case 'soft_deleted':
+        activity.description = `${modelBaseName}: ${targetIdentifier}`;
+        activity.event = 'delete';
+        break;
+      case 'restored':
+        activity.description = `${modelBaseName}: ${targetIdentifier}`;
+        activity.event = 'restore';
+        break;
+      default:
+        activity.description = `${modelBaseName}: ${targetIdentifier}`;
+        activity.event = eventName;
+        break;
+    }
+
+    if (activity.properties) {
+      activity.properties.causer_name = actorName;
+    }
+
+    if (activity.causerId != null) {
+      activity.causerType = causerType || 'AdminUserEntity';
+    }
+  }
+
   private async saveLog(
     action: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'SOFT_DELETE',
     event: any,
@@ -115,17 +229,17 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     )
       return;
 
-    const excludeFields = [
-      'password',
-      'previousPassword',
-      'twoFactorSecret',
-      'twoFactorBackupCodes',
-      'hash',
-      'token',
-      'salt',
-    ];
-    const cls = ClsServiceManager.getClsService();
+    const options: LogOptions =
+      typeof targetEntity.getActivitylogOptions === 'function'
+        ? targetEntity.getActivitylogOptions()
+        : {
+            dontLogEmptyChanges: true,
+            logExcept: this.defaultExcept,
+            logAll: true,
+          };
 
+    const excludeFields = options.logExcept ?? this.defaultExcept;
+    const cls = ClsServiceManager.getClsService();
     const auditRepo = event.manager.getRepository(ActivityLogEntity);
     const currentUser = cls.get('user') ?? {};
     const userId = currentUser?.id;
@@ -143,6 +257,8 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
 
     for (const key of keysToInspect) {
       if (excludeFields.includes(key)) continue;
+      if (options.logOnly && !options.logOnly.includes(key)) continue;
+
       const oldVal = event.databaseEntity?.[key];
       const newVal = event.entity?.[key];
 
@@ -169,162 +285,68 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
       }
     }
 
-    const userType = cls.get('userType') || 'GuestEntity';
-
-    if (userType === 'AdminUserEntity' || userId) {
-      const entityName = this.extractEntityIdentifier(targetEntity);
-      const entityLabel = this.formatEntityName(event.metadata.name);
-      const actorName =
-        currentUser?.fullName ??
-        (currentUser?.firstName || currentUser?.lastName
-          ? `${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}`.trim()
-          : null) ??
-        currentUser?.email ??
-        'Administrator';
-
-      const actionToEventMap: Record<string, string> = {
-        INSERT: 'created',
-        UPDATE: 'updated',
-        DELETE: 'deleted',
-        SOFT_DELETE: 'soft_deleted',
-        RESTORE: 'restored',
-      };
-
-      const log = auditRepo.create({
-        logName: 'default',
-        description: this.buildHumanDescription({
-          action,
-          actorName,
-          entityLabel,
-          entityId,
-          entityIdentifier: entityName,
-          changes,
-        }),
-        subjectType: event.metadata.name,
-        subjectId: entityId ? (entityId as any) : null,
-        causerType: userType,
-        causerId: userId ? String(userId) : null,
-        event: actionToEventMap[action] ?? action.toLowerCase(),
-        batchUuid: cls.get('batchUuid') ?? null,
-        properties: {
-          attributes: Object.keys(newValue).length > 0 ? newValue : undefined,
-          old: Object.keys(oldValue).length > 0 ? oldValue : undefined,
-          actorId: userId ? String(userId) : null,
-          actorEmail: currentUser?.email ?? null,
-          actorName,
-          entityName,
-          entityLabel,
-          changedFields: changedFields.length > 0 ? changedFields : undefined,
-          changes: changes.length > 0 ? changes : undefined,
-          roles: currentUser?.roles?.map((role: any) => role.name) ?? [],
-          ip: cls.get('ip'),
-          userAgent: cls.get('userAgent'),
-          requestId: cls.get('requestId'),
-        },
-      });
-
-      setImmediate(() => auditRepo.save(log));
+    // dontLogEmptyChanges logic from Spatie
+    if (
+      action === 'UPDATE' &&
+      options.dontLogEmptyChanges !== false &&
+      changedFields.length === 0
+    ) {
+      return;
     }
-  }
 
-  private formatEntityName(rawName: string): string {
-    if (!rawName) return 'Data';
-    const nameWithoutEntity = rawName.replace(/Entity$/, '');
-    const customMap: Record<string, string> = {
-      AdminUser: 'Admin User',
-      User: 'User',
-      AdminRole: 'Admin Role',
-      Role: 'Role',
-      AdminPermission: 'Admin Permission',
-      Permission: 'Permission',
-      CmsPage: 'CMS Page',
-      CmsPageTranslation: 'CMS Page Translation',
-      EmailLog: 'Email Log',
-      Setting: 'System Setting',
-      WhiteLabel: 'White Label',
-      File: 'File',
-      FileFolder: 'File Folder',
-      Country: 'Country',
-      State: 'State',
-      City: 'City',
-      Region: 'Region',
-      UserAccount: 'User Account',
-      AdminAccount: 'Admin Account',
-    };
-    if (customMap[nameWithoutEntity]) {
-      return customMap[nameWithoutEntity];
+    const causerId = currentUser?.id ? String(currentUser.id) : null;
+    const rawUserType = cls.get('userType');
+    const causerType = causerId ? rawUserType || 'AdminUserEntity' : null;
+    const actorName =
+      currentUser?.fullName ??
+      (currentUser?.firstName || currentUser?.lastName
+        ? `${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}`.trim()
+        : null) ??
+      currentUser?.email ??
+      (causerId ? 'Administrator' : 'System');
+
+    const modelBaseName = event.metadata.name.replace(/Entity$/, '');
+    const eventName = this.mapActionToEventName(action);
+
+    const log = auditRepo.create({
+      logName: 'default',
+      subjectType: event.metadata.name,
+      subjectId: entityId ? (entityId as any) : null,
+      causerType,
+      causerId,
+      event: eventName,
+      batchUuid: cls.get('batchUuid') ?? null,
+      properties: {
+        attributes: Object.keys(newValue).length > 0 ? newValue : undefined,
+        old: Object.keys(oldValue).length > 0 ? oldValue : undefined,
+        changedFields: changedFields.length > 0 ? changedFields : undefined,
+        changes: changes.length > 0 ? changes : undefined,
+        actorId: causerId,
+        actorEmail: currentUser?.email ?? null,
+        causer_name: actorName,
+        roles: currentUser?.roles?.map((role: any) => role.name) ?? [],
+        ip: cls.get('ip'),
+        userAgent: cls.get('userAgent'),
+        requestId: cls.get('requestId'),
+      },
+    });
+
+    // Execute tapActivity (either custom defined on entity or default tapActivity)
+    if (typeof targetEntity.tapActivity === 'function') {
+      targetEntity.tapActivity(log, eventName);
+    } else {
+      this.defaultTapActivity(
+        log,
+        eventName,
+        modelBaseName,
+        targetEntity,
+        oldValue,
+        newValue,
+        actorName,
+        causerType,
+      );
     }
-    return nameWithoutEntity.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
-  }
 
-  private extractEntityIdentifier(entity: any): string | null {
-    if (!entity) return null;
-    if (entity.name && typeof entity.name === 'string')
-      return entity.name.trim();
-    if (entity.fullName && typeof entity.fullName === 'string')
-      return entity.fullName.trim();
-    if (entity.firstName || entity.lastName) {
-      const fullName =
-        `${entity.firstName ?? ''} ${entity.lastName ?? ''}`.trim();
-      if (fullName) return fullName;
-    }
-    if (entity.title && typeof entity.title === 'string')
-      return entity.title.trim();
-    if (entity.email && typeof entity.email === 'string')
-      return entity.email.trim();
-    if (entity.username && typeof entity.username === 'string')
-      return entity.username.trim();
-    if (entity.key && typeof entity.key === 'string') return entity.key.trim();
-    if (entity.slug && typeof entity.slug === 'string')
-      return entity.slug.trim();
-    if (entity.originalName && typeof entity.originalName === 'string')
-      return entity.originalName.trim();
-    if (entity.fileName && typeof entity.fileName === 'string')
-      return entity.fileName.trim();
-    return null;
-  }
-
-  private buildHumanDescription({
-    action,
-    actorName,
-    entityLabel,
-    entityId,
-    entityIdentifier,
-    changes = [],
-  }: {
-    action: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'SOFT_DELETE';
-    actorName: string;
-    entityLabel: string;
-    entityId: string | number;
-    entityIdentifier?: string | null;
-    changes?: Array<{ field: string; label: string; from: any; to: any }>;
-  }): string {
-    const target = entityIdentifier
-      ? `${entityLabel} "${entityIdentifier}" (#${entityId})`
-      : `${entityLabel} (#${entityId})`;
-
-    switch (action) {
-      case 'INSERT':
-        return `${actorName} created ${target}`;
-      case 'UPDATE': {
-        if (changes.length > 0) {
-          const changeSummaries = changes
-            .slice(0, 3)
-            .map((c) => `changed ${c.label} from '${c.from}' to '${c.to}'`);
-          const moreCount = changes.length - 3;
-          const moreText = moreCount > 0 ? ` and ${moreCount} more` : '';
-          return `${actorName} updated ${target}: ${changeSummaries.join(', ')}${moreText}`;
-        }
-        return `${actorName} updated ${target}`;
-      }
-      case 'SOFT_DELETE':
-        return `${actorName} moved ${target} to trash`;
-      case 'DELETE':
-        return `${actorName} permanently deleted ${target}`;
-      case 'RESTORE':
-        return `${actorName} restored ${target}`;
-      default:
-        return `${actorName} performed ${action} on ${target}`;
-    }
+    setImmediate(() => auditRepo.save(log));
   }
 }

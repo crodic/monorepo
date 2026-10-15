@@ -29,7 +29,7 @@ describe('AuditLogSubscriber', () => {
     expect(mockDataSource.subscribers).toContain(subscriber);
   });
 
-  it('generates friendly description on INSERT of an AdminUserEntity', async () => {
+  it('generates Spatie formatted description on INSERT of an AdminUserEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user')
@@ -65,18 +65,20 @@ describe('AuditLogSubscriber', () => {
         subjectId: '10',
         causerType: 'AdminUserEntity',
         causerId: '1',
-        event: 'created',
-        description: expect.stringContaining('Super Admin created'),
+        event: 'create',
+        description: 'AdminUser: Jane Doe',
         properties: expect.objectContaining({
-          actorName: 'Super Admin',
-          entityName: 'Jane Doe',
-          entityLabel: 'Admin User',
+          causer_name: 'Super Admin',
+          attributes: expect.objectContaining({
+            fullName: 'Jane Doe',
+            email: 'jane@domain.com',
+          }),
         }),
       }),
     );
   });
 
-  it('generates friendly description with changed fields on UPDATE of AdminRoleEntity', async () => {
+  it('generates Spatie formatted description on UPDATE of AdminRoleEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user') return { id: '1', fullName: 'Super Admin' };
@@ -112,18 +114,54 @@ describe('AuditLogSubscriber', () => {
         subjectId: '2',
         causerType: 'AdminUserEntity',
         causerId: '1',
-        event: 'updated',
-        description: expect.stringContaining('updated'),
+        event: 'update',
+        description: 'AdminRole: Manager',
         properties: expect.objectContaining({
-          entityName: 'Manager',
-          entityLabel: 'Admin Role',
           changedFields: ['description'],
+          old: expect.objectContaining({
+            description: 'Old role description',
+          }),
+          attributes: expect.objectContaining({
+            description: 'Updated role description',
+          }),
         }),
       }),
     );
   });
 
-  it('generates friendly description on SOFT_DELETE of CmsPageEntity', async () => {
+  it('does not log on UPDATE if dontLogEmptyChanges is true and nothing changed', async () => {
+    const cls = {
+      get: jest.fn((key: string) => {
+        if (key === 'user') return { id: '1', fullName: 'Super Admin' };
+        if (key === 'userType') return 'AdminUserEntity';
+        return null;
+      }),
+    };
+    jest.spyOn(ClsServiceManager, 'getClsService').mockReturnValue(cls as any);
+
+    const event = {
+      metadata: { name: 'AdminRoleEntity' },
+      entity: {
+        id: '2',
+        name: 'Manager',
+        description: 'Same description',
+      },
+      databaseEntity: {
+        id: '2',
+        name: 'Manager',
+        description: 'Same description',
+      },
+      manager: {
+        getRepository: jest.fn().mockReturnValue(mockAuditRepo),
+      },
+    };
+
+    await subscriber.afterUpdate(event as any);
+
+    expect(mockAuditRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('generates Spatie formatted description on SOFT_DELETE of CmsPageEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user') return { id: '1', fullName: 'Super Admin' };
@@ -135,8 +173,8 @@ describe('AuditLogSubscriber', () => {
 
     const event = {
       metadata: { name: 'CmsPageEntity' },
-      entity: { id: '5', name: 'Privacy Policy' },
-      databaseEntity: { id: '5', name: 'Privacy Policy' },
+      entity: { id: '5', title: 'Privacy Policy' },
+      databaseEntity: { id: '5', title: 'Privacy Policy' },
       manager: {
         getRepository: jest.fn().mockReturnValue(mockAuditRepo),
       },
@@ -151,11 +189,44 @@ describe('AuditLogSubscriber', () => {
         subjectId: '5',
         causerType: 'AdminUserEntity',
         causerId: '1',
-        event: 'soft_deleted',
-        description: expect.stringContaining('moved'),
-        properties: expect.objectContaining({
-          entityLabel: 'CMS Page',
-        }),
+        event: 'delete',
+        description: 'CmsPage: Privacy Policy',
+      }),
+    );
+  });
+
+  it('delegates to custom tapActivity method on entity if present', async () => {
+    const cls = {
+      get: jest.fn((key: string) => {
+        if (key === 'user') return { id: '1', fullName: 'Super Admin' };
+        if (key === 'userType') return 'AdminUserEntity';
+        return null;
+      }),
+    };
+    jest.spyOn(ClsServiceManager, 'getClsService').mockReturnValue(cls as any);
+
+    const customTap = jest.fn((activity, eventName) => {
+      activity.description = `Custom: ${eventName}`;
+    });
+
+    const event = {
+      metadata: { name: 'CustomEntity' },
+      entity: {
+        id: '99',
+        name: 'Special Item',
+        tapActivity: customTap,
+      },
+      manager: {
+        getRepository: jest.fn().mockReturnValue(mockAuditRepo),
+      },
+    };
+
+    await subscriber.afterInsert(event as any);
+
+    expect(customTap).toHaveBeenCalledWith(expect.any(Object), 'created');
+    expect(mockAuditRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        description: 'Custom: created',
       }),
     );
   });
@@ -171,5 +242,42 @@ describe('AuditLogSubscriber', () => {
 
     await subscriber.afterInsert(event as any);
     expect(mockAuditRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('logs system or guest actions when there is no authenticated user', async () => {
+    const cls = {
+      get: jest.fn(() => null),
+    };
+    jest.spyOn(ClsServiceManager, 'getClsService').mockReturnValue(cls as any);
+
+    const event = {
+      metadata: { name: 'UserEntity' },
+      entity: {
+        id: '100',
+        fullName: 'Guest Registered User',
+        email: 'guest@domain.com',
+      },
+      manager: {
+        getRepository: jest.fn().mockReturnValue(mockAuditRepo),
+      },
+    };
+
+    await subscriber.afterInsert(event as any);
+
+    expect(mockAuditRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        logName: 'default',
+        subjectType: 'UserEntity',
+        subjectId: '100',
+        causerType: null,
+        causerId: null,
+        event: 'create',
+        description: 'User: Guest Registered User',
+        properties: expect.objectContaining({
+          causer_name: 'System',
+          actorId: null,
+        }),
+      }),
+    );
   });
 });
