@@ -20,25 +20,7 @@ export class AuditLogResDto {
 
   @StringField()
   @Expose()
-  entity!: string;
-
-  @StringFieldOptional()
-  @Expose()
-  entityId?: string;
-
-  @StringField()
-  @Expose()
-  action!: string;
-
-  @Expose()
-  oldValue?: any;
-
-  @Expose()
-  newValue?: any;
-
-  @StringFieldOptional()
-  @Expose()
-  userId?: string;
+  logName!: string;
 
   @StringFieldOptional()
   @Expose()
@@ -46,24 +28,89 @@ export class AuditLogResDto {
 
   @StringFieldOptional()
   @Expose()
-  ip?: string;
+  subjectType?: string;
 
   @StringFieldOptional()
   @Expose()
-  userAgent?: string;
+  subjectId?: string;
 
   @StringFieldOptional()
   @Expose()
-  requestId?: string;
+  causerType?: string;
+
+  @StringFieldOptional()
+  @Expose()
+  causerId?: string;
+
+  @StringFieldOptional()
+  @Expose()
+  event?: string;
+
+  @StringFieldOptional()
+  @Expose()
+  batchUuid?: string;
 
   @Expose()
-  metadata?: any;
-
-  @Expose()
-  @Transform(({ obj }) => obj.metadata?.changes ?? [], { toClassOnly: true })
-  changes?: AuditLogChangeItem[];
+  properties?: Record<string, any>;
 
   @ClassField(() => Date)
   @Expose()
+  createdAt!: Date;
+
+  @ClassField(() => Date)
+  @Expose()
+  updatedAt!: Date;
+
+  // Backwards-compatibility aliases for frontend
+  @Expose()
+  @Transform(({ obj }) => obj.subjectType, { toClassOnly: true })
+  entity?: string;
+
+  @Expose()
+  @Transform(({ obj }) => (obj.subjectId ? String(obj.subjectId) : undefined), {
+    toClassOnly: true,
+  })
+  entityId?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.event, { toClassOnly: true })
+  action?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.causerId, { toClassOnly: true })
+  userId?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.old, { toClassOnly: true })
+  oldValue?: any;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.attributes, { toClassOnly: true })
+  newValue?: any;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.ip, { toClassOnly: true })
+  ip?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.userAgent, { toClassOnly: true })
+  userAgent?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.requestId, { toClassOnly: true })
+  requestId?: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties, { toClassOnly: true })
+  metadata?: any;
+
+  @Expose()
+  @Transform(({ obj }) => obj.properties?.changes ?? [], { toClassOnly: true })
+  changes?: AuditLogChangeItem[];
+
+  @Expose()
+  @Transform(({ obj }) => obj.createdAt, { toClassOnly: true })
   timestamp!: Date;
 }
+
+export { AuditLogResDto as ActivityLogResDto };

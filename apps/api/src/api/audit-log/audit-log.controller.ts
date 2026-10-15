@@ -16,8 +16,8 @@ import {
 import { AuditLogService } from './audit-log.service';
 import { AuditLogResDto } from './dto/audit-log.res.dto';
 
-@ApiTags('Audit Logs')
-@Controller({ path: 'audit-logs', version: '1' })
+@ApiTags('Audit & Activity Logs')
+@Controller({ path: ['audit-logs', 'activity-logs'], version: '1' })
 @UseGuards(AdminAuthGuard, PoliciesGuard)
 export class AuditLogController {
   constructor(private readonly auditLogService: AuditLogService) {}
@@ -26,17 +26,28 @@ export class AuditLogController {
   @ApiAuth({
     type: AuditLogResDto,
     statusCode: 200,
-    summary: 'Get paginated audit logs',
+    summary: 'Get paginated audit and activity logs',
     isPaginated: true,
     paginateOptions: {
-      sortableColumns: ['id', 'timestamp'],
-      defaultSortBy: [['timestamp', 'DESC']],
+      sortableColumns: [
+        'id',
+        'createdAt',
+        'logName',
+        'event',
+        'subjectType',
+        'causerType',
+      ],
+      defaultSortBy: [['createdAt', 'DESC']],
       filterableColumns: {
-        timestamp: [FilterOperator.GTE, FilterOperator.LTE],
-        action: [FilterOperator.IN],
-        entity: [FilterOperator.ILIKE],
-        entityId: [FilterOperator.EQ],
-        userId: [FilterOperator.EQ],
+        createdAt: [FilterOperator.GTE, FilterOperator.LTE],
+        event: [FilterOperator.IN, FilterOperator.EQ],
+        logName: [FilterOperator.IN, FilterOperator.EQ],
+        subjectType: [FilterOperator.ILIKE, FilterOperator.EQ],
+        subjectId: [FilterOperator.EQ],
+        causerType: [FilterOperator.ILIKE, FilterOperator.EQ],
+        causerId: [FilterOperator.EQ],
+        batchUuid: [FilterOperator.EQ],
+        description: [FilterOperator.ILIKE],
       },
     },
   })

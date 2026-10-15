@@ -12,7 +12,7 @@ import {
   SoftRemoveEvent,
   UpdateEvent,
 } from 'typeorm';
-import { AuditLogEntity } from '../entities/audit-log.entity';
+import { ActivityLogEntity } from '../entities/activity-log.entity';
 
 const FIELD_LABELS: Record<string, string> = {
   firstName: 'First Name',
@@ -70,7 +70,7 @@ function formatValueForUser(value: any): string {
 export class AuditLogSubscriber implements EntitySubscriberInterface {
   private readonly logger = new Logger(AuditLogSubscriber.name);
   private readonly ignoreEntities = [
-    AuditLogEntity.name,
+    ActivityLogEntity.name,
     AdminSessionEntity.name,
     UserSessionEntity.name,
     'EmailLogEntity',
@@ -126,7 +126,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     ];
     const cls = ClsServiceManager.getClsService();
 
-    const auditRepo = event.manager.getRepository(AuditLogEntity);
+    const auditRepo = event.manager.getRepository(ActivityLogEntity);
     const currentUser = cls.get('user') ?? {};
     const userId = currentUser?.id;
 
@@ -182,28 +182,16 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
         currentUser?.email ??
         'Administrator';
 
+      const actionToEventMap: Record<string, string> = {
+        INSERT: 'created',
+        UPDATE: 'updated',
+        DELETE: 'deleted',
+        SOFT_DELETE: 'soft_deleted',
+        RESTORE: 'restored',
+      };
+
       const log = auditRepo.create({
-        entity: event.metadata.name,
-        entityId,
-        action,
-        oldValue,
-        newValue,
-        userId: userId ? String(userId) : null,
-        ip: cls.get('ip'),
-        userAgent: cls.get('userAgent'),
-        requestId: cls.get('requestId'),
-        timestamp: new Date(),
-        metadata: {
-          actorId: userId ? String(userId) : null,
-          actorEmail: currentUser?.email ?? null,
-          actorName,
-          entityName,
-          entityLabel,
-          changedFields: changedFields.length > 0 ? changedFields : undefined,
-          changes: changes.length > 0 ? changes : undefined,
-          roles: currentUser?.roles?.map((role: any) => role.name) ?? [],
-          userType,
-        },
+        logName: 'default',
         description: this.buildHumanDescription({
           action,
           actorName,
@@ -212,6 +200,27 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
           entityIdentifier: entityName,
           changes,
         }),
+        subjectType: event.metadata.name,
+        subjectId: entityId ? (entityId as any) : null,
+        causerType: userType,
+        causerId: userId ? String(userId) : null,
+        event: actionToEventMap[action] ?? action.toLowerCase(),
+        batchUuid: cls.get('batchUuid') ?? null,
+        properties: {
+          attributes: Object.keys(newValue).length > 0 ? newValue : undefined,
+          old: Object.keys(oldValue).length > 0 ? oldValue : undefined,
+          actorId: userId ? String(userId) : null,
+          actorEmail: currentUser?.email ?? null,
+          actorName,
+          entityName,
+          entityLabel,
+          changedFields: changedFields.length > 0 ? changedFields : undefined,
+          changes: changes.length > 0 ? changes : undefined,
+          roles: currentUser?.roles?.map((role: any) => role.name) ?? [],
+          ip: cls.get('ip'),
+          userAgent: cls.get('userAgent'),
+          requestId: cls.get('requestId'),
+        },
       });
 
       setImmediate(() => auditRepo.save(log));

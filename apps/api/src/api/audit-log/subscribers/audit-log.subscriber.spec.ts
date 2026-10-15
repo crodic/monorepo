@@ -1,6 +1,6 @@
 import { ClsServiceManager } from 'nestjs-cls';
 import { DataSource } from 'typeorm';
-import { AuditLogEntity } from '../entities/audit-log.entity';
+import { ActivityLogEntity } from '../entities/activity-log.entity';
 import { AuditLogSubscriber } from './audit-log.subscriber';
 
 describe('AuditLogSubscriber', () => {
@@ -60,11 +60,14 @@ describe('AuditLogSubscriber', () => {
 
     expect(mockAuditRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity: 'AdminUserEntity',
-        entityId: '10',
-        action: 'INSERT',
+        logName: 'default',
+        subjectType: 'AdminUserEntity',
+        subjectId: '10',
+        causerType: 'AdminUserEntity',
+        causerId: '1',
+        event: 'created',
         description: expect.stringContaining('Super Admin created'),
-        metadata: expect.objectContaining({
+        properties: expect.objectContaining({
           actorName: 'Super Admin',
           entityName: 'Jane Doe',
           entityLabel: 'Admin User',
@@ -104,11 +107,14 @@ describe('AuditLogSubscriber', () => {
 
     expect(mockAuditRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity: 'AdminRoleEntity',
-        entityId: '2',
-        action: 'UPDATE',
+        logName: 'default',
+        subjectType: 'AdminRoleEntity',
+        subjectId: '2',
+        causerType: 'AdminUserEntity',
+        causerId: '1',
+        event: 'updated',
         description: expect.stringContaining('updated'),
-        metadata: expect.objectContaining({
+        properties: expect.objectContaining({
           entityName: 'Manager',
           entityLabel: 'Admin Role',
           changedFields: ['description'],
@@ -140,20 +146,23 @@ describe('AuditLogSubscriber', () => {
 
     expect(mockAuditRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity: 'CmsPageEntity',
-        entityId: '5',
-        action: 'SOFT_DELETE',
+        logName: 'default',
+        subjectType: 'CmsPageEntity',
+        subjectId: '5',
+        causerType: 'AdminUserEntity',
+        causerId: '1',
+        event: 'soft_deleted',
         description: expect.stringContaining('moved'),
-        metadata: expect.objectContaining({
+        properties: expect.objectContaining({
           entityLabel: 'CMS Page',
         }),
       }),
     );
   });
 
-  it('does not log ignored entities like AuditLogEntity or AdminSessionEntity', async () => {
+  it('does not log ignored entities like ActivityLogEntity or AdminSessionEntity', async () => {
     const event = {
-      metadata: { name: AuditLogEntity.name },
+      metadata: { name: ActivityLogEntity.name },
       entity: { id: '1' },
       manager: {
         getRepository: jest.fn().mockReturnValue(mockAuditRepo),

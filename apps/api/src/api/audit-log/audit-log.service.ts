@@ -12,28 +12,45 @@ import {
 } from 'nestjs-paginate';
 import { LessThan, Repository } from 'typeorm';
 import { AuditLogResDto } from './dto/audit-log.res.dto';
-import { AuditLogEntity } from './entities/audit-log.entity';
+import { ActivityLogEntity } from './entities/activity-log.entity';
 
 @Injectable()
 export class AuditLogService {
   constructor(
-    @InjectRepository(AuditLogEntity)
-    private readonly auditLogRepository: Repository<AuditLogEntity>,
+    @InjectRepository(ActivityLogEntity)
+    private readonly auditLogRepository: Repository<ActivityLogEntity>,
   ) {}
 
   async findAll(query: PaginateQuery): Promise<Paginated<AuditLogResDto>> {
     const qb = this.auditLogRepository.createQueryBuilder('log');
 
     const result = await paginate(query, qb, {
-      sortableColumns: ['id', 'timestamp'],
-      searchableColumns: ['description', 'entity', 'entityId', 'userId', 'ip'],
-      defaultSortBy: [['timestamp', 'DESC']],
+      sortableColumns: [
+        'id',
+        'createdAt',
+        'logName',
+        'event',
+        'subjectType',
+        'causerType',
+      ],
+      searchableColumns: [
+        'description',
+        'subjectType',
+        'subjectId',
+        'causerId',
+        'logName',
+        'event',
+      ],
+      defaultSortBy: [['createdAt', 'DESC']],
       filterableColumns: {
-        timestamp: [FilterOperator.GTE, FilterOperator.LTE],
-        action: [FilterOperator.IN, FilterOperator.EQ],
-        entity: [FilterOperator.ILIKE, FilterOperator.EQ],
-        entityId: [FilterOperator.ILIKE, FilterOperator.EQ],
-        userId: [FilterOperator.EQ],
+        createdAt: [FilterOperator.GTE, FilterOperator.LTE],
+        event: [FilterOperator.IN, FilterOperator.EQ],
+        logName: [FilterOperator.IN, FilterOperator.EQ],
+        subjectType: [FilterOperator.ILIKE, FilterOperator.EQ],
+        subjectId: [FilterOperator.EQ],
+        causerType: [FilterOperator.ILIKE, FilterOperator.EQ],
+        causerId: [FilterOperator.EQ],
+        batchUuid: [FilterOperator.EQ],
         description: [FilterOperator.ILIKE],
       },
     });
@@ -63,6 +80,6 @@ export class AuditLogService {
   @Cron(CronExpression.EVERY_DAY_AT_10AM)
   async purgeAuditLogsOlderThan7Days() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    await this.auditLogRepository.delete({ timestamp: LessThan(sevenDaysAgo) });
+    await this.auditLogRepository.delete({ createdAt: LessThan(sevenDaysAgo) });
   }
 }
