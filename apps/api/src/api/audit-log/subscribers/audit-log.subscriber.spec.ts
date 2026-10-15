@@ -29,7 +29,7 @@ describe('AuditLogSubscriber', () => {
     expect(mockDataSource.subscribers).toContain(subscriber);
   });
 
-  it('generates Spatie formatted description on INSERT of an AdminUserEntity', async () => {
+  it('generates formatted description on INSERT of an AdminUserEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user')
@@ -78,7 +78,7 @@ describe('AuditLogSubscriber', () => {
     );
   });
 
-  it('generates Spatie formatted description on UPDATE of AdminRoleEntity', async () => {
+  it('generates formatted description on UPDATE of AdminRoleEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user') return { id: '1', fullName: 'Super Admin' };
@@ -161,7 +161,7 @@ describe('AuditLogSubscriber', () => {
     expect(mockAuditRepo.create).not.toHaveBeenCalled();
   });
 
-  it('generates Spatie formatted description on SOFT_DELETE of CmsPageEntity', async () => {
+  it('generates formatted description on SOFT_DELETE of CmsPageEntity', async () => {
     const cls = {
       get: jest.fn((key: string) => {
         if (key === 'user') return { id: '1', fullName: 'Super Admin' };

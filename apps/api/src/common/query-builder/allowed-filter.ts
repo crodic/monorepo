@@ -160,7 +160,7 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
 
   /**
    * Create a custom scope filter with full control over the query.
-   * Alias for custom() matching Laravel scope semantics.
+   * Alias for custom() matching named scope semantics.
    *
    * @param name - Filter name in query string
    * @param fn - Custom filter function

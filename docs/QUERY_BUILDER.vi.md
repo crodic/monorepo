@@ -1,8 +1,8 @@
-# Spatie-style QueryBuilder cho NestJS & TypeORM
+# Bộ QueryBuilder Cho NestJS & TypeORM
 
 > [English](QUERY_BUILDER.md) | **Tiếng Việt**
 
-Bộ QueryBuilder dạng Fluent API theo cơ chế whitelist an toàn cho NestJS và TypeORM, lấy cảm hứng thiết kế từ package [`spatie/laravel-query-builder`](https://github.com/spatie/laravel-query-builder) nổi tiếng của Laravel.
+Bộ QueryBuilder dạng Fluent API theo cơ chế whitelist an toàn cho NestJS và TypeORM.
 
 Package này cho phép ứng dụng frontend lọc dữ liệu (filter), sắp xếp (sort), nạp quan hệ (include), chỉ định các trường cần lấy (sparse fieldsets), và phân trang (pagination) thông qua định dạng URL query string chuẩn hóa, rõ ràng và an toàn tuyệt đối.
 
@@ -214,7 +214,7 @@ AllowedFilter.trashed(); // mặc định tên param 'trashed' và cột 'delete
 
 ### Custom Filters (`AllowedFilter.custom`)
 
-Hoàn toàn tương đồng với chuẩn `AllowedFilter::custom()` của Spatie Laravel. Hỗ trợ cả hàm closure lẫn class triển khai `FilterInterface`:
+Hỗ trợ cả hàm closure lẫn class triển khai `FilterInterface`:
 
 #### 1. Dùng hàm Closure
 
@@ -226,7 +226,7 @@ AllowedFilter.custom("search", (qb, value, alias) => {
 });
 ```
 
-#### 2. Dùng Class độc lập (chuẩn Spatie Laravel)
+#### 2. Dùng Class độc lập
 
 ```typescript
 import { FilterInterface } from "./common/query-builder";
@@ -244,7 +244,7 @@ AllowedFilter.custom("search", new FuzzySearchFilter());
 ```
 
 > [!TIP]
-> Bạn cũng có thể dùng `AllowedFilter.scope("search", callback)` như một alias quen thuộc theo phong cách model scope của Laravel.
+> Bạn cũng có thể dùng `AllowedFilter.scope("search", callback)` như một alias quen thuộc theo phong cách named scope.
 
 ---
 

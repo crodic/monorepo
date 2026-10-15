@@ -1,8 +1,8 @@
-# Spatie-style QueryBuilder for NestJS & TypeORM
+# QueryBuilder for NestJS & TypeORM
 
 > **English** | [Tiếng Việt](QUERY_BUILDER.vi.md)
 
-A fluent, secure, whitelist-based query builder for NestJS and TypeORM inspired by Laravel's [`spatie/laravel-query-builder`](https://github.com/spatie/laravel-query-builder).
+A fluent, secure, whitelist-based query builder for NestJS and TypeORM.
 
 It enables frontends to filter, sort, include relations, select sparse fieldsets, and paginate database entities using clean, standardized URL query strings.
 
@@ -215,7 +215,7 @@ AllowedFilter.trashed(); // defaults to 'trashed' query param and 'deletedAt' co
 
 ### Custom Filters (`AllowedFilter.custom`)
 
-Matches Spatie's `AllowedFilter::custom()` semantics. Supports both closure callbacks and class-based filters implementing `FilterInterface`:
+Supports both closure callbacks and class-based filters implementing `FilterInterface`:
 
 #### 1. Closure style
 
@@ -227,7 +227,7 @@ AllowedFilter.custom("search", (qb, value, alias) => {
 });
 ```
 
-#### 2. Class-based style (Spatie Laravel pattern)
+#### 2. Class-based style
 
 ```typescript
 import { FilterInterface } from "./common/query-builder";
@@ -245,7 +245,7 @@ AllowedFilter.custom("search", new FuzzySearchFilter());
 ```
 
 > [!TIP]
-> `AllowedFilter.scope("search", callback)` is also supported as an alias for Laravel scope semantics.
+> `AllowedFilter.scope("search", callback)` is also supported as an alias for named scope semantics.
 
 ---
 

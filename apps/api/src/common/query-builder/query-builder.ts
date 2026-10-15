@@ -23,7 +23,7 @@ import {
 import { QueryParams } from './types';
 
 /**
- * A fluent, feature-complete query builder inspired by Spatie's Laravel QueryBuilder.
+ * A fluent, feature-complete query builder for TypeORM.
  *
  * Provides a clean, secure, whitelist-based API for filtering, sorting,
  * including relations, sparse fieldsets, and paginating TypeORM queries.

@@ -256,7 +256,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
       }
     }
 
-    // dontLogEmptyChanges logic from Spatie
+    // Skip logging if no fields actually changed
     if (
       action === 'UPDATE' &&
       options.dontLogEmptyChanges !== false &&
