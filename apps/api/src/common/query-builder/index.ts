@@ -7,6 +7,11 @@ export {
 export { AllowedSort } from './allowed-sort';
 export { AllowedInclude } from './allowed-include';
 export {
+  ApiQueryBuilderDocs,
+  type ApiQueryBuilderDocsOptions,
+  type ApiQueryBuilderFilterConfig,
+} from './swagger.decorator';
+export {
   getGlobalConfig,
   setGlobalConfig,
   resetGlobalConfig,

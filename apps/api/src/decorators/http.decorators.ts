@@ -14,6 +14,11 @@ import { PaginateConfig, PaginatedSwaggerDocs } from 'nestjs-paginate';
 import { AuthOptional } from './auth-optional.decorator';
 import { Public } from './public.decorator';
 
+import {
+  ApiQueryBuilderDocs,
+  ApiQueryBuilderDocsOptions,
+} from '../common/query-builder/swagger.decorator';
+
 export interface ExternalDocumentationObject {
   description?: string;
   url: string;
@@ -39,16 +44,33 @@ type IApiPaginatedOptions<T extends Type<any>> = Omit<
 > & {
   type: T;
   isPaginated: true;
+  isQueryBuilder?: false;
   paginateOptions?: PaginateConfig<InstanceType<T>>;
+  queryBuilderOptions?: never;
+};
+
+type IApiQueryBuilderOptions<T extends Type<any>> = Omit<
+  IApiBaseOptions<T>,
+  'type'
+> & {
+  type: T;
+  isQueryBuilder: true;
+  isPaginated?: false;
+  paginateOptions?: never;
+  queryBuilderOptions?: Omit<ApiQueryBuilderDocsOptions<T>, 'entity'>;
 };
 
 type IApiNonPaginatedOptions<T extends Type<any>> = IApiBaseOptions<T> & {
   isPaginated?: false;
+  isQueryBuilder?: false;
   paginateOptions?: never;
+  queryBuilderOptions?: never;
 };
 
 export type IApiOptions<T extends Type<any> = any> =
-  IApiPaginatedOptions<T> | IApiNonPaginatedOptions<T>;
+  | IApiPaginatedOptions<T>
+  | IApiQueryBuilderOptions<T>
+  | IApiNonPaginatedOptions<T>;
 
 export type IApiAuthOptions<T extends Type<any> = any> = IApiOptions<T> & {
   auths?: ApiAuthType[];
@@ -73,6 +95,14 @@ function buildErrorResponses(errorList: number[]) {
 function buildSuccessDecorator<T extends Type<any>>(opts: IApiOptions<T>) {
   const status = opts.statusCode ?? HttpStatus.OK;
   const desc = opts.description ?? (status === 201 ? 'Created' : 'OK');
+
+  if (opts.isQueryBuilder && opts.type) {
+    return ApiQueryBuilderDocs({
+      entity: opts.type,
+      ...(opts.queryBuilderOptions ?? {}),
+      description: desc,
+    });
+  }
 
   if (opts.isPaginated && opts.type) {
     return PaginatedSwaggerDocs(
@@ -201,3 +231,9 @@ export const ApiAuthOptional = <T extends Type<any>>(
     ...buildErrorResponses(options.errorResponses || defaultErrorResponses),
   );
 };
+
+export {
+  ApiQueryBuilderDocs,
+  type ApiQueryBuilderDocsOptions,
+  type ApiQueryBuilderFilterConfig,
+} from '../common/query-builder/swagger.decorator';

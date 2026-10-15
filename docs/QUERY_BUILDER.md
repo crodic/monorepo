@@ -392,6 +392,63 @@ When client passes invalid parameters:
 
 ---
 
+## Swagger OpenAPI Integration (`@ApiQueryBuilderDocs`)
+
+You can document QueryBuilder endpoints in Swagger UI with zero boilerplate:
+
+### Option A: Standalone Decorator
+
+```typescript
+import { Controller, Get, Query } from "@nestjs/common";
+import {
+  ApiQueryBuilderDocs,
+  AllowedFilter,
+  QueryParams,
+} from "../common/query-builder";
+import { UserDto } from "./dto/user.dto";
+
+@Controller("users")
+export class UserController {
+  @Get()
+  @ApiQueryBuilderDocs({
+    entity: UserDto,
+    filters: ["name", AllowedFilter.exact("status"), AllowedFilter.trashed()],
+    sorts: ["createdAt", "name"],
+    defaultSort: "-createdAt",
+    includes: ["roles", "profile"],
+    fields: ["id", "name", "email"],
+    defaultLimit: 20,
+    maxLimit: 100,
+  })
+  findAll(@Query() query: QueryParams) {
+    return this.userService.findAll(query);
+  }
+}
+```
+
+### Option B: Integrated with `@ApiPublic` / `@ApiAuth`
+
+```typescript
+import { ApiAuth } from '../decorators/http.decorators';
+
+@Get()
+@ApiAuth({
+  type: UserDto,
+  isQueryBuilder: true,
+  summary: 'List users with filters and pagination',
+  queryBuilderOptions: {
+    filters: ['name', AllowedFilter.exact('status')],
+    sorts: ['createdAt', 'name'],
+    includes: ['roles'],
+  },
+})
+findAll(@Query() query: QueryParams) {
+  return this.userService.findAll(query);
+}
+```
+
+---
+
 ## Security Best Practices
 
 1. **Never use raw strings from queries in SQL**: Parameter values are always parameterized (`:paramName`).

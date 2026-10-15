@@ -391,6 +391,63 @@ Khi client truyền tham số không hợp lệ:
 
 ---
 
+## Tích hợp Swagger OpenAPI (`@ApiQueryBuilderDocs`)
+
+Bạn có thể tạo tài liệu tự động cho Swagger UI cực kỳ tiện lợi:
+
+### Cách 1: Sử dụng Decorator độc lập
+
+```typescript
+import { Controller, Get, Query } from "@nestjs/common";
+import {
+  ApiQueryBuilderDocs,
+  AllowedFilter,
+  QueryParams,
+} from "../common/query-builder";
+import { UserDto } from "./dto/user.dto";
+
+@Controller("users")
+export class UserController {
+  @Get()
+  @ApiQueryBuilderDocs({
+    entity: UserDto,
+    filters: ["name", AllowedFilter.exact("status"), AllowedFilter.trashed()],
+    sorts: ["createdAt", "name"],
+    defaultSort: "-createdAt",
+    includes: ["roles", "profile"],
+    fields: ["id", "name", "email"],
+    defaultLimit: 20,
+    maxLimit: 100,
+  })
+  findAll(@Query() query: QueryParams) {
+    return this.userService.findAll(query);
+  }
+}
+```
+
+### Cách 2: Tích hợp trực tiếp vào `@ApiPublic` / `@ApiAuth`
+
+```typescript
+import { ApiAuth } from '../decorators/http.decorators';
+
+@Get()
+@ApiAuth({
+  type: UserDto,
+  isQueryBuilder: true,
+  summary: 'Danh sách người dùng kèm lọc và phân trang',
+  queryBuilderOptions: {
+    filters: ['name', AllowedFilter.exact('status')],
+    sorts: ['createdAt', 'name'],
+    includes: ['roles'],
+  },
+})
+findAll(@Query() query: QueryParams) {
+  return this.userService.findAll(query);
+}
+```
+
+---
+
 ## Bảo mật
 
 1. **Tuyệt đối không dùng chuỗi SQL raw**: Tất cả các giá trị filter đều được truyền qua TypeORM parameter binding (`:paramName`) để chống SQL Injection.
