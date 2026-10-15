@@ -5,7 +5,7 @@ export class AllowedSort<T extends ObjectLiteral = any> {
   private constructor(
     /** Name used in the query string: ?sort=name or ?sort=-name */
     public readonly name: string,
-    /** Actual database column name */
+    /** Actual database column name (can be 'column' or 'relation.column') */
     public readonly column: string,
     /** Custom sort function */
     public readonly customFn?: SortApplyFn<T>,
@@ -19,7 +19,8 @@ export class AllowedSort<T extends ObjectLiteral = any> {
    * @param column - Database column name (defaults to name)
    *
    * @example
-   * AllowedSort.field('date', 'createdAt')  // ?sort=-date → ORDER BY createdAt DESC
+   * AllowedSort.field('date', 'createdAt')      // ?sort=-date → ORDER BY createdAt DESC
+   * AllowedSort.field('role', 'roles.name')     // ?sort=role → ORDER BY roles.name ASC
    */
   static field<T extends ObjectLiteral = any>(
     name: string,
@@ -59,10 +60,14 @@ export class AllowedSort<T extends ObjectLiteral = any> {
       return;
     }
 
+    const target = this.column.includes('.')
+      ? this.column
+      : `${alias}.${this.column}`;
+
     if (isFirst) {
-      qb.orderBy(`${alias}.${this.column}`, direction);
+      qb.orderBy(target, direction);
     } else {
-      qb.addOrderBy(`${alias}.${this.column}`, direction);
+      qb.addOrderBy(target, direction);
     }
   }
 }

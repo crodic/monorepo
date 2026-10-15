@@ -9,10 +9,13 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
     public readonly relation: string,
     /** Custom include function */
     public readonly customFn?: IncludeApplyFn<T>,
+    /** Whether this is a relation count */
+    public readonly isCount = false,
   ) {}
 
   /**
    * Create a relationship include using leftJoinAndSelect.
+   * Supports nested dot notation (e.g. 'posts.comments').
    * This is the default when passing a plain string to allowedIncludes().
    *
    * @param name - Include name in query string
@@ -20,7 +23,7 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
    *
    * @example
    * AllowedInclude.relationship('roles')
-   * AllowedInclude.relationship('author', 'createdByUser')
+   * AllowedInclude.relationship('comments', 'posts.comments')
    */
   static relationship<T extends ObjectLiteral = any>(
     name: string,
@@ -31,7 +34,7 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
 
   /**
    * Create a count include using loadRelationCountAndMap.
-   * Maps the count to `{relation}Count` property on the entity.
+   * Maps the count to `{relation}{countSuffix}` property on the entity.
    *
    * @param name - Include name in query string
    * @param relation - Entity relation property name (defaults to name)
@@ -44,10 +47,7 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
     relation?: string,
   ): AllowedInclude<T> {
     const rel = relation ?? name;
-    const fn: IncludeApplyFn<T> = (qb, alias) => {
-      qb.loadRelationCountAndMap(`${alias}.${rel}Count`, `${alias}.${rel}`);
-    };
-    return new AllowedInclude(name, rel, fn);
+    return new AllowedInclude(name, rel, undefined, true);
   }
 
   /**
@@ -69,12 +69,42 @@ export class AllowedInclude<T extends ObjectLiteral = any> {
    * Apply this include to the query builder.
    * @internal Called by QueryBuilder — not intended for direct use.
    */
-  apply(qb: SelectQueryBuilder<T>, alias: string): void {
+  apply(
+    qb: SelectQueryBuilder<T>,
+    alias: string,
+    joinedAliases?: Set<string>,
+    countSuffix = 'Count',
+  ): void {
     if (this.customFn) {
       this.customFn(qb, alias);
       return;
     }
 
-    qb.leftJoinAndSelect(`${alias}.${this.relation}`, this.relation);
+    if (this.isCount) {
+      const rel = this.relation;
+      qb.loadRelationCountAndMap(
+        `${alias}.${rel}${countSuffix}`,
+        `${alias}.${rel}`,
+      );
+      return;
+    }
+
+    // Support nested dot relations: e.g. "posts.comments"
+    const parts = this.relation.split('.');
+    let currentParentAlias = alias;
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const joinProperty = `${currentParentAlias}.${part}`;
+      const joinAlias =
+        parts.length === 1 ? part : parts.slice(0, i + 1).join('_');
+
+      if (!joinedAliases?.has(joinAlias)) {
+        qb.leftJoinAndSelect(joinProperty, joinAlias);
+        joinedAliases?.add(joinAlias);
+      }
+
+      currentParentAlias = joinAlias;
+    }
   }
 }

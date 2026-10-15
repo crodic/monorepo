@@ -1,63 +1,73 @@
 import { ObjectLiteral, Repository, SelectQueryBuilder } from 'typeorm';
-import {
-  DEFAULT_CURRENT_PAGE,
-  DEFAULT_PAGE_LIMIT,
-} from '../constants/app.constant';
 import { OffsetPaginatedDto } from '../dto/offset-pagination/paginated.dto';
 import { OffsetPaginationDto } from '../dto/offset-pagination/offset-pagination.dto';
 import { PageOptionsDto } from '../dto/offset-pagination/page-options.dto';
 import { AllowedFilter } from './allowed-filter';
 import { AllowedInclude } from './allowed-include';
 import { AllowedSort } from './allowed-sort';
+import {
+  getGlobalConfig,
+  QueryBuilderConfig,
+  QueryBuilderUserConfig,
+  setGlobalConfig,
+} from './config';
+import {
+  InvalidFieldQueryException,
+  InvalidFilterQueryException,
+  InvalidIncludeQueryException,
+  InvalidSortQueryException,
+} from './exceptions';
 import { QueryParams } from './types';
 
 /**
- * A fluent query builder inspired by Spatie's Laravel QueryBuilder.
+ * A fluent, feature-complete query builder inspired by Spatie's Laravel QueryBuilder.
  *
  * Provides a clean, secure, whitelist-based API for filtering, sorting,
- * including relations, and paginating TypeORM queries from HTTP request parameters.
+ * including relations, sparse fieldsets, and paginating TypeORM queries.
  *
  * @example
  * ```ts
- * // In your controller
- * @Get()
- * findAll(@Query() query: QueryParams) {
- *   return this.userService.findAll(query);
- * }
+ * // Configure globally (optional, e.g. in main.ts)
+ * QueryBuilder.configure({
+ *   strictMode: true,
+ *   defaultLimit: 20,
+ * });
  *
  * // In your service
  * async findAll(query: QueryParams) {
  *   return QueryBuilder.for(this.userRepo, query)
  *     .allowedFilters([
- *       'name',                                    // partial (ILIKE)
- *       AllowedFilter.exact('status'),             // exact (=)
- *       AllowedFilter.scope('search', (qb, value, alias) => {
- *         qb.andWhere(`(${alias}.name ILIKE :s OR ${alias}.email ILIKE :s)`, { s: `%${value}%` });
- *       }),
+ *       'name',                                      // partial (ILIKE)
+ *       AllowedFilter.exact('status'),               // exact (=)
+ *       AllowedFilter.startsWith('code'),            // prefix (INV%)
+ *       AllowedFilter.operator('minAge', '>=', 'age'), // comparison
+ *       AllowedFilter.trashed(),                     // soft deletes (with/only/without)
+ *       AllowedFilter.scope('search', (qb, val, a) => ...),
  *     ])
  *     .allowedSorts(['id', 'name', 'createdAt'])
  *     .defaultSort('-createdAt')
- *     .allowedIncludes(['roles', 'profile'])
+ *     .allowedIncludes(['roles', 'profile', AllowedInclude.count('comments')])
+ *     .allowedFields(['id', 'name', 'email', 'roles.id', 'roles.name'])
+ *     .strict(true)
  *     .paginate();
  * }
- * ```
- *
- * Frontend URL format:
- * ```
- * GET /api/v1/users?filter[name]=john&filter[status]=active&sort=-createdAt,name&include=roles&page=2&limit=15
  * ```
  */
 export class QueryBuilder<T extends ObjectLiteral> {
   private readonly qb: SelectQueryBuilder<T>;
   private readonly alias: string;
   private readonly query: QueryParams;
+  private readonly config: QueryBuilderConfig;
 
   private _filters: AllowedFilter<T>[] = [];
   private _sorts: AllowedSort<T>[] = [];
   private _includes: AllowedInclude<T>[] = [];
+  private _fields: string[] = [];
   private _defaultSortStr?: string;
-  private _defaultLimit: number = DEFAULT_PAGE_LIMIT;
-  private _maxLimit = 100;
+  private _defaultLimit: number;
+  private _maxLimit: number;
+  private _strictMode: boolean;
+  private _joinedAliases = new Set<string>();
   private _built = false;
   private _filterIndex = 0;
 
@@ -65,6 +75,18 @@ export class QueryBuilder<T extends ObjectLiteral> {
     this.qb = qb;
     this.alias = qb.alias;
     this.query = query;
+    this.config = getGlobalConfig();
+
+    this._defaultLimit = this.config.defaultLimit;
+    this._maxLimit = this.config.maxLimit;
+    this._strictMode = this.config.strictMode;
+  }
+
+  /**
+   * Globally configure QueryBuilder defaults.
+   */
+  static configure(config: QueryBuilderUserConfig): QueryBuilderConfig {
+    return setGlobalConfig(config);
   }
 
   /**
@@ -72,13 +94,6 @@ export class QueryBuilder<T extends ObjectLiteral> {
    *
    * @param source - TypeORM Repository or SelectQueryBuilder
    * @param query - Parsed query parameters from the request
-   *
-   * @example
-   * // From repository (auto-generates alias from entity name)
-   * QueryBuilder.for(this.userRepo, query)
-   *
-   * // From existing query builder (uses its alias)
-   * QueryBuilder.for(this.userRepo.createQueryBuilder('u'), query)
    */
   static for<T extends ObjectLiteral>(
     source: Repository<T> | SelectQueryBuilder<T>,
@@ -102,16 +117,18 @@ export class QueryBuilder<T extends ObjectLiteral> {
   // ─── CONFIGURATION (Fluent API) ─────────────────────────
 
   /**
+   * Enable or disable strict mode for this query.
+   * In strict mode, an exception is thrown when the client requests
+   * an unallowed filter, sort, include, or field.
+   */
+  strict(enabled = true): this {
+    this._strictMode = enabled;
+    return this;
+  }
+
+  /**
    * Define the allowed filters for this query.
    * Strings default to **partial** (ILIKE) filters.
-   * Unrecognized filter keys from the request are silently ignored (security).
-   *
-   * @example
-   * .allowedFilters([
-   *   'name',                              // partial match (ILIKE)
-   *   AllowedFilter.exact('status'),       // exact match (=)
-   *   AllowedFilter.scope('search', fn),   // custom scope
-   * ])
    */
   allowedFilters(filters: (string | AllowedFilter<T>)[]): this {
     this._filters = filters.map((f) =>
@@ -122,13 +139,7 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
   /**
    * Define the allowed sorts for this query.
-   * Strings default to column sorts.
-   * Use `-` prefix in the query string for descending order.
-   * Unrecognized sort keys from the request are silently ignored (security).
-   *
-   * @example
-   * .allowedSorts(['id', 'name', 'createdAt'])
-   * // Frontend: ?sort=-createdAt,name → ORDER BY createdAt DESC, name ASC
+   * Strings default to column sorts. Use `-` prefix for descending order.
    */
   allowedSorts(sorts: (string | AllowedSort<T>)[]): this {
     this._sorts = sorts.map((s) =>
@@ -138,12 +149,7 @@ export class QueryBuilder<T extends ObjectLiteral> {
   }
 
   /**
-   * Set the default sort when no `?sort=` parameter is provided.
-   * Supports `-` prefix for descending and comma-separated multiple sorts.
-   *
-   * @example
-   * .defaultSort('-createdAt')        // newest first
-   * .defaultSort('-createdAt,name')   // newest first, then by name
+   * Set the default sort when no sort parameter is provided.
    */
   defaultSort(sort: string): this {
     this._defaultSortStr = sort;
@@ -153,12 +159,6 @@ export class QueryBuilder<T extends ObjectLiteral> {
   /**
    * Define the allowed includes (relations) for this query.
    * Strings default to `leftJoinAndSelect`.
-   * Unrecognized include keys from the request are silently ignored (security).
-   *
-   * @example
-   * .allowedIncludes(['roles', 'profile'])
-   * .allowedIncludes([AllowedInclude.count('comments')])
-   * // Frontend: ?include=roles,profile
    */
   allowedIncludes(includes: (string | AllowedInclude<T>)[]): this {
     this._includes = includes.map((i) =>
@@ -168,10 +168,19 @@ export class QueryBuilder<T extends ObjectLiteral> {
   }
 
   /**
-   * Override default and maximum limit for pagination.
+   * Define the allowed fields (sparse fieldsets) for this query.
+   * Frontend: ?fields=id,name or ?fields[user]=id,name&fields[roles]=id,title
    *
-   * @param defaultLimit - Default items per page (fallback: DEFAULT_PAGE_LIMIT)
-   * @param maxLimit - Maximum items per page (fallback: 100)
+   * @example
+   * .allowedFields(['id', 'name', 'email', 'roles.id', 'roles.title'])
+   */
+  allowedFields(fields: string[]): this {
+    this._fields = fields;
+    return this;
+  }
+
+  /**
+   * Override default and maximum limit for pagination.
    */
   setLimit(defaultLimit: number, maxLimit?: number): this {
     this._defaultLimit = defaultLimit;
@@ -181,11 +190,6 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
   /**
    * Add a direct WHERE clause that is always applied, regardless of query params.
-   * Useful for tenant isolation, soft-delete scopes, or ownership checks.
-   *
-   * @example
-   * .where('user.isActive = :active', { active: true })
-   * .where('user.tenantId = :tenantId', { tenantId })
    */
   where(condition: string, parameters?: Record<string, any>): this {
     this.qb.andWhere(condition, parameters);
@@ -196,9 +200,6 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
   /**
    * Execute the query with offset pagination.
-   * Returns data array and pagination metadata.
-   *
-   * @param defaultLimit - Override the default limit for this call
    */
   async paginate(defaultLimit?: number): Promise<OffsetPaginatedDto<T>> {
     this.build();
@@ -237,44 +238,133 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
   /**
    * Get the underlying TypeORM SelectQueryBuilder after applying all configurations.
-   * Useful for adding custom conditions before executing.
    */
   getQueryBuilder(): SelectQueryBuilder<T> {
     this.build();
     return this.qb;
   }
 
-  // ─── INTERNAL ───────────────────────────────────────────
+  // ─── INTERNAL BUILD PROCESS ─────────────────────────────
 
   private build(): void {
     if (this._built) return;
     this._built = true;
 
+    this.applyFields();
     this.applyIncludes();
     this.applyFilters();
     this.applySorts();
   }
 
+  private applyFields(): void {
+    const fieldsParam = this.query[this.config.parameters.fields];
+    if (!fieldsParam) return;
+
+    const requestedFields: string[] = [];
+
+    if (typeof fieldsParam === 'string') {
+      requestedFields.push(
+        ...fieldsParam
+          .split(',')
+          .map((f) => f.trim())
+          .filter(Boolean),
+      );
+    } else if (typeof fieldsParam === 'object' && fieldsParam !== null) {
+      for (const [scope, value] of Object.entries(fieldsParam)) {
+        const valArr = Array.isArray(value)
+          ? value
+          : typeof value === 'string'
+            ? value.split(',')
+            : [];
+        for (const rawField of valArr) {
+          const field = rawField.trim();
+          if (!field) continue;
+          if (scope === this.alias || scope === `${this.alias}s`) {
+            requestedFields.push(field);
+          } else {
+            requestedFields.push(
+              field.includes('.') ? field : `${scope}.${field}`,
+            );
+          }
+        }
+      }
+    }
+
+    if (requestedFields.length === 0) return;
+
+    // Strict mode validation
+    if (this._strictMode && this._fields.length > 0) {
+      const allowedSet = new Set(this._fields);
+      const invalid = requestedFields.filter((f) => !allowedSet.has(f));
+      if (invalid.length > 0) {
+        throw new InvalidFieldQueryException(invalid, this._fields);
+      }
+    }
+
+    // Filter fields if whitelist defined, otherwise apply all requested
+    const validFields =
+      this._fields.length > 0
+        ? requestedFields.filter((f) => this._fields.includes(f))
+        : requestedFields;
+
+    if (validFields.length === 0) return;
+
+    const rootFields: string[] = [];
+    const relationFields: string[] = [];
+
+    for (const f of validFields) {
+      if (f.includes('.')) {
+        relationFields.push(f);
+      } else {
+        rootFields.push(`${this.alias}.${f}`);
+      }
+    }
+
+    if (rootFields.length > 0) {
+      this.qb.select(rootFields);
+    }
+    if (relationFields.length > 0) {
+      if (rootFields.length > 0) {
+        this.qb.addSelect(relationFields);
+      } else {
+        this.qb.select(relationFields);
+      }
+    }
+  }
+
   private applyFilters(): void {
-    const filterParams = this.query.filter;
+    const filterParams = this.query[this.config.parameters.filter];
     if (!filterParams || typeof filterParams !== 'object') return;
 
     const allowedMap = new Map(this._filters.map((f) => [f.name, f]));
+    const allowedNames = Array.from(allowedMap.keys());
+
+    // Strict mode validation
+    if (this._strictMode) {
+      const invalid = Object.keys(filterParams).filter(
+        (k) => !allowedMap.has(k),
+      );
+      if (invalid.length > 0) {
+        throw new InvalidFilterQueryException(invalid, allowedNames);
+      }
+    }
 
     for (const [key, value] of Object.entries(filterParams)) {
       const filter = allowedMap.get(key);
-      if (!filter) continue; // silently ignore unallowed filters
+      if (!filter) continue;
 
       filter.apply(this.qb, this.alias, value, this._filterIndex++);
     }
   }
 
   private applySorts(): void {
-    const sortParam = this.query.sort;
+    const sortParam = this.query[this.config.parameters.sort];
     const sortMap = new Map(this._sorts.map((s) => [s.name, s]));
+    const allowedNames = Array.from(sortMap.keys());
 
     if (sortParam && typeof sortParam === 'string') {
       const parts = sortParam.split(',').filter(Boolean);
+      const invalid: string[] = [];
       let isFirst = true;
 
       for (const part of parts) {
@@ -284,10 +374,17 @@ export class QueryBuilder<T extends ObjectLiteral> {
         const direction: 'ASC' | 'DESC' = isDesc ? 'DESC' : 'ASC';
 
         const sort = sortMap.get(name);
-        if (!sort) continue; // silently ignore unallowed sorts
+        if (!sort) {
+          invalid.push(name);
+          continue;
+        }
 
         sort.apply(this.qb, this.alias, direction, isFirst);
         isFirst = false;
+      }
+
+      if (this._strictMode && invalid.length > 0) {
+        throw new InvalidSortQueryException(invalid, allowedNames);
       }
 
       if (!isFirst) return; // at least one sort was applied
@@ -313,11 +410,11 @@ export class QueryBuilder<T extends ObjectLiteral> {
       if (sort) {
         sort.apply(this.qb, this.alias, direction, isFirst);
       } else {
-        // default sort can reference any column directly
+        const target = name.includes('.') ? name : `${this.alias}.${name}`;
         if (isFirst) {
-          this.qb.orderBy(`${this.alias}.${name}`, direction);
+          this.qb.orderBy(target, direction);
         } else {
-          this.qb.addOrderBy(`${this.alias}.${name}`, direction);
+          this.qb.addOrderBy(target, direction);
         }
       }
       isFirst = false;
@@ -325,23 +422,39 @@ export class QueryBuilder<T extends ObjectLiteral> {
   }
 
   private applyIncludes(): void {
-    const includeParam = this.query.include;
+    const includeParam = this.query[this.config.parameters.include];
     if (!includeParam || typeof includeParam !== 'string') return;
 
     const allowedMap = new Map(this._includes.map((i) => [i.name, i]));
-    const parts = includeParam.split(',').filter(Boolean);
+    const allowedNames = Array.from(allowedMap.keys());
+    const parts = includeParam
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
 
-    for (const part of parts) {
-      const name = part.trim();
+    if (this._strictMode) {
+      const invalid = parts.filter((p) => !allowedMap.has(p));
+      if (invalid.length > 0) {
+        throw new InvalidIncludeQueryException(invalid, allowedNames);
+      }
+    }
+
+    for (const name of parts) {
       const include = allowedMap.get(name);
-      if (!include) continue; // silently ignore unallowed includes
+      if (!include) continue;
 
-      include.apply(this.qb, this.alias);
+      include.apply(
+        this.qb,
+        this.alias,
+        this._joinedAliases,
+        this.config.countSuffix,
+      );
     }
   }
 
   private resolveLimit(overrideDefault?: number): number {
-    const raw = Number(this.query.limit);
+    const limitKey = this.config.parameters.limit;
+    const raw = Number(this.query[limitKey]);
     const limit =
       Number.isFinite(raw) && raw > 0
         ? raw
@@ -351,10 +464,9 @@ export class QueryBuilder<T extends ObjectLiteral> {
   }
 
   private resolvePage(): number {
-    const raw = Number(this.query.page);
-    return Number.isFinite(raw) && raw > 0
-      ? Math.floor(raw)
-      : DEFAULT_CURRENT_PAGE;
+    const pageKey = this.config.parameters.page;
+    const raw = Number(this.query[pageKey]);
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 1;
   }
 }
 

@@ -4,19 +4,27 @@ import { FilterApplyFn } from './types';
 export enum FilterOperator {
   EXACT = 'exact',
   PARTIAL = 'partial',
+  STARTS_WITH = 'starts_with',
+  ENDS_WITH = 'ends_with',
+  OPERATOR = 'operator',
   SCOPE = 'scope',
+  TRASHED = 'trashed',
 }
+
+export type ComparisonOperator = '=' | '!=' | '<>' | '>' | '>=' | '<' | '<=';
 
 export class AllowedFilter<T extends ObjectLiteral = any> {
   private constructor(
     /** Name used in the query string: ?filter[name]=... */
     public readonly name: string,
-    /** Actual database column name */
+    /** Actual database column name (can be 'column' or 'relation.column') */
     public readonly column: string,
     /** Filter operator type */
     public readonly operator: FilterOperator,
     /** Custom scope function (only for SCOPE type) */
     public readonly scopeFn?: FilterApplyFn<T>,
+    /** Comparison operator for OPERATOR type (e.g. '>=') */
+    public readonly comparisonOp?: ComparisonOperator,
   ) {}
 
   /**
@@ -29,6 +37,7 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
    * @example
    * AllowedFilter.exact('status')             // ?filter[status]=active
    * AllowedFilter.exact('role', 'roleId')     // ?filter[role]=1 → WHERE roleId = 1
+   * AllowedFilter.exact('roleName', 'role.name') // ?filter[roleName]=admin → WHERE role.name = 'admin'
    */
   static exact<T extends ObjectLiteral = any>(
     name: string,
@@ -56,6 +65,63 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
   }
 
   /**
+   * Create a prefix match filter (WHERE col ILIKE value%).
+   *
+   * @param name - Filter name in query string
+   * @param column - Database column name (defaults to name)
+   *
+   * @example
+   * AllowedFilter.startsWith('code')          // ?filter[code]=INV → ILIKE 'INV%'
+   */
+  static startsWith<T extends ObjectLiteral = any>(
+    name: string,
+    column?: string,
+  ): AllowedFilter<T> {
+    return new AllowedFilter(name, column ?? name, FilterOperator.STARTS_WITH);
+  }
+
+  /**
+   * Create a suffix match filter (WHERE col ILIKE %value).
+   *
+   * @param name - Filter name in query string
+   * @param column - Database column name (defaults to name)
+   *
+   * @example
+   * AllowedFilter.endsWith('domain')          // ?filter[domain]=.com → ILIKE '%.com'
+   */
+  static endsWith<T extends ObjectLiteral = any>(
+    name: string,
+    column?: string,
+  ): AllowedFilter<T> {
+    return new AllowedFilter(name, column ?? name, FilterOperator.ENDS_WITH);
+  }
+
+  /**
+   * Create a comparison operator filter (WHERE col > value, etc.).
+   *
+   * @param name - Filter name in query string
+   * @param op - Comparison operator ('=', '!=', '<>', '>', '>=', '<', '<=')
+   * @param column - Database column name (defaults to name)
+   *
+   * @example
+   * AllowedFilter.operator('minAge', '>=', 'age') // ?filter[minAge]=18 → age >= 18
+   * AllowedFilter.operator('maxPrice', '<=', 'price')
+   */
+  static operator<T extends ObjectLiteral = any>(
+    name: string,
+    op: ComparisonOperator,
+    column?: string,
+  ): AllowedFilter<T> {
+    return new AllowedFilter(
+      name,
+      column ?? name,
+      FilterOperator.OPERATOR,
+      undefined,
+      op,
+    );
+  }
+
+  /**
    * Create a custom scope filter with full control over the query.
    *
    * @param name - Filter name in query string
@@ -74,6 +140,25 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
   }
 
   /**
+   * Filter soft-deleted entities.
+   * - ?filter[trashed]=with     -> includes deleted records (withDeleted())
+   * - ?filter[trashed]=only     -> only deleted records (withDeleted() AND deletedAt IS NOT NULL)
+   * - ?filter[trashed]=without  -> normal records (default TypeORM behavior)
+   *
+   * @param name - Filter name in query string (defaults to 'trashed')
+   * @param column - Column name for deleted timestamp (defaults to 'deletedAt')
+   *
+   * @example
+   * AllowedFilter.trashed()                   // ?filter[trashed]=only
+   */
+  static trashed<T extends ObjectLiteral = any>(
+    name = 'trashed',
+    column = 'deletedAt',
+  ): AllowedFilter<T> {
+    return new AllowedFilter(name, column, FilterOperator.TRASHED);
+  }
+
+  /**
    * Apply this filter to the query builder.
    * @internal Called by QueryBuilder — not intended for direct use.
    */
@@ -85,16 +170,20 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
   ): void {
     if (value === undefined || value === null || value === '') return;
 
+    const target = this.column.includes('.')
+      ? this.column
+      : `${alias}.${this.column}`;
+
     const paramName = `qb_f_${this.column.replace(/\W/g, '_')}_${paramIndex}`;
 
     switch (this.operator) {
       case FilterOperator.EXACT: {
         if (Array.isArray(value)) {
-          qb.andWhere(`${alias}.${this.column} IN (:...${paramName})`, {
+          qb.andWhere(`${target} IN (:...${paramName})`, {
             [paramName]: value,
           });
         } else {
-          qb.andWhere(`${alias}.${this.column} = :${paramName}`, {
+          qb.andWhere(`${target} = :${paramName}`, {
             [paramName]: value,
           });
         }
@@ -104,8 +193,7 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
       case FilterOperator.PARTIAL: {
         if (Array.isArray(value)) {
           const conditions = value.map(
-            (_: any, i: number) =>
-              `${alias}.${this.column} ILIKE :${paramName}_${i}`,
+            (_: any, i: number) => `${target} ILIKE :${paramName}_${i}`,
           );
           const params: Record<string, string> = {};
           value.forEach((v: string, i: number) => {
@@ -113,15 +201,50 @@ export class AllowedFilter<T extends ObjectLiteral = any> {
           });
           qb.andWhere(`(${conditions.join(' OR ')})`, params);
         } else {
-          qb.andWhere(`${alias}.${this.column} ILIKE :${paramName}`, {
+          qb.andWhere(`${target} ILIKE :${paramName}`, {
             [paramName]: `%${value}%`,
           });
         }
         break;
       }
 
+      case FilterOperator.STARTS_WITH: {
+        qb.andWhere(`${target} ILIKE :${paramName}`, {
+          [paramName]: `${value}%`,
+        });
+        break;
+      }
+
+      case FilterOperator.ENDS_WITH: {
+        qb.andWhere(`${target} ILIKE :${paramName}`, {
+          [paramName]: `%${value}`,
+        });
+        break;
+      }
+
+      case FilterOperator.OPERATOR: {
+        const op = this.comparisonOp ?? '=';
+        qb.andWhere(`${target} ${op} :${paramName}`, {
+          [paramName]: value,
+        });
+        break;
+      }
+
       case FilterOperator.SCOPE: {
         this.scopeFn?.(qb, value, alias);
+        break;
+      }
+
+      case FilterOperator.TRASHED: {
+        const strVal = String(value).toLowerCase();
+        if (typeof (qb as any).withDeleted === 'function') {
+          if (strVal === 'with') {
+            qb.withDeleted();
+          } else if (strVal === 'only') {
+            qb.withDeleted();
+            qb.andWhere(`${target} IS NOT NULL`);
+          }
+        }
         break;
       }
     }

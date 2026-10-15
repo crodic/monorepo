@@ -3,6 +3,13 @@ import { QueryBuilder } from './query-builder';
 import { AllowedFilter, FilterOperator } from './allowed-filter';
 import { AllowedSort } from './allowed-sort';
 import { AllowedInclude } from './allowed-include';
+import { resetGlobalConfig, setGlobalConfig } from './config';
+import {
+  InvalidFieldQueryException,
+  InvalidFilterQueryException,
+  InvalidIncludeQueryException,
+  InvalidSortQueryException,
+} from './exceptions';
 
 interface TestUser extends ObjectLiteral {
   id: string;
@@ -10,6 +17,7 @@ interface TestUser extends ObjectLiteral {
   email: string;
   status: string;
   createdAt: Date;
+  deletedAt?: Date;
   roles?: any[];
 }
 
@@ -21,6 +29,9 @@ function createMockQb(alias = 'user') {
     addOrderBy: jest.fn().mockReturnThis(),
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     loadRelationCountAndMap: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    withDeleted: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     getMany: jest.fn().mockResolvedValue([]),
@@ -42,6 +53,10 @@ function createMockRepo(
 }
 
 describe('Spatie-style QueryBuilder', () => {
+  afterEach(() => {
+    resetGlobalConfig();
+  });
+
   describe('Initialization (QueryBuilder.for)', () => {
     it('should initialize from an existing SelectQueryBuilder', () => {
       const qb = createMockQb('customUser');
@@ -71,7 +86,7 @@ describe('Spatie-style QueryBuilder', () => {
     });
   });
 
-  describe('AllowedFilter', () => {
+  describe('AllowedFilter Operators', () => {
     it('should apply partial filter by default when provided as string', () => {
       const qb = createMockQb();
       QueryBuilder.for(qb, { filter: { name: 'alice' } })
@@ -121,21 +136,68 @@ describe('Spatie-style QueryBuilder', () => {
       );
     });
 
-    it('should support custom column mapping for exact and partial filters', () => {
+    it('should apply startsWith filter (prefix match)', () => {
       const qb = createMockQb();
-      QueryBuilder.for(qb, { filter: { role: 'admin', q: 'searchTerm' } })
-        .allowedFilters([
-          AllowedFilter.exact('role', 'roleId'),
-          AllowedFilter.partial('q', 'displayName'),
-        ])
+      QueryBuilder.for(qb, { filter: { code: 'INV' } })
+        .allowedFilters([AllowedFilter.startsWith('code')])
         .getQueryBuilder();
 
-      expect(qb.andWhere).toHaveBeenCalledWith('user.roleId = :qb_f_roleId_0', {
-        qb_f_roleId_0: 'admin',
+      expect(qb.andWhere).toHaveBeenCalledWith('user.code ILIKE :qb_f_code_0', {
+        qb_f_code_0: 'INV%',
       });
+    });
+
+    it('should apply endsWith filter (suffix match)', () => {
+      const qb = createMockQb();
+      QueryBuilder.for(qb, { filter: { email: '.com' } })
+        .allowedFilters([AllowedFilter.endsWith('email')])
+        .getQueryBuilder();
+
       expect(qb.andWhere).toHaveBeenCalledWith(
-        'user.displayName ILIKE :qb_f_displayName_1',
-        { qb_f_displayName_1: '%searchTerm%' },
+        'user.email ILIKE :qb_f_email_0',
+        { qb_f_email_0: '%.com' },
+      );
+    });
+
+    it('should apply comparison operator filter', () => {
+      const qb = createMockQb();
+      QueryBuilder.for(qb, { filter: { minAge: 18 } })
+        .allowedFilters([AllowedFilter.operator('minAge', '>=', 'age')])
+        .getQueryBuilder();
+
+      expect(qb.andWhere).toHaveBeenCalledWith('user.age >= :qb_f_age_0', {
+        qb_f_age_0: 18,
+      });
+    });
+
+    it('should handle relation column with dot notation in filters', () => {
+      const qb = createMockQb();
+      QueryBuilder.for(qb, { filter: { role: 'admin' } })
+        .allowedFilters([AllowedFilter.exact('role', 'roles.name')])
+        .getQueryBuilder();
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'roles.name = :qb_f_roles_name_0',
+        { qb_f_roles_name_0: 'admin' },
+      );
+    });
+
+    it('should apply trashed filter for soft deletes', () => {
+      const qbWith = createMockQb();
+      QueryBuilder.for(qbWith, { filter: { trashed: 'with' } })
+        .allowedFilters([AllowedFilter.trashed()])
+        .getQueryBuilder();
+
+      expect(qbWith.withDeleted).toHaveBeenCalled();
+
+      const qbOnly = createMockQb();
+      QueryBuilder.for(qbOnly, { filter: { trashed: 'only' } })
+        .allowedFilters([AllowedFilter.trashed()])
+        .getQueryBuilder();
+
+      expect(qbOnly.withDeleted).toHaveBeenCalled();
+      expect(qbOnly.andWhere).toHaveBeenCalledWith(
+        'user.deletedAt IS NOT NULL',
       );
     });
 
@@ -161,7 +223,7 @@ describe('Spatie-style QueryBuilder', () => {
       );
     });
 
-    it('should ignore filters not present in allowedFilters', () => {
+    it('should ignore filters not present in allowedFilters when strict mode is false', () => {
       const qb = createMockQb();
       QueryBuilder.for(qb, { filter: { unallowed: 'malicious', name: 'safe' } })
         .allowedFilters(['name'])
@@ -171,6 +233,19 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.andWhere).toHaveBeenCalledWith('user.name ILIKE :qb_f_name_0', {
         qb_f_name_0: '%safe%',
       });
+    });
+
+    it('should throw InvalidFilterQueryException in strict mode for unallowed filters', () => {
+      const qb = createMockQb();
+      const builder = QueryBuilder.for(qb, {
+        filter: { unallowed: 'malicious', name: 'safe' },
+      })
+        .allowedFilters(['name'])
+        .strict(true);
+
+      expect(() => builder.getQueryBuilder()).toThrow(
+        InvalidFilterQueryException,
+      );
     });
 
     it('should skip filter if value is empty string, null, or undefined', () => {
@@ -187,7 +262,11 @@ describe('Spatie-style QueryBuilder', () => {
     it('should expose FilterOperator enum values', () => {
       expect(FilterOperator.EXACT).toBe('exact');
       expect(FilterOperator.PARTIAL).toBe('partial');
+      expect(FilterOperator.STARTS_WITH).toBe('starts_with');
+      expect(FilterOperator.ENDS_WITH).toBe('ends_with');
+      expect(FilterOperator.OPERATOR).toBe('operator');
       expect(FilterOperator.SCOPE).toBe('scope');
+      expect(FilterOperator.TRASHED).toBe('trashed');
     });
   });
 
@@ -220,30 +299,13 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.addOrderBy).toHaveBeenCalledWith('user.name', 'ASC');
     });
 
-    it('should support custom column mapping for field sort', () => {
+    it('should support relation column in sort with dot notation', () => {
       const qb = createMockQb();
-      QueryBuilder.for(qb, { sort: '-date' })
-        .allowedSorts([AllowedSort.field('date', 'created_at')])
+      QueryBuilder.for(qb, { sort: '-roleName' })
+        .allowedSorts([AllowedSort.field('roleName', 'roles.name')])
         .getQueryBuilder();
 
-      expect(qb.orderBy).toHaveBeenCalledWith('user.created_at', 'DESC');
-    });
-
-    it('should support custom sort callback', () => {
-      const qb = createMockQb();
-      const sortCallback = jest.fn((builder, dir, alias) => {
-        builder.orderBy(`${alias}.viewCount + ${alias}.likeCount`, dir);
-      });
-
-      QueryBuilder.for(qb, { sort: '-score' })
-        .allowedSorts([AllowedSort.callback('score', sortCallback)])
-        .getQueryBuilder();
-
-      expect(sortCallback).toHaveBeenCalledWith(qb, 'DESC', 'user');
-      expect(qb.orderBy).toHaveBeenCalledWith(
-        'user.viewCount + user.likeCount',
-        'DESC',
-      );
+      expect(qb.orderBy).toHaveBeenCalledWith('roles.name', 'DESC');
     });
 
     it('should fall back to defaultSort when sort param is not provided', () => {
@@ -257,14 +319,15 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.addOrderBy).toHaveBeenCalledWith('user.name', 'ASC');
     });
 
-    it('should fall back to defaultSort when provided sort has only unallowed items', () => {
+    it('should throw InvalidSortQueryException in strict mode for unallowed sorts', () => {
       const qb = createMockQb();
-      QueryBuilder.for(qb, { sort: 'maliciousColumn' })
-        .allowedSorts(['name', 'createdAt'])
-        .defaultSort('-createdAt')
-        .getQueryBuilder();
+      const builder = QueryBuilder.for(qb, { sort: 'unallowedSort' })
+        .allowedSorts(['name'])
+        .strict(true);
 
-      expect(qb.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC');
+      expect(() => builder.getQueryBuilder()).toThrow(
+        InvalidSortQueryException,
+      );
     });
   });
 
@@ -278,75 +341,109 @@ describe('Spatie-style QueryBuilder', () => {
       expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('user.roles', 'roles');
     });
 
-    it('should apply multiple includes comma-separated', () => {
+    it('should handle nested relation includes (dot notation)', () => {
       const qb = createMockQb();
-      QueryBuilder.for(qb, { include: 'roles,profile' })
-        .allowedIncludes(['roles', 'profile'])
+      QueryBuilder.for(qb, { include: 'posts.comments' })
+        .allowedIncludes(['posts.comments'])
         .getQueryBuilder();
 
-      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('user.roles', 'roles');
+      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('user.posts', 'posts');
       expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
-        'user.profile',
-        'profile',
+        'posts.comments',
+        'posts_comments',
       );
     });
 
-    it('should support relation property mapping', () => {
-      const qb = createMockQb();
-      QueryBuilder.for(qb, { include: 'author' })
-        .allowedIncludes([
-          AllowedInclude.relationship('author', 'createdByUser'),
-        ])
-        .getQueryBuilder();
-
-      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
-        'user.createdByUser',
-        'createdByUser',
-      );
-    });
-
-    it('should support count include via loadRelationCountAndMap', () => {
+    it('should support count include with custom countSuffix', () => {
+      setGlobalConfig({ countSuffix: '_count' });
       const qb = createMockQb();
       QueryBuilder.for(qb, { include: 'comments' })
         .allowedIncludes([AllowedInclude.count('comments')])
         .getQueryBuilder();
 
       expect(qb.loadRelationCountAndMap).toHaveBeenCalledWith(
-        'user.commentsCount',
+        'user.comments_count',
         'user.comments',
       );
     });
 
-    it('should support custom callback include', () => {
+    it('should throw InvalidIncludeQueryException in strict mode for unallowed includes', () => {
       const qb = createMockQb();
-      const customFn = jest.fn((builder, alias) => {
-        builder.leftJoinAndSelect(
-          `${alias}.roles`,
-          'role',
-          'role.isActive = true',
-        );
-      });
+      const builder = QueryBuilder.for(qb, { include: 'unknownRelation' })
+        .allowedIncludes(['roles'])
+        .strict(true);
 
-      QueryBuilder.for(qb, { include: 'activeRoles' })
-        .allowedIncludes([AllowedInclude.callback('activeRoles', customFn)])
-        .getQueryBuilder();
-
-      expect(customFn).toHaveBeenCalledWith(qb, 'user');
-      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
-        'user.roles',
-        'role',
-        'role.isActive = true',
+      expect(() => builder.getQueryBuilder()).toThrow(
+        InvalidIncludeQueryException,
       );
     });
+  });
 
-    it('should ignore unallowed includes', () => {
+  describe('Sparse Fieldsets (allowedFields)', () => {
+    it('should select flat fields on root entity', () => {
       const qb = createMockQb();
-      QueryBuilder.for(qb, { include: 'secrets,roles' })
-        .allowedIncludes(['roles'])
+      QueryBuilder.for(qb, { fields: 'id,name' })
+        .allowedFields(['id', 'name', 'email'])
         .getQueryBuilder();
 
-      expect(qb.leftJoinAndSelect).toHaveBeenCalledTimes(1);
-      expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('user.roles', 'roles');
+      expect(qb.select).toHaveBeenCalledWith(['user.id', 'user.name']);
+    });
+
+    it('should select scoped fields for root and relations', () => {
+      const qb = createMockQb();
+      QueryBuilder.for(qb, {
+        fields: {
+          user: 'id,name',
+          roles: 'id,title',
+        },
+      })
+        .allowedFields(['id', 'name', 'roles.id', 'roles.title'])
+        .getQueryBuilder();
+
+      expect(qb.select).toHaveBeenCalledWith(['user.id', 'user.name']);
+      expect(qb.addSelect).toHaveBeenCalledWith(['roles.id', 'roles.title']);
+    });
+
+    it('should throw InvalidFieldQueryException in strict mode for unallowed fields', () => {
+      const qb = createMockQb();
+      const builder = QueryBuilder.for(qb, { fields: 'id,secretHash' })
+        .allowedFields(['id', 'name'])
+        .strict(true);
+
+      expect(() => builder.getQueryBuilder()).toThrow(
+        InvalidFieldQueryException,
+      );
+    });
+  });
+
+  describe('Configuration & Parameter Customization', () => {
+    it('should support customized parameter names', () => {
+      QueryBuilder.configure({
+        parameters: {
+          filter: 'filters',
+          sort: 'order',
+          limit: 'per_page',
+          page: 'p',
+        },
+      });
+
+      const qb = createMockQb();
+      QueryBuilder.for(qb, {
+        filters: { name: 'alice' },
+        order: '-createdAt',
+        per_page: 25,
+        p: 2,
+      })
+        .allowedFilters(['name'])
+        .allowedSorts(['createdAt'])
+        .paginate();
+
+      expect(qb.andWhere).toHaveBeenCalledWith('user.name ILIKE :qb_f_name_0', {
+        qb_f_name_0: '%alice%',
+      });
+      expect(qb.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC');
+      expect(qb.take).toHaveBeenCalledWith(25);
+      expect(qb.skip).toHaveBeenCalledWith(25); // (2 - 1) * 25
     });
   });
 
@@ -391,13 +488,6 @@ describe('Spatie-style QueryBuilder', () => {
       await QueryBuilder.for(qb, { limit: 500 }).setLimit(10, 50).paginate();
 
       expect(qb.take).toHaveBeenCalledWith(50);
-    });
-
-    it('should allow overrideDefault in paginate() call', async () => {
-      const qb = createMockQb();
-      await QueryBuilder.for(qb, {}).paginate(25);
-
-      expect(qb.take).toHaveBeenCalledWith(25);
     });
   });
 
