@@ -4,6 +4,11 @@ import { nestJsConfig } from '@repo/eslint-config/nest';
 export default [
   ...nestJsConfig,
   {
-    ignores: ['.prettierrc.mjs', 'eslint.config.mjs', 'dist/**'],
+    ignores: [
+      '.prettierrc.mjs',
+      'eslint.config.mjs',
+      'dist/**',
+      'src/generated/**',
+    ],
   },
 ];
