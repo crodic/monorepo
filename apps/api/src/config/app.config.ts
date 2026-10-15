@@ -8,7 +8,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { Environment } from '../common/constants/app.constant';
+import { Environment, LogService } from '../common/constants/app.constant';
 import validateConfig from '../utils/validate-config';
 
 export type AppConfig = {
@@ -20,6 +20,8 @@ export type AppConfig = {
   corsOrigin: string;
   fallbackLanguage: string;
   debug: boolean;
+  logLevel: string;
+  logService: string;
 };
 
 class EnvironmentVariablesValidator {
@@ -56,6 +58,14 @@ class EnvironmentVariablesValidator {
   @IsBoolean()
   @IsOptional()
   APP_DEBUG?: boolean;
+
+  @IsString()
+  @IsOptional()
+  APP_LOG_LEVEL?: string;
+
+  @IsEnum(LogService)
+  @IsOptional()
+  APP_LOG_SERVICE?: string;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -74,5 +84,7 @@ export default registerAs<AppConfig>('app', () => {
       'http://localhost:5173,http://localhost:3000',
     fallbackLanguage: process.env.APP_FALLBACK_LANGUAGE || 'en',
     debug: process.env.APP_DEBUG === 'true',
+    logLevel: process.env.APP_LOG_LEVEL || 'info',
+    logService: process.env.APP_LOG_SERVICE || LogService.CONSOLE,
   };
 });

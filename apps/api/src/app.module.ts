@@ -1,6 +1,6 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,6 +12,8 @@ import {
   I18nModule,
   QueryResolver,
 } from 'nestjs-i18n';
+import { ClsModule } from 'nestjs-cls';
+import { LoggerModule } from 'nestjs-pino';
 import appConfig from './config/app.config';
 import { AllConfigType } from './config/config.type';
 import { Environment } from './common/constants/app.constant';
@@ -26,6 +28,9 @@ import { BackgroundModule } from './background/background.module';
 import storageConfig from './filesystem/config/storage.config';
 import { FilesystemModule } from './filesystem/filesystem.module';
 import { ApiModule } from './api/api.module';
+import { RequestContextInterceptor } from './interceptors/request-context.interceptor';
+import { RequestIdMiddleware } from './middlewares/request-id.middleware';
+import loggerFactory from './utils/logger-factory';
 
 @Module({
   imports: [
@@ -33,6 +38,15 @@ import { ApiModule } from './api/api.module';
       isGlobal: true,
       load: [appConfig, databaseConfig, redisConfig, mailConfig, storageConfig],
       envFilePath: ['.env'],
+    }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: loggerFactory,
+    }),
+    ClsModule.forRoot({
+      middleware: { mount: true },
+      global: true,
     }),
     TypeOrmModule.forRootAsync({
       useClass: TypeOrmConfigService,
@@ -103,9 +117,17 @@ import { ApiModule } from './api/api.module';
   ],
   providers: [
     {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestContextInterceptor,
+    },
+    {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { SnakeNamingStrategy } from './naming-strategies/snake-naming.strategy';
+import { TypeOrmCustomLogger } from '../utils/typeorm-custom-logger';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -12,6 +13,9 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       'database.sslEnabled',
       false,
     );
+
+    const isDev =
+      this.configService.get<string>('app.nodeEnv') !== 'production';
 
     return {
       type: 'postgres',
@@ -25,7 +29,11 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         false,
       ),
       dropSchema: false,
-      logging: this.configService.get<string>('app.nodeEnv') !== 'production',
+      logging: isDev,
+      logger: TypeOrmCustomLogger.getInstance(
+        'default',
+        isDev ? ['error', 'warn', 'migration', 'schema'] : ['error', 'warn'],
+      ),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
       namingStrategy: new SnakeNamingStrategy(),

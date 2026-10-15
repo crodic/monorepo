@@ -1,0 +1,135 @@
+import { ConfigService } from '@nestjs/config';
+import { type IncomingMessage, type ServerResponse } from 'http';
+import { Params } from 'nestjs-pino';
+import { GenReqId, Options, type ReqId } from 'pino-http';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  loggingRedactPaths,
+  LogService,
+} from '../common/constants/app.constant';
+import { AllConfigType } from '../config/config.type';
+
+// https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#logseverity
+const PinoLevelToGoogleLoggingSeverityLookup = Object.freeze({
+  trace: 'DEBUG',
+  debug: 'DEBUG',
+  info: 'INFO',
+  warn: 'WARNING',
+  error: 'ERROR',
+  fatal: 'CRITICAL',
+});
+
+const genReqId: GenReqId = (
+  req: IncomingMessage,
+  res: ServerResponse<IncomingMessage>,
+) => {
+  const id: ReqId = (req.headers['x-request-id'] as string) || uuidv4();
+  res.setHeader('X-Request-Id', id.toString());
+  return id;
+};
+
+const customSuccessMessage = (
+  req: IncomingMessage,
+  res: ServerResponse<IncomingMessage>,
+  responseTime: number,
+) => {
+  return `[${req.id || '*'}] "${req.method} ${req.url}" ${res.statusCode} - "${req.headers['host']}" "${req.headers['user-agent']}" - ${responseTime} ms`;
+};
+
+const customReceivedMessage = (req: IncomingMessage) => {
+  return `[${req.id || '*'}] "${req.method} ${req.url}"`;
+};
+
+const customErrorMessage = (
+  req: IncomingMessage,
+  res: ServerResponse<IncomingMessage>,
+  err: Error,
+) => {
+  return `[${req.id || '*'}] "${req.method} ${req.url}" ${res.statusCode} - "${req.headers['host']}" "${req.headers['user-agent']}" - message: ${err.message}`;
+};
+
+function logServiceConfig(logService: string): Options {
+  switch (logService) {
+    case LogService.GOOGLE_LOGGING:
+      return googleLoggingConfig();
+    case LogService.AWS_CLOUDWATCH:
+      return cloudwatchLoggingConfig();
+    case LogService.CONSOLE:
+    default:
+      return consoleLoggingConfig();
+  }
+}
+
+function cloudwatchLoggingConfig(): Options {
+  return {
+    messageKey: 'message',
+  };
+}
+
+function googleLoggingConfig(): Options {
+  return {
+    messageKey: 'message',
+    formatters: {
+      level(label, number) {
+        return {
+          severity:
+            PinoLevelToGoogleLoggingSeverityLookup[
+              label as keyof typeof PinoLevelToGoogleLoggingSeverityLookup
+            ] || PinoLevelToGoogleLoggingSeverityLookup.info,
+          level: number,
+        };
+      },
+    },
+  };
+}
+
+function consoleLoggingConfig(): Options {
+  return {
+    messageKey: 'msg',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        singleLine: true,
+        ignore:
+          'req.id,req.method,req.url,req.headers,req.remoteAddress,req.remotePort,res.headers',
+      },
+    },
+  };
+}
+
+async function loggerFactory(
+  configService: ConfigService<AllConfigType>,
+): Promise<Params> {
+  const logLevel = configService.get('app.logLevel', { infer: true }) || 'info';
+  const logService =
+    configService.get('app.logService', { infer: true }) || LogService.CONSOLE;
+  const isDebug = configService.get('app.debug', { infer: true }) ?? false;
+
+  const pinoHttpOptions: Options = {
+    level: logLevel,
+    genReqId: isDebug ? genReqId : undefined,
+    serializers: isDebug
+      ? {
+          req: (req: any) => {
+            req.body = req.raw.body;
+            return req;
+          },
+        }
+      : undefined,
+    customSuccessMessage,
+    customReceivedMessage,
+    customErrorMessage,
+    redact: {
+      paths: loggingRedactPaths,
+      censor: '**GDPR COMPLIANT**',
+    },
+    ...logServiceConfig(logService),
+  };
+
+  return {
+    pinoHttp: pinoHttpOptions,
+    forRoutes: ['*'],
+  };
+}
+
+export default loggerFactory;
