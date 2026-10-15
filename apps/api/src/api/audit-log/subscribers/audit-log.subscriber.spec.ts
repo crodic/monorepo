@@ -63,11 +63,11 @@ describe('AuditLogSubscriber', () => {
         entity: 'AdminUserEntity',
         entityId: '10',
         action: 'INSERT',
-        description: expect.stringContaining('Super Admin đã tạo mới'),
+        description: expect.stringContaining('Super Admin created'),
         metadata: expect.objectContaining({
           actorName: 'Super Admin',
           entityName: 'Jane Doe',
-          entityLabel: 'Quản trị viên (Admin User)',
+          entityLabel: 'Admin User',
         }),
       }),
     );
@@ -107,10 +107,10 @@ describe('AuditLogSubscriber', () => {
         entity: 'AdminRoleEntity',
         entityId: '2',
         action: 'UPDATE',
-        description: expect.stringContaining('đã cập nhật'),
+        description: expect.stringContaining('updated'),
         metadata: expect.objectContaining({
           entityName: 'Manager',
-          entityLabel: 'Vai trò (Admin Role)',
+          entityLabel: 'Admin Role',
           changedFields: ['description'],
         }),
       }),
@@ -143,9 +143,9 @@ describe('AuditLogSubscriber', () => {
         entity: 'CmsPageEntity',
         entityId: '5',
         action: 'SOFT_DELETE',
-        description: expect.stringContaining('vào thùng rác'),
+        description: expect.stringContaining('moved'),
         metadata: expect.objectContaining({
-          entityLabel: 'Trang CMS',
+          entityLabel: 'CMS Page',
         }),
       }),
     );

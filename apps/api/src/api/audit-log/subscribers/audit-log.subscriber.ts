@@ -15,50 +15,50 @@ import {
 import { AuditLogEntity } from '../entities/audit-log.entity';
 
 const FIELD_LABELS: Record<string, string> = {
-  firstName: 'Tên (First Name)',
-  lastName: 'Họ (Last Name)',
-  fullName: 'Họ và tên (Full Name)',
-  first_name: 'Tên (First Name)',
-  last_name: 'Họ (Last Name)',
-  full_name: 'Họ và tên (Full Name)',
+  firstName: 'First Name',
+  lastName: 'Last Name',
+  fullName: 'Full Name',
+  first_name: 'First Name',
+  last_name: 'Last Name',
+  full_name: 'Full Name',
   email: 'Email',
-  phone: 'Số điện thoại',
-  bio: 'Tiểu sử',
-  avatar: 'Ảnh đại diện',
-  birthday: 'Ngày sinh',
-  name: 'Tên',
-  description: 'Mô tả',
-  isSystem: 'Quyền hệ thống',
-  is_system: 'Quyền hệ thống',
-  group: 'Nhóm phân loại',
-  key: 'Mã định danh (Key)',
-  roleIds: 'Vai trò (Roles)',
-  permissionIds: 'Quyền hạn (Permissions)',
-  status: 'Trạng thái',
-  title: 'Tiêu đề',
-  slug: 'Đường dẫn (Slug)',
-  content: 'Nội dung',
-  locale: 'Ngôn ngữ',
-  target: 'Đối tượng áp dụng',
-  brandName: 'Tên thương hiệu',
-  siteTitle: 'Tiêu đề trang',
-  isActive: 'Trạng thái kích hoạt',
-  is_active: 'Trạng thái kích hoạt',
-  notifications: 'Cài đặt thông báo',
-  twoFactorEnabled: 'Bảo mật 2 lớp (2FA)',
-  two_factor_enabled: 'Bảo mật 2 lớp (2FA)',
-  verifiedAt: 'Thời gian xác minh',
-  verified_at: 'Thời gian xác minh',
+  phone: 'Phone',
+  bio: 'Bio',
+  avatar: 'Avatar',
+  birthday: 'Birthday',
+  name: 'Name',
+  description: 'Description',
+  isSystem: 'System Flag',
+  is_system: 'System Flag',
+  group: 'Group',
+  key: 'Key',
+  roleIds: 'Roles',
+  permissionIds: 'Permissions',
+  status: 'Status',
+  title: 'Title',
+  slug: 'Slug',
+  content: 'Content',
+  locale: 'Locale',
+  target: 'Target',
+  brandName: 'Brand Name',
+  siteTitle: 'Site Title',
+  isActive: 'Active Status',
+  is_active: 'Active Status',
+  notifications: 'Notification Settings',
+  twoFactorEnabled: 'Two-Factor Authentication',
+  two_factor_enabled: 'Two-Factor Authentication',
+  verifiedAt: 'Verified At',
+  verified_at: 'Verified At',
 };
 
 function formatValueForUser(value: any): string {
-  if (value === null || value === undefined) return '(Trống)';
-  if (typeof value === 'boolean') return value ? 'Bật (True)' : 'Tắt (False)';
+  if (value === null || value === undefined) return '(Empty)';
+  if (typeof value === 'boolean') return value ? 'True' : 'False';
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'object') {
     if (Array.isArray(value)) {
       return value.length === 0
-        ? '(Danh sách trống)'
+        ? '(Empty list)'
         : value.map((v) => formatValueForUser(v)).join(', ');
     }
     return JSON.stringify(value);
@@ -180,7 +180,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
           ? `${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}`.trim()
           : null) ??
         currentUser?.email ??
-        'Quản trị viên';
+        'Administrator';
 
       const log = auditRepo.create({
         entity: event.metadata.name,
@@ -219,28 +219,28 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
   }
 
   private formatEntityName(rawName: string): string {
-    if (!rawName) return 'Dữ liệu';
+    if (!rawName) return 'Data';
     const nameWithoutEntity = rawName.replace(/Entity$/, '');
     const customMap: Record<string, string> = {
-      AdminUser: 'Quản trị viên (Admin User)',
-      User: 'Người dùng (User)',
-      AdminRole: 'Vai trò (Admin Role)',
-      Role: 'Vai trò (Role)',
-      AdminPermission: 'Quyền hạn (Admin Permission)',
-      Permission: 'Quyền hạn (Permission)',
-      CmsPage: 'Trang CMS',
-      CmsPageTranslation: 'Bản dịch trang CMS',
-      EmailLog: 'Nhật ký Email',
-      Setting: 'Cấu hình hệ thống',
-      WhiteLabel: 'Cấu hình thương hiệu (White Label)',
-      File: 'Tập tin',
-      FileFolder: 'Thư mục tập tin',
-      Country: 'Quốc gia',
-      State: 'Tỉnh/Bang',
-      City: 'Thành phố',
-      Region: 'Khu vực',
-      UserAccount: 'Tài khoản người dùng',
-      AdminAccount: 'Tài khoản quản trị',
+      AdminUser: 'Admin User',
+      User: 'User',
+      AdminRole: 'Admin Role',
+      Role: 'Role',
+      AdminPermission: 'Admin Permission',
+      Permission: 'Permission',
+      CmsPage: 'CMS Page',
+      CmsPageTranslation: 'CMS Page Translation',
+      EmailLog: 'Email Log',
+      Setting: 'System Setting',
+      WhiteLabel: 'White Label',
+      File: 'File',
+      FileFolder: 'File Folder',
+      Country: 'Country',
+      State: 'State',
+      City: 'City',
+      Region: 'Region',
+      UserAccount: 'User Account',
+      AdminAccount: 'Admin Account',
     };
     if (customMap[nameWithoutEntity]) {
       return customMap[nameWithoutEntity];
@@ -296,26 +296,26 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
 
     switch (action) {
       case 'INSERT':
-        return `${actorName} đã tạo mới ${target}`;
+        return `${actorName} created ${target}`;
       case 'UPDATE': {
         if (changes.length > 0) {
           const changeSummaries = changes
             .slice(0, 3)
-            .map((c) => `đổi ${c.label} từ '${c.from}' thành '${c.to}'`);
+            .map((c) => `changed ${c.label} from '${c.from}' to '${c.to}'`);
           const moreCount = changes.length - 3;
-          const moreText = moreCount > 0 ? ` và ${moreCount} mục khác` : '';
-          return `${actorName} đã cập nhật ${target}: ${changeSummaries.join(', ')}${moreText}`;
+          const moreText = moreCount > 0 ? ` and ${moreCount} more` : '';
+          return `${actorName} updated ${target}: ${changeSummaries.join(', ')}${moreText}`;
         }
-        return `${actorName} đã cập nhật thông tin ${target}`;
+        return `${actorName} updated ${target}`;
       }
       case 'SOFT_DELETE':
-        return `${actorName} đã chuyển ${target} vào thùng rác`;
+        return `${actorName} moved ${target} to trash`;
       case 'DELETE':
-        return `${actorName} đã xoá vĩnh viễn ${target}`;
+        return `${actorName} permanently deleted ${target}`;
       case 'RESTORE':
-        return `${actorName} đã khôi phục ${target}`;
+        return `${actorName} restored ${target}`;
       default:
-        return `${actorName} đã thực hiện thao tác ${action} trên ${target}`;
+        return `${actorName} performed ${action} on ${target}`;
     }
   }
 }
