@@ -35,6 +35,7 @@ Package này cho phép ứng dụng frontend lọc dữ liệu (filter), sắp x
 - [Phân trang (`paginate`)](#phân-trang-paginate)
 - [Cấu hình toàn cục & Tùy biến tham số URL](#cấu-hình-toàn-cục--tùy-biến-tham-số-url)
 - [Chế độ nghiêm ngặt & Xử lý lỗi (`Strict Mode`)](#chế-độ-nghiêm-ngặt--xử-lý-lỗi-strict-mode)
+- [Tích hợp Swagger OpenAPI (`@ApiQueryBuilderDocs`)](#tích-hợp-swagger-openapi-apiquerybuilderdocs)
 - [Bảo mật](#bảo-mật)
 
 ---
@@ -48,6 +49,7 @@ Package này cho phép ứng dụng frontend lọc dữ liệu (filter), sắp x
 - **Hỗ trợ Xóa mềm (Soft Delete)**: Tương thích hoàn toàn với `@DeleteDateColumn()` (`with`, `only`, `without`).
 - **Tùy biến tham số (Configuration)**: Cho phép đổi tên tham số query trên URL (ví dụ: dùng `per_page` thay vì `limit`, `filters` thay vì `filter`).
 - **Strict Mode**: Hỗ trợ ném lỗi `400 Bad Request` chi tiết khi frontend gửi tham số không hợp lệ, giúp debug dễ dàng.
+- **Tích hợp Swagger OpenAPI**: Decorator `@ApiQueryBuilderDocs` tự động tạo tài liệu Swagger UI chi tiết không cần cấu hình thủ công.
 
 ---
 
@@ -57,15 +59,17 @@ Toàn bộ mã nguồn nằm tại [`apps/api/src/common/query-builder/`](file:/
 
 ```
 apps/api/src/common/query-builder/
-├── allowed-filter.ts       # Định nghĩa các loại filter (exact, partial, startsWith, operator, scope, trashed)
-├── allowed-sort.ts         # Định nghĩa các loại sắp xếp (field, custom callback)
-├── allowed-include.ts      # Định nghĩa nạp quan hệ và đếm quan hệ (relation count)
-├── config.ts               # Quản lý cấu hình toàn cục và cục bộ
-├── exceptions.ts           # Hệ thống Exception cho strict mode (InvalidFilterQueryException,...)
-├── query-builder.ts        # Lớp QueryBuilder điều phối chính
-├── types.ts                # Định nghĩa interface và kiểu dữ liệu TypeScript
-├── index.ts                # Barrel export
-└── query-builder.spec.ts   # 39 Unit tests độc lập bao phủ toàn bộ tính năng
+├── allowed-filter.ts         # Định nghĩa các loại filter (exact, partial, startsWith, operator, scope, trashed)
+├── allowed-sort.ts           # Định nghĩa các loại sắp xếp (field, custom callback)
+├── allowed-include.ts        # Định nghĩa nạp quan hệ và đếm quan hệ (relation count)
+├── config.ts                 # Quản lý cấu hình toàn cục và cục bộ
+├── exceptions.ts             # Hệ thống Exception cho strict mode (InvalidFilterQueryException,...)
+├── query-builder.ts          # Lớp QueryBuilder điều phối chính
+├── swagger.decorator.ts      # Swagger OpenAPI decorator tự động (@ApiQueryBuilderDocs)
+├── swagger.decorator.spec.ts # Kiểm thử unit test cho Swagger decorator
+├── types.ts                  # Định nghĩa interface và kiểu dữ liệu TypeScript
+├── index.ts                  # Barrel export
+└── query-builder.spec.ts     # 39 Unit tests độc lập bao phủ toàn bộ tính năng
 ```
 
 ---

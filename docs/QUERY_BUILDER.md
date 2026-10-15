@@ -35,6 +35,7 @@ It enables frontends to filter, sort, include relations, select sparse fieldsets
 - [Pagination](#pagination)
 - [Configuration & Custom Parameters](#configuration--custom-parameters)
 - [Strict Mode & Exception Handling](#strict-mode--exception-handling)
+- [Swagger OpenAPI Integration (`@ApiQueryBuilderDocs`)](#swagger-openapi-integration-apiquerybuilderdocs)
 - [Security Best Practices](#security-best-practices)
 
 ---
@@ -49,6 +50,7 @@ It enables frontends to filter, sort, include relations, select sparse fieldsets
 - **Soft Deletes**: Native integration with TypeORM's `@DeleteDateColumn()` (`with`, `only`, `without`).
 - **Global & Per-Query Configuration**: Customize query parameter names (`per_page` vs `limit`, `filters` vs `filter`).
 - **Strict Mode**: Optionally throw descriptive `400 Bad Request` exceptions when frontend sends invalid parameters.
+- **Swagger OpenAPI Integration**: Zero-boilerplate `@ApiQueryBuilderDocs` decorator for interactive documentation.
 
 ---
 
@@ -58,15 +60,17 @@ All components are located in [`apps/api/src/common/query-builder/`](file:///hom
 
 ```
 apps/api/src/common/query-builder/
-├── allowed-filter.ts       # Filter definitions (exact, partial, prefix, operator, scope, trashed)
-├── allowed-sort.ts         # Sort definitions (field, custom callback)
-├── allowed-include.ts      # Relation inclusion and relation counts
-├── config.ts               # Global and per-query configuration
-├── exceptions.ts           # InvalidQueryException hierarchy for strict mode
-├── query-builder.ts        # Main QueryBuilder orchestrator
-├── types.ts                # TypeScript interfaces and callback types
-├── index.ts                # Barrel export
-└── query-builder.spec.ts   # Comprehensive unit test suite
+├── allowed-filter.ts         # Filter definitions (exact, partial, prefix, operator, scope, trashed)
+├── allowed-sort.ts           # Sort definitions (field, custom callback)
+├── allowed-include.ts        # Relation inclusion and relation counts
+├── config.ts                 # Global and per-query configuration
+├── exceptions.ts             # InvalidQueryException hierarchy for strict mode
+├── query-builder.ts          # Main QueryBuilder orchestrator
+├── swagger.decorator.ts      # Swagger OpenAPI documentation decorator (@ApiQueryBuilderDocs)
+├── swagger.decorator.spec.ts # Swagger decorator unit tests
+├── types.ts                  # TypeScript interfaces and callback types
+├── index.ts                  # Barrel export
+└── query-builder.spec.ts     # Comprehensive unit test suite
 ```
 
 ---
