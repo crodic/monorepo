@@ -14,6 +14,7 @@ import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { AllConfigType } from './config/config.type';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
+import { updateGlobalConfig } from 'nestjs-paginate';
 import { setupSwagger } from './utils/setup-swagger';
 
 async function bootstrap() {
@@ -78,6 +79,12 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(reflector));
 
   setupSwagger(app);
+
+  updateGlobalConfig({
+    defaultOrigin: undefined,
+    defaultLimit: 20,
+    defaultMaxLimit: 100,
+  });
 
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);
