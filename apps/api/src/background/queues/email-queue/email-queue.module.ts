@@ -1,3 +1,5 @@
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { BullBoardModule } from '@bull-board/nestjs';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { MailModule } from '../../../mail/mail.module';
@@ -10,6 +12,10 @@ import { EmailQueueService } from './email-queue.service';
   imports: [
     BullModule.registerQueue({
       name: EMAIL_QUEUE_NAME,
+    }),
+    BullBoardModule.forFeature({
+      name: EMAIL_QUEUE_NAME,
+      adapter: BullMQAdapter,
     }),
     MailModule,
   ],

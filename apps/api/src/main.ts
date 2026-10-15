@@ -55,6 +55,9 @@ async function bootstrap() {
       { method: RequestMethod.GET, path: 'health/(.*)' },
       { method: RequestMethod.GET, path: 'docs' },
       { method: RequestMethod.GET, path: 'docs/(.*)' },
+      'storage/uploads/(.*)',
+      'queues',
+      'queues/(.*)',
     ],
   });
 

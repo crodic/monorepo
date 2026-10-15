@@ -22,6 +22,7 @@ export type AppConfig = {
   debug: boolean;
   logLevel: string;
   logService: string;
+  bullBoardPath: string;
 };
 
 class EnvironmentVariablesValidator {
@@ -66,6 +67,10 @@ class EnvironmentVariablesValidator {
   @IsEnum(LogService)
   @IsOptional()
   APP_LOG_SERVICE?: string;
+
+  @IsString()
+  @IsOptional()
+  BULL_BOARD_PATH?: string;
 }
 
 export default registerAs<AppConfig>('app', () => {
@@ -86,5 +91,6 @@ export default registerAs<AppConfig>('app', () => {
     debug: process.env.APP_DEBUG === 'true',
     logLevel: process.env.APP_LOG_LEVEL || 'info',
     logService: process.env.APP_LOG_SERVICE || LogService.CONSOLE,
+    bullBoardPath: process.env.BULL_BOARD_PATH || '/queues',
   };
 });

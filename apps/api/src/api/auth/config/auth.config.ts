@@ -204,7 +204,7 @@ export default registerAs<AuthConfig>('auth', () => {
     clientResetPasswordUrl: env.USER_AUTH_CLIENT_RESET_PASSWORD_URL,
     googleOAuthCallbackUrl: env.GOOGLE_OAUTH_CALLBACK_URL,
 
-    adminPanelUsername: env.ADMIN_PANEL_USERNAME,
-    adminPanelPassword: env.ADMIN_PANEL_PASSWORD,
+    adminPanelUsername: env.ADMIN_PANEL_USERNAME || 'admin',
+    adminPanelPassword: env.ADMIN_PANEL_PASSWORD || 'admin',
   };
 });

@@ -2,6 +2,9 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { BullModule } from '@nestjs/bullmq';
+import { ExpressAdapter } from '@bull-board/express';
+import { BullBoardModule } from '@bull-board/nestjs';
+import expressBasicAuth from 'express-basic-auth';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import fs from 'fs';
@@ -30,6 +33,8 @@ import sentryConfig from './config/sentry.config';
 import authConfig from './api/auth/config/auth.config';
 import { FilesystemModule } from './filesystem/filesystem.module';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ApiModule } from './api/api.module';
 import { SharedModule } from './shared/shared.module';
 import { RequestContextInterceptor } from './interceptors/request-context.interceptor';
@@ -39,6 +44,8 @@ import loggerFactory from './utils/logger-factory';
 @Module({
   imports: [
     SentryModule.forRoot(),
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -119,6 +126,42 @@ import loggerFactory from './utils/logger-factory';
           lazyConnect: true,
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
+        },
+      }),
+    }),
+    BullBoardModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AllConfigType>) => ({
+        route: config.getOrThrow('app.bullBoardPath', { infer: true }),
+        adapter: ExpressAdapter,
+        middleware: expressBasicAuth({
+          users: {
+            [config.getOrThrow('auth.adminPanelUsername', {
+              infer: true,
+            })]: config.getOrThrow('auth.adminPanelPassword', {
+              infer: true,
+            }),
+          },
+          challenge: true,
+        }),
+        boardOptions: {
+          uiConfig: {
+            boardLogo: {
+              path: '/logo.png',
+              width: 50,
+              height: 50,
+            },
+            boardTitle: config.getOrThrow('app.name', { infer: true }),
+            favIcon: {
+              default: '/favicon.png',
+              alternative: '/favicon.png',
+            },
+            environment: {
+              label: config.getOrThrow('app.nodeEnv', { infer: true }),
+              color: '#3b82f6',
+            },
+          },
         },
       }),
     }),

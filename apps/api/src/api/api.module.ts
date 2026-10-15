@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CmsPageModule } from './cms-page/cms-page.module';
 import { EmailModule } from './email/email.module';
 import { FileModule } from './file/file.module';
+import { HomeModule } from './home/home.module';
 import { LocationModule } from './location/location.module';
 import { SettingsModule } from './settings/settings.module';
 import { UserModule } from './user/user.module';
@@ -26,6 +27,7 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     WhiteLabelModule,
     CmsPageModule,
     LocationModule,
+    HomeModule,
   ],
   exports: [
     UserModule,
@@ -40,6 +42,7 @@ import { WhiteLabelModule } from './white-label/white-label.module';
     WhiteLabelModule,
     CmsPageModule,
     LocationModule,
+    HomeModule,
   ],
 })
 export class ApiModule {}
