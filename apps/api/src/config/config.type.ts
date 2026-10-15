@@ -4,6 +4,7 @@ import { MailConfig } from '../mail/config/mail-config.type';
 import { RedisConfig } from '../redis/config/redis-config.type';
 import { StorageConfig } from '../filesystem/config/storage-config.type';
 import { SentryConfig } from './sentry.config';
+import { AuthConfig } from '../api/auth/config/auth-config.type';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -12,4 +13,5 @@ export type AllConfigType = {
   mail: MailConfig;
   storage: StorageConfig;
   sentry: SentryConfig;
+  auth: AuthConfig;
 };

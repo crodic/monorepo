@@ -26,6 +26,9 @@ coverage
 out/
 build
 dist
+dist-ssr
+uploads
+storage
 *.tsbuildinfo
 
 

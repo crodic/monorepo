@@ -1,5 +1,5 @@
 import { AdminUserEntity } from '../../api/admin-user/entities/admin-user.entity';
-import { RoleEntity } from '../../api/role/entities/role.entity';
+import { AdminRoleEntity } from '../../api/admin-role/entities/admin-role.entity';
 import { UserEntity } from '../../api/user/entities/user.entity';
 import {
   AbilityBuilder,
@@ -12,7 +12,9 @@ import { Injectable } from '@nestjs/common';
 import { AppActions, AppSubjects } from '../../utils/permissions.constant';
 
 export type Subjects =
-  InferSubjects<typeof UserEntity | typeof RoleEntity> | AppSubjects | 'all';
+  | InferSubjects<typeof UserEntity | typeof AdminRoleEntity>
+  | AppSubjects
+  | 'all';
 
 export type AppAbility = MongoAbility<[AppActions, Subjects]>;
 

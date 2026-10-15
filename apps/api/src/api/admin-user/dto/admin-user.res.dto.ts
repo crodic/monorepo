@@ -1,0 +1,75 @@
+import { AdminRoleResDto } from '../../admin-role/dto/admin-role.res.dto';
+import { WrapperType } from '../../../common/types/types';
+import {
+  ArrayField,
+  BooleanField,
+  ClassField,
+  JsonField,
+  StringField,
+  StringFieldOptional,
+} from '../../../decorators/field.decorators';
+import { Exclude, Expose, Transform } from 'class-transformer';
+
+@Exclude()
+export class AdminUserResDto {
+  @StringField()
+  @Expose()
+  id!: string;
+
+  @StringField()
+  @Expose()
+  firstName!: string;
+
+  @StringField()
+  @Expose()
+  lastName!: string;
+
+  @StringField()
+  @Expose()
+  fullName!: string;
+
+  @StringFieldOptional()
+  @Expose()
+  phone?: string;
+
+  @StringFieldOptional()
+  @Expose()
+  birthday?: string;
+
+  @StringField()
+  @Expose()
+  email!: string;
+
+  @StringFieldOptional()
+  @Expose()
+  bio?: string;
+
+  @StringFieldOptional()
+  @Expose()
+  avatar?: string;
+
+  @ArrayField(AdminRoleResDto)
+  @Expose()
+  roles?: WrapperType<AdminRoleResDto>[];
+
+  @BooleanField()
+  @Transform(({ value }) => !!value)
+  @Expose()
+  verifiedAt?: boolean;
+
+  @BooleanField()
+  @Expose()
+  twoFactorEnabled!: boolean;
+
+  @JsonField()
+  @Expose()
+  notifications!: Record<string, boolean>;
+
+  @ClassField(() => Date)
+  @Expose()
+  createdAt!: Date;
+
+  @ClassField(() => Date)
+  @Expose()
+  updatedAt!: Date;
+}

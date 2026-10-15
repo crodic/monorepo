@@ -1,24 +1,28 @@
 import { AutoIncrementID } from '../../../common/types/common.type';
 import { AbstractEntity } from '../../../database/entities/abstract.entity';
-import { hashPassword as hashPass } from '../../../utils/password.util';
 import {
-  AfterLoad,
-  BeforeInsert,
-  BeforeUpdate,
   Column,
   DeleteDateColumn,
   Entity,
   Index,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
-import { RoleEntity } from '../../role/entities/role.entity';
+import { AdminRoleEntity } from '../../admin-role/entities/admin-role.entity';
+import { AdminAccountEntity } from './admin-account.entity';
+import { AdminSessionEntity } from '../../auth/entities/admin-session.entity';
+import { IAuthUser } from '../../auth/interfaces/auth-entity.interface';
 
 @Entity('admin_users')
-export class AdminUserEntity extends AbstractEntity {
-  private previousPassword?: string;
+export class AdminUserEntity extends AbstractEntity implements IAuthUser {
+  @OneToMany(() => AdminAccountEntity, (account) => account.admin)
+  accounts?: Relation<AdminAccountEntity>[];
+
+  @OneToMany(() => AdminSessionEntity, (session) => session.admin)
+  sessions?: Relation<AdminSessionEntity>[];
 
   constructor(data?: Partial<AdminUserEntity>) {
     super();
@@ -48,9 +52,6 @@ export class AdminUserEntity extends AbstractEntity {
   @Column()
   @Index('UQ_admin_user_email', { where: '"deleted_at" IS NULL', unique: true })
   email!: string;
-
-  @Column({ nullable: true })
-  password?: string;
 
   @Column({ nullable: true })
   bio?: string;
@@ -86,7 +87,7 @@ export class AdminUserEntity extends AbstractEntity {
   })
   deletedAt?: Date | null;
 
-  @ManyToMany(() => RoleEntity, (role) => role.admins, { eager: true })
+  @ManyToMany(() => AdminRoleEntity, (role) => role.admins, { eager: true })
   @JoinTable({
     name: 'admin_user_role',
     synchronize: false,
@@ -101,21 +102,8 @@ export class AdminUserEntity extends AbstractEntity {
       foreignKeyConstraintName: 'FK_admin_user_role_admin_role',
     },
   })
-  roles!: Relation<RoleEntity>[];
+  roles!: Relation<AdminRoleEntity>[];
 
   @Column({ type: 'timestamptz', name: 'verified_at', nullable: true })
   verifiedAt?: Date;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  async hashPassword() {
-    if (this.password && this.password !== this.previousPassword) {
-      this.password = await hashPass(this.password);
-    }
-  }
-
-  @AfterLoad()
-  private loadPreviousPassword() {
-    this.previousPassword = this.password;
-  }
 }

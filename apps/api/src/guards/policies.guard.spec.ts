@@ -1,6 +1,6 @@
+import { AdminPermissionEntity } from '../api/admin-permission/entities/admin-permission.entity';
+import { AdminRoleEntity } from '../api/admin-role/entities/admin-role.entity';
 import { AdminUserEntity } from '../api/admin-user/entities/admin-user.entity';
-import { PermissionEntity } from '../api/permission/entities/permission.entity';
-import { RoleEntity } from '../api/role/entities/role.entity';
 import {
   CHECK_ANY_POLICIES_KEY,
   CHECK_POLICIES_KEY,
@@ -46,9 +46,9 @@ describe('PoliciesGuard', () => {
   it('allows access if policies are satisfied', () => {
     const user = new AdminUserEntity({
       roles: [
-        new RoleEntity({
+        new AdminRoleEntity({
           permissionEntities: [
-            new PermissionEntity({
+            new AdminPermissionEntity({
               key: `${AppActions.Read}:${AppSubjects.Role}`,
             }),
           ],

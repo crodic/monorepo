@@ -27,6 +27,7 @@ import { RedisModule } from './redis/redis.module';
 import { BackgroundModule } from './background/background.module';
 import storageConfig from './filesystem/config/storage.config';
 import sentryConfig from './config/sentry.config';
+import authConfig from './api/auth/config/auth.config';
 import { FilesystemModule } from './filesystem/filesystem.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { ApiModule } from './api/api.module';
@@ -47,6 +48,7 @@ import loggerFactory from './utils/logger-factory';
         mailConfig,
         storageConfig,
         sentryConfig,
+        authConfig,
       ],
       envFilePath: ['.env'],
     }),

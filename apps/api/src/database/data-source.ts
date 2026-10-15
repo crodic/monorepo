@@ -8,7 +8,9 @@ const isSslEnabled = process.env.DATABASE_SSL_ENABLED === 'true';
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DATABASE_HOST || 'localhost',
-  port: process.env.DATABASE_PORT ? parseInt(process.env.DATABASE_PORT, 10) : 5432,
+  port: process.env.DATABASE_PORT
+    ? parseInt(process.env.DATABASE_PORT, 10)
+    : 5432,
   username: process.env.DATABASE_USERNAME || 'postgres',
   password: process.env.DATABASE_PASSWORD || 'postgres',
   database: process.env.DATABASE_NAME || 'monorepo',
@@ -24,7 +26,8 @@ export const AppDataSource = new DataSource({
       : 100,
     ssl: isSslEnabled
       ? {
-          rejectUnauthorized: process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
+          rejectUnauthorized:
+            process.env.DATABASE_REJECT_UNAUTHORIZED === 'true',
           ca: process.env.DATABASE_CA || undefined,
           key: process.env.DATABASE_KEY || undefined,
           cert: process.env.DATABASE_CERT || undefined,
