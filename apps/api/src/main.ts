@@ -1,3 +1,4 @@
+import './instrument';
 import {
   ClassSerializerInterceptor,
   HttpStatus,

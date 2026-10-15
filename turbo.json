@@ -14,7 +14,8 @@
     "USER_AUTH_*",
     "GOOGLE_*",
     "BULL_*",
-    "ADMIN_*"
+    "ADMIN_*",
+    "SENTRY_*"
   ],
   "tasks": {
     "build": {

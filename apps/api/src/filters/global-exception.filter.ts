@@ -17,6 +17,7 @@ import { ErrorCode } from '../common/constants/error-code.constant';
 import { ErrorDetailDto } from '../common/dto/error-detail.dto';
 import { ErrorDto } from '../common/dto/error.dto';
 import { ValidationException } from '../common/exceptions/validation.exception';
+import { SentryExceptionCaptured } from '@sentry/nestjs';
 import { AllConfigType } from '../config/config.type';
 import { I18nTranslations } from '../generated/i18n.generated';
 
@@ -28,6 +29,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   constructor(private readonly configService: ConfigService<AllConfigType>) {}
 
+  @SentryExceptionCaptured()
   catch(exception: any, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();

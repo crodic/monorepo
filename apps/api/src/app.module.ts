@@ -26,7 +26,9 @@ import redisConfig from './redis/config/redis.config';
 import { RedisModule } from './redis/redis.module';
 import { BackgroundModule } from './background/background.module';
 import storageConfig from './filesystem/config/storage.config';
+import sentryConfig from './config/sentry.config';
 import { FilesystemModule } from './filesystem/filesystem.module';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { ApiModule } from './api/api.module';
 import { RequestContextInterceptor } from './interceptors/request-context.interceptor';
 import { RequestIdMiddleware } from './middlewares/request-id.middleware';
@@ -34,9 +36,17 @@ import loggerFactory from './utils/logger-factory';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, redisConfig, mailConfig, storageConfig],
+      load: [
+        appConfig,
+        databaseConfig,
+        redisConfig,
+        mailConfig,
+        storageConfig,
+        sentryConfig,
+      ],
       envFilePath: ['.env'],
     }),
     LoggerModule.forRootAsync({

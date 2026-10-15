@@ -3,6 +3,7 @@ import { DatabaseConfig } from '../database/config/database-config.type';
 import { MailConfig } from '../mail/config/mail-config.type';
 import { RedisConfig } from '../redis/config/redis-config.type';
 import { StorageConfig } from '../filesystem/config/storage-config.type';
+import { SentryConfig } from './sentry.config';
 
 export type AllConfigType = {
   app: AppConfig;
@@ -10,4 +11,5 @@ export type AllConfigType = {
   redis: RedisConfig;
   mail: MailConfig;
   storage: StorageConfig;
+  sentry: SentryConfig;
 };
