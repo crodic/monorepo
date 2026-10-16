@@ -43,11 +43,7 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: (id) => {
             if (id.includes('node_modules')) {
-              if (
-                id.includes('@tiptap') ||
-                id.includes('prosemirror') ||
-                id.includes('reactjs-tiptap-editor')
-              ) {
+              if (id.includes('@tiptap') || id.includes('prosemirror')) {
                 return 'vendor-editor'
               }
               if (id.includes('recharts') || id.includes('d3-')) {
