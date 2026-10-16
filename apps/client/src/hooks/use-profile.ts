@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/http";
 import { SocialAccount, User } from "@/types/apis";
 import { useRouter } from "@/i18n/navigation";
+import { useAuthStore } from "@/store/use-auth-store";
 import xior from "xior";
 
 export const PROFILE_QUERY_KEY = ["user-profile"] as const;
@@ -196,6 +197,7 @@ export function useSignOut() {
         )
         .catch(() => null);
 
+      useAuthStore.getState().logout();
       queryClient.setQueryData(PROFILE_QUERY_KEY, null);
       queryClient.setQueryData(SOCIAL_ACCOUNTS_QUERY_KEY, []);
       router.push("/auth/login");
