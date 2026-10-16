@@ -58,9 +58,6 @@ export async function refreshClientToken(
       if (cookieAccessToken && cookieAccessToken !== failedToken) {
         useAuthStore.getState().setTokens({ accessToken: cookieAccessToken });
         http.defaults.headers.Authorization = `Bearer ${cookieAccessToken}`;
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("auth:tokens-updated"));
-        }
         return cookieAccessToken;
       }
 
@@ -78,9 +75,6 @@ export async function refreshClientToken(
 
       useAuthStore.getState().setTokens({ accessToken: newAccessToken });
       http.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("auth:tokens-updated"));
-      }
       return newAccessToken;
     } catch (err: unknown) {
       const status =

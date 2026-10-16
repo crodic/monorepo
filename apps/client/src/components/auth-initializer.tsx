@@ -30,9 +30,6 @@ export function AuthInitializer() {
     if (!isLoading) {
       if (data?.accessToken) {
         setTokens({ accessToken: data.accessToken });
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("auth:tokens-updated"));
-        }
       } else {
         setIsHydrating(false);
       }

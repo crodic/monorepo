@@ -15,16 +15,18 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProfile, useSignOut } from "@/hooks/use-profile";
 import { Link } from "@/i18n/navigation";
+import { useAuthStore } from "@/store/use-auth-store";
 import { useTranslations } from "next-intl";
 import React from "react";
 
 export default function UserAccount() {
   const { data: profile, isLoading } = useProfile();
+  const isHydrating = useAuthStore((state) => state.isHydrating);
   const signOutMutation = useSignOut();
   const t = useTranslations("Navigation");
   const tProfile = useTranslations("Profile");
 
-  if (isLoading) {
+  if (isLoading || isHydrating) {
     return (
       <div className="flex items-center gap-2">
         <Skeleton className="h-8 w-20 rounded-md" />

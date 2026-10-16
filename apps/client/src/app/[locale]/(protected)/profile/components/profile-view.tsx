@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile, useSignOut } from "@/hooks/use-profile";
+import { useAuthStore } from "@/store/use-auth-store";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import React from "react";
@@ -19,6 +20,7 @@ import { SocialAccountsCard } from "./social-accounts-card";
 export function ProfileView() {
   const t = useTranslations("Profile");
   const { data: profile, isLoading, isError, refetch } = useProfile();
+  const isHydrating = useAuthStore((state) => state.isHydrating);
   const signOutMutation = useSignOut();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -37,7 +39,7 @@ export function ProfileView() {
     router.replace(query ? `/profile?${query}` : "/profile");
   };
 
-  if (isLoading) {
+  if (isLoading || isHydrating) {
     return (
       <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
         <ProfileHeader profile={undefined} isLoading={true} />

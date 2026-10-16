@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { http } from "@/lib/http";
 import { SocialAccount, User } from "@/types/apis";
@@ -31,21 +30,8 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function useProfile() {
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const handleTokensUpdated = () => {
-      void queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
-      void queryClient.invalidateQueries({
-        queryKey: SOCIAL_ACCOUNTS_QUERY_KEY,
-      });
-    };
-
-    window.addEventListener("auth:tokens-updated", handleTokensUpdated);
-    return () => {
-      window.removeEventListener("auth:tokens-updated", handleTokensUpdated);
-    };
-  }, [queryClient]);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const isHydrating = useAuthStore((state) => state.isHydrating);
 
   return useQuery<User | null>({
     queryKey: PROFILE_QUERY_KEY,
@@ -66,6 +52,7 @@ export function useProfile() {
         throw error;
       }
     },
+    enabled: !isHydrating && !!accessToken,
     staleTime: 1000 * 60 * 2,
     retry: (count, error: unknown) => {
       const status =
@@ -79,6 +66,9 @@ export function useProfile() {
 }
 
 export function useSocialAccounts() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const isHydrating = useAuthStore((state) => state.isHydrating);
+
   return useQuery<SocialAccount[]>({
     queryKey: SOCIAL_ACCOUNTS_QUERY_KEY,
     queryFn: async () => {
@@ -98,6 +88,7 @@ export function useSocialAccounts() {
         throw error;
       }
     },
+    enabled: !isHydrating && !!accessToken,
     staleTime: 1000 * 60 * 2,
     retry: (count, error: unknown) => {
       const status =
