@@ -1,0 +1,330 @@
+{
+  "HomePage": {
+    "title": "Xin chào thế giới!"
+  },
+  "Languages": {
+    "en": "Tiếng Anh",
+    "vi": "Tiếng Việt"
+  },
+  "Navigation": {
+    "home": "Trang chủ",
+    "features": "Tính năng",
+    "techStack": "Công nghệ",
+    "profile": "Hồ sơ",
+    "accountSettings": "Cài đặt tài khoản",
+    "signIn": "Đăng nhập",
+    "signUp": "Bắt đầu ngay",
+    "logout": "Đăng xuất",
+    "docs": "Tài liệu",
+    "github": "GitHub"
+  },
+  "Landing": {
+    "metaTitle": "Khởi đầu dự án Full-Stack Monorepo với Next.js 15 & Turborepo",
+    "metaDescription": "Bộ khung boilerplate full-stack chuẩn doanh nghiệp với Next.js 15 App Router, NestJS, TailwindCSS v4, TypeORM và TanStack Query.",
+    "hero": {
+      "badge": "Full-Stack Monorepo Boilerplate",
+      "title": "Kiến trúc Full-Stack hiện đại chuẩn Doanh nghiệp",
+      "subtitle": "Mẫu monorepo sẵn sàng cho sản phẩm thực tế với Next.js 15 App Router, NestJS API, PostgreSQL TypeORM, TailwindCSS v4, TanStack Query và bảo mật hoàn chỉnh.",
+      "getStarted": "Bắt đầu miễn phí",
+      "exploreProfile": "Khám phá Hồ sơ",
+      "viewGithub": "Mã nguồn GitHub"
+    },
+    "techStack": {
+      "badge": "Công nghệ hiện đại",
+      "title": "Hệ sinh thái công nghệ tiêu chuẩn",
+      "subtitle": "Mỗi thư viện và công cụ đều được chọn lọc kỹ lưỡng vì hiệu năng cao, tốc độ phát triển và khả năng bảo trì lâu dài."
+    },
+    "features": {
+      "badge": "Điểm nhấn kiến trúc",
+      "title": "Tất cả những gì bạn cần để ra mắt nhanh hơn",
+      "subtitle": "Áp dụng clean architecture, phân chia module rõ ràng và thiết kế có khả năng mở rộng được tích hợp sẵn từ lõi.",
+      "items": {
+        "monorepo": {
+          "title": "Turborepo & pnpm Workspace",
+          "description": "Điều phối monorepo hiệu năng cao với remote caching, duy nhất một file lockfile và chia sẻ cấu hình dùng chung."
+        },
+        "auth": {
+          "title": "Xác thực thông minh & Dynamic Route Guards",
+          "description": "Bảo vệ route tự động theo cấu trúc thư mục với Route Groups, quản lý phiên làm việc qua HTTP-only cookie, tự động refresh token ngầm và Alert cảnh báo hết hạn thông minh."
+        },
+        "forms": {
+          "title": "Kiểm tra biểu mẫu chặt chẽ",
+          "description": "Form an toàn kiểu dữ liệu với React Hook Form kết hợp Zod schema và thông báo phản hồi Sonner toast."
+        },
+        "query": {
+          "title": "TanStack React Query",
+          "description": "Lưu trữ cache ở client, prefetch dữ liệu ngầm, cập nhật lạc quan (optimistic updates) và tự động làm mới cache."
+        },
+        "i18n": {
+          "title": "Đa ngôn ngữ hoàn chỉnh",
+          "description": "Định tuyến đa ngôn ngữ tích hợp sẵn qua next-intl (Tiếng Việt & Tiếng Anh), tối ưu SEO và không bị giật bố cục."
+        },
+        "design": {
+          "title": "TailwindCSS v4 & Radix UI",
+          "description": "Hệ thống UI component tiếp cận chuẩn quốc tế, bố cục responsive, chuyển đổi giao diện Sáng/Tối và hiệu ứng mượt mà."
+        }
+      }
+    },
+    "portal": {
+      "badge": "Tích Hợp Sẵn Admin Portal",
+      "title": "Cổng Quản Trị Doanh Nghiệp Toàn Diện",
+      "subtitle": "Sở hữu ngay dashboard quản trị xây dựng bằng Vite + React sẵn sàng sử dụng. Quản lý người dùng, phân quyền chi tiết, nhật ký hoạt động và tùy biến thương hiệu mà không cần code lại từ đầu.",
+      "openPortal": "Khám Phá Admin Portal",
+      "features": {
+        "users": {
+          "title": "Quản Lý Người Dùng & Admin",
+          "description": "Quản lý toàn diện vòng đời tài khoản, trạng thái xác thực email và phân cấp nhiều tài khoản quản trị."
+        },
+        "rbac": {
+          "title": "Phân Quyền CASL & RBAC",
+          "description": "Ma trận quyền hạn chi tiết và kiểm tra quyền động bảo đảm an toàn dữ liệu trên từng chức năng."
+        },
+        "whiteLabel": {
+          "title": "White-Label Tùy Biến Thương Hiệu",
+          "description": "Tự do cấu hình logo, favicon, thẻ SEO meta và chủ đề màu sắc theo từng thương hiệu hoặc khách hàng."
+        },
+        "audit": {
+          "title": "Nhật Ký Hoạt Động & Kiểm Toán",
+          "description": "Theo dõi lịch sử thao tác của admin trong thời gian thực, nhật ký gửi email và kiểm toán bảo mật."
+        }
+      },
+      "preview": {
+        "title": "Crodic Admin Control Center",
+        "systemOnline": "Hệ Thống Sẵn Sàng",
+        "stats": {
+          "totalUsers": "Tổng User",
+          "activeAdmins": "Admin Hoạt Động",
+          "auditEvents": "Sự Kiện Nhật Ký",
+          "systemHealth": "Độ Ổn Định"
+        },
+        "recentUsersTitle": "Người Dùng Mới Đăng Ký",
+        "roleAdmin": "Quản trị viên",
+        "roleMember": "Thành viên",
+        "statusActive": "Hoạt động",
+        "statusVerified": "Đã xác thực"
+      }
+    },
+    "cta": {
+      "badge": "Bắt đầu phát triển",
+      "title": "Sẵn sàng xây dựng dự án tiếp theo của bạn?",
+      "subtitle": "Clone repository, tùy biến các domain models của bạn và tự tin triển khai lên môi trường thực tế chỉ trong vài phút.",
+      "button": "Bắt đầu ngay bây giờ",
+      "github": "Ghé thăm GitHub"
+    }
+  },
+  "Profile": {
+    "pageTitle": "Hồ sơ tài khoản",
+    "pageDescription": "Quản lý thông tin cá nhân, cài đặt bảo mật mật khẩu và các tài khoản liên kết.",
+    "tabs": {
+      "general": "Thông tin chung",
+      "security": "Bảo mật & Tài khoản"
+    },
+    "memberSince": "Thành viên từ",
+    "verified": "Đã xác thực",
+    "unverified": "Chưa xác thực",
+    "role": "Thành viên",
+    "loading": "Đang tải thông tin hồ sơ...",
+    "errorLoading": "Không thể tải thông tin hồ sơ. Vui lòng thử lại.",
+    "authRequired": "Yêu cầu xác thực",
+    "retry": "Thử lại",
+    "signIn": "Đăng nhập",
+    "signingOut": "Đang đăng xuất..."
+  },
+  "GeneralInfo": {
+    "title": "Thông tin cá nhân",
+    "description": "Cập nhật họ tên và thông tin tài khoản của bạn.",
+    "firstName": "Tên",
+    "firstNamePlaceholder": "Nhập tên của bạn",
+    "lastName": "Họ & tên đệm",
+    "lastNamePlaceholder": "Nhập họ của bạn",
+    "email": "Địa chỉ Email",
+    "emailReadonlyHint": "Địa chỉ email của bạn được quản lý bởi nhà cung cấp xác thực và không thể thay đổi tại đây.",
+    "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "success": "Cập nhật hồ sơ thành công.",
+    "error": "Không thể cập nhật hồ sơ. Vui lòng thử lại.",
+    "validation": {
+      "firstNameRequired": "Vui lòng nhập tên.",
+      "firstNameMax": "Tên không được vượt quá 100 ký tự.",
+      "lastNameRequired": "Vui lòng nhập họ.",
+      "lastNameMax": "Họ không được vượt quá 100 ký tự."
+    }
+  },
+  "Security": {
+    "title": "Bảo mật & Xác thực",
+    "description": "Quản lý mật khẩu, phương thức đăng nhập và các nhà cung cấp OAuth liên kết.",
+    "password": {
+      "changeTitle": "Đổi mật khẩu",
+      "changeDescription": "Đảm bảo tài khoản của bạn được bảo vệ bằng mật khẩu mạnh và an toàn.",
+      "currentPassword": "Mật khẩu hiện tại",
+      "currentPasswordPlaceholder": "Nhập mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới (tối thiểu 8 ký tự)",
+      "confirmNewPassword": "Xác nhận mật khẩu mới",
+      "confirmNewPasswordPlaceholder": "Nhập lại mật khẩu mới",
+      "submitChange": "Cập nhật mật khẩu",
+      "updating": "Đang cập nhật...",
+      "changeSuccess": "Đổi mật khẩu thành công.",
+      "changeError": "Không thể đổi mật khẩu. Vui lòng kiểm tra lại mật khẩu hiện tại.",
+      "setupTitle": "Thiết lập mật khẩu",
+      "setupDescription": "Thêm mật khẩu để bạn có thể đăng nhập trực tiếp bằng email bên cạnh tài khoản Google.",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu (tối thiểu 8 ký tự)",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "submitSetup": "Thiết lập mật khẩu",
+      "settingUp": "Đang thiết lập...",
+      "setupSuccess": "Thiết lập mật khẩu thành công.",
+      "setupError": "Không thể thiết lập mật khẩu. Vui lòng thử lại.",
+      "validation": {
+        "currentRequired": "Vui lòng nhập mật khẩu hiện tại.",
+        "min": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "match": "Mật khẩu xác nhận không khớp."
+      }
+    },
+    "social": {
+      "title": "Tài khoản liên kết",
+      "description": "Liên kết các tài khoản bên ngoài để đăng nhập nhanh chóng và an toàn.",
+      "google": "Google",
+      "googleDescription": "Đăng nhập nhanh bằng tài khoản Google của bạn",
+      "linked": "Đã liên kết",
+      "notLinked": "Chưa liên kết",
+      "linkGoogle": "Liên kết Google",
+      "linking": "Đang liên kết...",
+      "linkSuccess": "Liên kết tài khoản Google thành công.",
+      "linkError": "Không thể liên kết tài khoản Google."
+    },
+    "session": {
+      "title": "Quản lý phiên",
+      "description": "Đăng xuất khỏi phiên làm việc trên trình duyệt hiện tại.",
+      "signOut": "Đăng xuất",
+      "signingOut": "Đang đăng xuất...",
+      "confirmTitle": "Đăng xuất khỏi tài khoản?",
+      "confirmDescription": "Bạn sẽ cần đăng nhập lại để truy cập vào hồ sơ tài khoản của mình.",
+      "cancel": "Hủy",
+      "confirm": "Đăng xuất ngay"
+    }
+  },
+  "Footer": {
+    "about": "Bộ khởi tạo monorepo full-stack chuẩn doanh nghiệp được xây dựng với kiến trúc sạch, an toàn kiểu dữ liệu và trải nghiệm lập trình hiện đại.",
+    "product": "Sản phẩm",
+    "features": "Tính năng",
+    "techStack": "Công nghệ",
+    "profile": "Hồ sơ người dùng",
+    "auth": "Xác thực & Bảo mật",
+    "resources": "Tài nguyên",
+    "documentation": "Tài liệu",
+    "github": "GitHub",
+    "apiDocs": "Swagger API",
+    "changelog": "Lịch sử cập nhật",
+    "legal": "Pháp lý",
+    "privacy": "Chính sách bảo mật",
+    "terms": "Điều khoản sử dụng",
+    "allRightsReserved": "Đã đăng ký bản quyền."
+  },
+  "Auth": {
+    "layout": {
+      "welcome": "Chào mừng đến với Crodic Framework",
+      "tagline": "Nền tảng full-stack monorepo hiện đại để xây dựng và mở rộng ứng dụng"
+    },
+    "login": {
+      "metaTitle": "Đăng nhập",
+      "metaDescription": "Đăng nhập vào tài khoản của bạn",
+      "title": "Đăng nhập",
+      "description": "Nhập thông tin xác thực để truy cập tài khoản của bạn",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "••••••••",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "continueGoogle": "Tiếp tục với Google",
+      "noAccount": "Chưa có tài khoản?",
+      "signUp": "Đăng ký",
+      "toasts": {
+        "verificationSuccess": "Tài khoản của bạn đã được xác thực thành công. Bạn có thể đăng nhập ngay bây giờ.",
+        "verificationFailed": "Không thể xác thực tài khoản. Liên kết có thể không hợp lệ hoặc đã hết hạn.",
+        "resetSuccess": "Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.",
+        "socialFailed": "Đăng nhập bằng Google thất bại. Vui lòng thử lại.",
+        "loginError": "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin."
+      },
+      "alerts": {
+        "session_expired": {
+          "title": "Phiên đăng nhập hết hạn",
+          "description": "Phiên làm việc của bạn đã kết thúc. Vui lòng đăng nhập lại để tiếp tục."
+        },
+        "unauthorized": {
+          "title": "Yêu cầu đăng nhập",
+          "description": "Vui lòng đăng nhập để truy cập vào trang này."
+        },
+        "invalid_token": {
+          "title": "Phiên không hợp lệ",
+          "description": "Phiên xác thực của bạn không hợp lệ. Vui lòng đăng nhập lại."
+        }
+      }
+    },
+    "signUp": {
+      "metaTitle": "Đăng ký tài khoản",
+      "metaDescription": "Tạo tài khoản mới để bắt đầu sử dụng",
+      "title": "Tạo tài khoản",
+      "description": "Đăng ký tài khoản và xác thực email trước khi đăng nhập.",
+      "firstName": "Tên",
+      "firstNamePlaceholder": "Văn",
+      "lastName": "Họ",
+      "lastNamePlaceholder": "Nguyễn",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "password": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "submit": "Đăng ký tài khoản",
+      "submitting": "Đang tạo tài khoản...",
+      "alreadyHaveAccount": "Đã có tài khoản?",
+      "signIn": "Đăng nhập",
+      "successToast": "Tạo tài khoản thành công. Vui lòng kiểm tra email để xác thực.",
+      "errorToast": "Không thể tạo tài khoản. Vui lòng thử lại.",
+      "validation": {
+        "firstNameRequired": "Vui lòng nhập tên.",
+        "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+        "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "passwordsMismatch": "Mật khẩu xác nhận không khớp."
+      }
+    },
+    "forgotPassword": {
+      "metaTitle": "Quên mật khẩu",
+      "metaDescription": "Yêu cầu liên kết đặt lại mật khẩu",
+      "title": "Quên mật khẩu",
+      "description": "Nhập địa chỉ email của bạn để nhận liên kết đặt lại mật khẩu.",
+      "email": "Email",
+      "emailPlaceholder": "name@example.com",
+      "submit": "Gửi liên kết đặt lại",
+      "submitting": "Đang gửi...",
+      "backToSignIn": "Quay lại đăng nhập",
+      "successToast": "Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.",
+      "errorToast": "Không thể gửi email đặt lại. Vui lòng thử lại."
+    },
+    "resetPassword": {
+      "metaTitle": "Đặt lại mật khẩu",
+      "metaDescription": "Thiết lập mật khẩu mới cho tài khoản",
+      "title": "Đặt lại mật khẩu",
+      "description": "Chọn mật khẩu mới cho tài khoản của bạn.",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "missingToken": "Liên kết đặt lại thiếu token. Vui lòng yêu cầu liên kết mới.",
+      "submit": "Đặt lại mật khẩu",
+      "submitting": "Đang xử lý...",
+      "backToSignIn": "Quay lại đăng nhập",
+      "tokenMissingToast": "Liên kết đặt lại không hợp lệ hoặc thiếu thông tin.",
+      "errorToast": "Không thể đặt lại mật khẩu. Liên kết có thể không hợp lệ hoặc đã hết hạn.",
+      "validation": {
+        "passwordMin": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "passwordsMismatch": "Mật khẩu xác nhận không khớp."
+      }
+    },
+    "oauth": {
+      "loading": "Đang hoàn tất đăng nhập bằng Google...",
+      "successToast": "Đăng nhập bằng Google thành công.",
+      "failedToast": "Đăng nhập Google thất bại. Vui lòng thử lại."
+    }
+  }
+}
