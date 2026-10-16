@@ -32,6 +32,10 @@
       "description": "Runs type checks",
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "description": "Runs unit tests across packages",
+      "cache": false
+    },
     "dev": {
       "cache": false,
       "persistent": true

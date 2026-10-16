@@ -1,0 +1,794 @@
+"use client";
+
+import React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  KeyboardSensor,
+  MouseSensor,
+  rectIntersection,
+  TouchSensor,
+  type DragStartEvent,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
+import { Plus, TriangleAlert } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableOverlay,
+} from "@/components/ui/sortable";
+import {
+  Alert,
+  AlertContent,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { formatBytes } from "@/hooks/use-file-upload";
+import type {
+  ExistingImage,
+  ImagePayload,
+  UIImage,
+  UploadProgress,
+} from "./types";
+import { ImageLightbox } from "./image-lightbox";
+import { UploadProgressList } from "./upload-progress-list";
+import { UploadDropzone } from "./upload-dropzone";
+import { SortableImageTile } from "./sortable-image-tile";
+
+type OverlaySize = {
+  width: number;
+  height: number;
+};
+
+const EMPTY_EXISTING_IMAGES: ExistingImage[] = [];
+
+export interface SortableImageUploadProps {
+  // Existing images from server (initial data for edit flow)
+  existingImages?: ExistingImage[];
+  // Controlled form value
+  value?: ImagePayload[];
+  // Callback when form value changes
+  onChange?: (value: ImagePayload[]) => void;
+  // Configuration
+  maxFiles?: number;
+  maxSize?: number;
+  accept?: string;
+  className?: string;
+  gridClassName?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  coverIndex?: number | null;
+  onCoverIndexChange?: (index: number | null) => void;
+}
+
+export default function SortableImageUpload({
+  existingImages = EMPTY_EXISTING_IMAGES,
+  value,
+  onChange,
+  maxFiles = 5,
+  maxSize = 10 * 1024 * 1024, // 10MB
+  accept = "image/*",
+  className,
+  gridClassName,
+  disabled = false,
+  loading = false,
+  coverIndex,
+  onCoverIndexChange,
+}: SortableImageUploadProps) {
+  // UI state for display and drag/drop - contains ALL visible images
+  const [uiImages, setUiImages] = useState<UIImage[]>([]);
+
+  // Track upload progress (UI-only state)
+  const [uploadProgress, setUploadProgress] = useState<
+    Map<string, UploadProgress>
+  >(new Map());
+
+  // Drag state for drop zone styling
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Validation errors (UI-only)
+  const [errors, setErrors] = useState<string[]>([]);
+
+  // Fullscreen image preview state
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Keep the drag preview the same size as the grid cell being dragged.
+  const [overlaySize, setOverlaySize] = useState<OverlaySize | null>(null);
+
+  // Track files for new images (needed for preview URLs)
+  const fileMapRef = useRef<Map<string, File>>(new Map());
+
+  // Track preview URLs for cleanup
+  const previewUrlsRef = useRef<Map<string, string>>(new Map());
+
+  // Initialize UI state from props and form value
+  useEffect(() => {
+    const newUiImages: UIImage[] = [];
+    const deletedIds = new Set(
+      (value ?? []).filter((p) => p.type === "deleted").map((p) => p.id),
+    );
+
+    // Get active payloads sorted by order
+    const activePayloads = (value ?? [])
+      .filter(
+        (p): p is ImagePayload & { type: "existing" | "new" } =>
+          p.type === "existing" || p.type === "new",
+      )
+      .sort((a, b) => a.order - b.order);
+
+    // Check if value only contains existing images (reset scenario)
+    const hasOnlyExistingPayloads = activePayloads.every(
+      (p) => p.type === "existing",
+    );
+    const newPayloadsInValue = activePayloads.filter((p) => p.type === "new");
+
+    // Clear upload progress and file refs for items no longer in value
+    if (hasOnlyExistingPayloads && activePayloads.length > 0) {
+      // Form was reset - clear all new image state
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrlsRef.current.clear();
+      fileMapRef.current.clear();
+      queueMicrotask(() => {
+        setUploadProgress(new Map());
+        setErrors([]);
+      });
+    } else {
+      // Clean up any orphaned entries not in new value
+      const newTempIds = new Set(newPayloadsInValue.map((p) => p.tempId));
+
+      // Remove orphaned preview URLs
+      for (const [tempId, url] of previewUrlsRef.current.entries()) {
+        if (!newTempIds.has(tempId)) {
+          URL.revokeObjectURL(url);
+          previewUrlsRef.current.delete(tempId);
+        }
+      }
+
+      // Remove orphaned file refs
+      for (const tempId of fileMapRef.current.keys()) {
+        if (!newTempIds.has(tempId)) {
+          fileMapRef.current.delete(tempId);
+        }
+      }
+
+      // Remove orphaned upload progress entries
+      queueMicrotask(() => {
+        setUploadProgress((prev) => {
+          const updated = new Map(prev);
+          for (const tempId of updated.keys()) {
+            if (!newTempIds.has(tempId)) {
+              updated.delete(tempId);
+            }
+          }
+          return updated;
+        });
+      });
+    }
+
+    // If we have payloads with order, use that order
+    if (activePayloads.length > 0) {
+      for (const payload of activePayloads) {
+        if (payload.type === "existing") {
+          const existing = existingImages.find((e) => e.id === payload.id);
+          if (existing && !deletedIds.has(existing.id)) {
+            newUiImages.push({
+              id: existing.id,
+              src: existing.src,
+              alt: existing.alt ?? "Image",
+              source: "existing",
+            });
+          }
+        } else if (payload.type === "new") {
+          const file = fileMapRef.current.get(payload.tempId);
+          if (file) {
+            let previewUrl = previewUrlsRef.current.get(payload.tempId);
+            if (!previewUrl) {
+              previewUrl = URL.createObjectURL(file);
+              previewUrlsRef.current.set(payload.tempId, previewUrl);
+            }
+            newUiImages.push({
+              id: payload.tempId,
+              src: previewUrl,
+              alt: file.name,
+              source: "new",
+              file,
+            });
+          }
+        }
+      }
+    } else {
+      // No payloads yet - initialize from existing images
+      for (const existing of existingImages) {
+        if (!deletedIds.has(existing.id)) {
+          newUiImages.push({
+            id: existing.id,
+            src: existing.src,
+            alt: existing.alt ?? "Image",
+            source: "existing",
+          });
+        }
+      }
+    }
+
+    setUiImages(newUiImages);
+  }, [existingImages, value]);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    const urls = previewUrlsRef.current;
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  // Build ImagePayload[] from current UI state and deleted items
+  const buildPayload = useCallback(
+    (currentUiImages: UIImage[], deletedIds: string[]): ImagePayload[] => {
+      const payloads: ImagePayload[] = [];
+
+      // Add active images with their order
+      currentUiImages.forEach((img, index) => {
+        if (img.source === "existing") {
+          payloads.push({
+            type: "existing",
+            id: img.id,
+            order: index,
+          });
+        } else {
+          const file = fileMapRef.current.get(img.id);
+          if (file) {
+            payloads.push({
+              type: "new",
+              file,
+              tempId: img.id,
+              order: index,
+            });
+          }
+        }
+      });
+
+      // Add deleted items
+      for (const id of deletedIds) {
+        payloads.push({
+          type: "deleted",
+          id,
+        });
+      }
+
+      return payloads;
+    },
+    [],
+  );
+
+  // Get current deleted IDs from form value
+  const deletedIds = useMemo(
+    () => (value ?? []).filter((p) => p.type === "deleted").map((p) => p.id),
+    [value],
+  );
+
+  // Validate a file before adding
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (!file.type.startsWith("image/")) {
+        return "File must be an image";
+      }
+      if (file.size > maxSize) {
+        return `File size must be less than ${(maxSize / 1024 / 1024).toFixed(1)}MB`;
+      }
+      if (uiImages.length >= maxFiles) {
+        return `Maximum ${maxFiles} files allowed`;
+      }
+      return null;
+    },
+    [maxSize, maxFiles, uiImages.length],
+  );
+
+  // Simulate upload progress (in real app, this would be actual upload)
+  const simulateUpload = useCallback((tempId: string) => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 20;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        setUploadProgress((prev) => {
+          const updated = new Map(prev);
+          const current = updated.get(tempId);
+          if (current) {
+            updated.set(tempId, {
+              ...current,
+              progress: 100,
+              status: "completed",
+            });
+          }
+          return updated;
+        });
+      } else {
+        setUploadProgress((prev) => {
+          const updated = new Map(prev);
+          const current = updated.get(tempId);
+          if (current) {
+            updated.set(tempId, { ...current, progress });
+          }
+          return updated;
+        });
+      }
+    }, 100);
+  }, []);
+
+  // Add new images
+  const addImages = useCallback(
+    (files: FileList | File[]) => {
+      const newUiImages: UIImage[] = [];
+      const newProgress: UploadProgress[] = [];
+      const newErrors: string[] = [];
+      const remainingSlots = maxFiles - uiImages.length;
+
+      Array.from(files)
+        .slice(0, Math.max(remainingSlots, 0))
+        .forEach((file) => {
+          const error = validateFile(file);
+          if (error) {
+            newErrors.push(`${file.name}: ${error}`);
+            return;
+          }
+
+          const tempId = `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const previewUrl = URL.createObjectURL(file);
+
+          // Store file and preview URL references
+          fileMapRef.current.set(tempId, file);
+          previewUrlsRef.current.set(tempId, previewUrl);
+
+          newUiImages.push({
+            id: tempId,
+            src: previewUrl,
+            alt: file.name,
+            source: "new",
+            file,
+          });
+
+          newProgress.push({
+            tempId,
+            fileName: file.name,
+            fileSize: file.size,
+            progress: 0,
+            status: "uploading",
+          });
+        });
+
+      if (Array.from(files).length > remainingSlots) {
+        newErrors.push(`Maximum ${maxFiles} files allowed`);
+      }
+
+      if (newErrors.length > 0) {
+        setErrors((prev) => [...prev, ...newErrors]);
+      }
+
+      if (newUiImages.length > 0) {
+        const updatedUiImages = [...uiImages, ...newUiImages];
+        setUiImages(updatedUiImages);
+
+        // Update progress tracking
+        setUploadProgress((prev) => {
+          const updated = new Map(prev);
+          newProgress.forEach((p) => updated.set(p.tempId, p));
+          return updated;
+        });
+
+        // Sync to form
+        const payload = buildPayload(updatedUiImages, deletedIds);
+        onChange?.(payload);
+
+        if (
+          onCoverIndexChange &&
+          updatedUiImages.length > 0 &&
+          (coverIndex === null ||
+            coverIndex === undefined ||
+            coverIndex >= updatedUiImages.length)
+        ) {
+          onCoverIndexChange(0);
+        }
+
+        // Simulate upload progress for each new image
+        newProgress.forEach((p) => simulateUpload(p.tempId));
+      }
+    },
+    [
+      uiImages,
+      maxFiles,
+      validateFile,
+      buildPayload,
+      deletedIds,
+      onChange,
+      coverIndex,
+      onCoverIndexChange,
+      simulateUpload,
+    ],
+  );
+
+  const closeLightbox = useCallback(() => {
+    setLightboxIndex(null);
+  }, []);
+
+  // Remove an image
+  const removeImage = useCallback(
+    (id: string) => {
+      const removedIndex = uiImages.findIndex((img) => img.id === id);
+      const imageToRemove = uiImages[removedIndex];
+      if (!imageToRemove) return;
+
+      // Update UI state
+      const updatedUiImages = uiImages.filter((img) => img.id !== id);
+      setUiImages(updatedUiImages);
+
+      // Update deleted IDs based on image source
+      const updatedDeletedIds = [...deletedIds];
+      if (imageToRemove.source === "existing") {
+        // Existing image: add to deleted list
+        updatedDeletedIds.push(id);
+      } else {
+        // New image: cleanup file references and preview URL
+        const previewUrl = previewUrlsRef.current.get(id);
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          previewUrlsRef.current.delete(id);
+        }
+        fileMapRef.current.delete(id);
+        setUploadProgress((prev) => {
+          const updated = new Map(prev);
+          updated.delete(id);
+          return updated;
+        });
+      }
+
+      // Sync to form
+      const payload = buildPayload(updatedUiImages, updatedDeletedIds);
+      onChange?.(payload);
+
+      if (onCoverIndexChange && typeof coverIndex === "number") {
+        if (updatedUiImages.length === 0) {
+          onCoverIndexChange(null);
+        } else if (removedIndex === coverIndex) {
+          onCoverIndexChange(0);
+        } else if (removedIndex < coverIndex) {
+          onCoverIndexChange(coverIndex - 1);
+        } else if (coverIndex >= updatedUiImages.length) {
+          onCoverIndexChange(updatedUiImages.length - 1);
+        }
+      }
+
+      if (updatedUiImages.length === 0) {
+        closeLightbox();
+      }
+    },
+    [
+      uiImages,
+      deletedIds,
+      buildPayload,
+      onChange,
+      coverIndex,
+      onCoverIndexChange,
+      closeLightbox,
+    ],
+  );
+
+  // Handle reorder after drag/drop
+  const handleReorder = useCallback(
+    (newOrder: string[]) => {
+      const coverImageId =
+        typeof coverIndex === "number" ? uiImages[coverIndex]?.id : undefined;
+
+      // Reconstruct UI images in new order
+      const reorderedUiImages = newOrder
+        .map((id) => uiImages.find((img) => img.id === id))
+        .filter((img): img is UIImage => img !== undefined);
+
+      setUiImages(reorderedUiImages);
+
+      // Sync to form with updated order
+      const payload = buildPayload(reorderedUiImages, deletedIds);
+      onChange?.(payload);
+
+      if (coverImageId && onCoverIndexChange) {
+        const nextCoverIndex = reorderedUiImages.findIndex(
+          (image) => image.id === coverImageId,
+        );
+        if (nextCoverIndex >= 0) {
+          onCoverIndexChange(nextCoverIndex);
+        }
+      }
+    },
+    [
+      uiImages,
+      deletedIds,
+      buildPayload,
+      onChange,
+      coverIndex,
+      onCoverIndexChange,
+    ],
+  );
+
+  const openLightbox = useCallback((index: number) => {
+    setLightboxIndex(index);
+  }, []);
+
+  // Drag and drop handlers for upload zone
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      if (disabled || loading) return;
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        addImages(files);
+      }
+    },
+    [addImages, disabled, loading],
+  );
+
+  // Open file dialog
+  const openFileDialog = useCallback(() => {
+    if (disabled || loading) return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = accept;
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        addImages(target.files);
+      }
+    };
+    input.click();
+  }, [accept, addImages, disabled, loading]);
+
+  // Format bytes helper
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  };
+
+  // Get upload progress entries as array
+  const progressEntries = useMemo(
+    () => Array.from(uploadProgress.values()),
+    [uploadProgress],
+  );
+
+  const isDisabled = disabled || loading;
+  const canAddMore = uiImages.length < maxFiles;
+  const canSelectCover = Boolean(onCoverIndexChange);
+  const normalizedCoverIndex =
+    typeof coverIndex === "number" &&
+    coverIndex >= 0 &&
+    coverIndex < uiImages.length
+      ? coverIndex
+      : null;
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const rect = event.active.rect.current.initial;
+
+    setOverlaySize(
+      rect
+        ? {
+            width: rect.width,
+            height: rect.height,
+          }
+        : null,
+    );
+  }, []);
+  const renderImageTile = useCallback(
+    (item: UIImage, index: number, isOverlay = false) => (
+      <SortableImageTile
+        item={item}
+        index={index}
+        isOverlay={isOverlay}
+        overlaySize={overlaySize}
+        isCover={canSelectCover && index === normalizedCoverIndex}
+        canSelectCover={canSelectCover}
+        disabled={isDisabled}
+        onOpenLightbox={openLightbox}
+        onSelectCover={onCoverIndexChange}
+        onRemove={removeImage}
+      />
+    ),
+    [
+      canSelectCover,
+      isDisabled,
+      normalizedCoverIndex,
+      onCoverIndexChange,
+      openLightbox,
+      overlaySize,
+      removeImage,
+    ],
+  );
+
+  return (
+    <div className={cn("w-full max-w-4xl", className)}>
+      {loading && (
+        <div className="border-border bg-muted/20 mb-4 rounded-md border p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="space-y-2">
+              <div className="bg-muted h-4 w-40 animate-pulse rounded" />
+              <div className="bg-muted h-3 w-64 max-w-full animate-pulse rounded" />
+            </div>
+            <div className="bg-muted size-9 animate-pulse rounded-md" />
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={index}
+                className="bg-muted aspect-square animate-pulse rounded-md"
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!loading && (
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-sm">
+            {uiImages.length > 0
+              ? `${uiImages.length}/${maxFiles} images. Drag images to reorder.`
+              : `Upload up to ${maxFiles} images (JPG, PNG, GIF, WebP, max ${formatBytes(maxSize)} each).`}
+          </p>
+
+          {uiImages.length > 0 && canAddMore && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={openFileDialog}
+              disabled={isDisabled}
+              type="button"
+              className="w-full sm:w-auto"
+            >
+              <Plus className="size-4" />
+              Add image
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Image Grid with Sortable */}
+      {!loading && uiImages.length > 0 && (
+        <div className="mb-6">
+          <Sortable
+            value={uiImages.map((item) => item.id)}
+            onValueChange={handleReorder}
+            getItemValue={(item) => item}
+            orientation="mixed"
+            strategy={rectSortingStrategy}
+            collisionDetection={rectIntersection}
+            modifiers={[]}
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragCancel={() => setOverlaySize(null)}
+            onDragEnd={() => setOverlaySize(null)}
+          >
+            <SortableContent
+              className={cn(
+                "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5",
+                gridClassName,
+              )}
+            >
+              {uiImages.map((item, index) => {
+                return (
+                  <SortableItem
+                    key={item.id}
+                    value={item.id}
+                    disabled={isDisabled}
+                    asHandle
+                  >
+                    {renderImageTile(item, index)}
+                  </SortableItem>
+                );
+              })}
+            </SortableContent>
+            <SortableOverlay>
+              {({ value }) => {
+                const index = uiImages.findIndex((image) => image.id === value);
+                const item = index >= 0 ? uiImages[index] : undefined;
+
+                return item ? renderImageTile(item, index, true) : null;
+              }}
+            </SortableOverlay>
+          </Sortable>
+        </div>
+      )}
+
+      {/* Upload Area */}
+      {!loading && uiImages.length === 0 && (
+        <UploadDropzone
+          isDragging={isDragging}
+          disabled={isDisabled}
+          maxSize={maxSize}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onBrowseClick={openFileDialog}
+        />
+      )}
+
+      {/* Upload Progress Cards */}
+      <UploadProgressList
+        entries={progressEntries}
+        onRemove={removeImage}
+        disabled={isDisabled}
+      />
+
+      {/* Error Messages */}
+      {errors.length > 0 && (
+        <Alert variant="destructive" appearance="light" className="mt-5">
+          <AlertIcon>
+            <TriangleAlert />
+          </AlertIcon>
+          <AlertContent>
+            <AlertTitle>File upload error(s)</AlertTitle>
+            <AlertDescription>
+              {errors.map((error, index) => (
+                <p key={index} className="last:mb-0">
+                  {error}
+                </p>
+              ))}
+            </AlertDescription>
+          </AlertContent>
+        </Alert>
+      )}
+
+      {/* Lightbox Modal */}
+      <ImageLightbox
+        images={uiImages}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onIndexChange={setLightboxIndex}
+      />
+    </div>
+  );
+}

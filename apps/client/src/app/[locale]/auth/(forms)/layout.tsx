@@ -1,0 +1,78 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { cn, decodeToken } from "@/lib/utils";
+import { WhiteLabelLogo } from "@/lib/white-label";
+import Image from "next/image";
+import React from "react";
+
+interface AuthFormsLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}
+
+export default async function AuthLayout({
+  children,
+  params,
+}: AuthFormsLayoutProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  // Guard for guest routes: If user is authenticated with a valid token, redirect to profile
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get("refreshToken")?.value;
+
+  if (refreshToken) {
+    const payload = decodeToken(refreshToken);
+    if (payload?.exp && payload.exp * 1000 > Date.now()) {
+      redirect(`/${locale}/profile`);
+    }
+  }
+
+  const t = await getTranslations({ locale, namespace: "Auth.layout" });
+
+  return (
+    <section className={cn("min-h-screen w-full")}>
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <div
+          className={cn(
+            "relative hidden flex-col justify-between overflow-hidden p-10 lg:flex",
+            "bg-accent text-white",
+          )}
+        >
+          <Image
+            src="/crodic-auth.jpg"
+            alt="Crodic Framework"
+            fill
+            priority
+            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="object-cover"
+          />
+
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+          <Link href="/" className="relative z-10 flex items-center gap-2">
+            <WhiteLabelLogo
+              fallback={
+                <span className="text-primary text-2xl font-bold tracking-tight">
+                  Crodic Framework
+                </span>
+              }
+            />
+          </Link>
+          <div className="relative z-10 max-w-md">
+            <p className="text-muted dark:text-muted-foreground mb-2 text-sm">
+              {t("welcome")}
+            </p>
+            <h2 className="text-3xl leading-tight font-semibold tracking-tight md:text-4xl">
+              {t("tagline")}
+            </h2>
+          </div>
+        </div>
+
+        {/* Right Side - Form */}
+        {children}
+      </div>
+    </section>
+  );
+}
