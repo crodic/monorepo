@@ -215,7 +215,7 @@ const selectNext = (editor: CoreEditor) => {
   if (view) {
     view
       .domAtPos(from)
-       
+
       // @ts-ignore
       .node.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
@@ -243,7 +243,7 @@ const selectPrevious = (editor: CoreEditor) => {
   if (view) {
     view
       .domAtPos(from)
-       
+
       // @ts-ignore
       .node.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }

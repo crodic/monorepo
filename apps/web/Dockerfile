@@ -1,13 +1,12 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:20.19-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN corepack enable \
-  && corepack prepare pnpm@10.30.3 --activate
+RUN npm install -g pnpm@11.25.0
 
 FROM base AS deps
 
@@ -23,7 +22,7 @@ FROM deps AS builder
 ENV NODE_ENV=production
 
 COPY . .
-RUN pnpm --filter web-portal build
+RUN pnpm --filter web build
 
 FROM nginx:1.27-alpine AS production
 

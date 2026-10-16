@@ -1,159 +1,195 @@
-# Turborepo starter
+# Enterprise Full-Stack Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+[![Turborepo](https://img.shields.io/badge/Turborepo-Orchestrated-blue?logo=turborepo)](https://turbo.build/)
+[![Package Manager](https://img.shields.io/badge/pnpm-10.30.3-orange?logo=pnpm)](https://pnpm.io/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.19.0-green?logo=node.js)](https://nodejs.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-11-red?logo=nestjs)](https://nestjs.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-black?logo=next.js)](https://nextjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6_React_19-purple?logo=vite)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict_7.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 
-## Using this example
+An enterprise-ready, production-grade full-stack monorepo boilerplate built with **Turborepo**, **pnpm workspaces**, **NestJS**, **Next.js (App Router)**, **Vite + React**, and **Tailwind CSS**.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Architecture Overview
+
+```
+monorepo/
+├── apps/
+│   ├── api/                    # NestJS 11 backend with TypeORM, PostgreSQL, Redis, BullMQ, Swagger
+│   ├── client/                 # Next.js 16 (App Router) public client website with i18n
+│   └── web/                    # Vite 6 + React 19 admin management portal
+├── packages/
+│   ├── query-builder/          # Shared type-safe query builders (RestQueryBuilder & PaginateQueryBuilder)
+│   ├── eslint-config/          # Shared ESLint flat configurations
+│   ├── typescript-config/      # Shared tsconfig definitions
+│   ├── prettier-config/        # Shared Prettier formatting rules
+│   └── commitlint-config/      # Commitlint conventional commit rules
+├── docs/                       # Comprehensive technical and architecture documentation
+└── scripts/                    # Automation scripts (setup, storage cleanup)
 ```
 
-## What's inside?
+### Workspace Applications & Packages
 
-This Turborepo includes the following packages/apps:
+| Workspace                                              | Type        | Technology Stack                                                        | Description                                                                                                 |
+| :----------------------------------------------------- | :---------- | :---------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------- |
+| **[`apps/api`](apps/api)**                             | Application | NestJS 11, TypeORM, PostgreSQL, Redis, BullMQ, Swagger, Sentry          | Core REST API backend with modular architecture, strict DTO validation, and RBAC authentication.            |
+| **[`apps/client`](apps/client)**                       | Application | Next.js 16 (App Router), React 19, Turbopack, TailwindCSS v4, next-intl | Public-facing client web application featuring server components, SEO metadata, and multi-language support. |
+| **[`apps/web`](apps/web)**                             | Application | Vite 6, React 19, TailwindCSS v4, TanStack Query, Radix UI, Tiptap      | Admin management portal with rich data tables, sortable lists, theme editor, and file managers.             |
+| **[`packages/query-builder`](packages/query-builder)** | Package     | TypeScript, Vitest                                                      | Dual-mode query builder supporting standard RESTful / JSON:API queries and `nestjs-paginate`.               |
 
-### Apps and Packages
+---
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+## Tech Stack & Standards
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- **Backend**: NestJS 11, TypeORM, PostgreSQL 16+, Redis 7+, BullMQ (background queues), Mailpit (local email testing).
+- **Frontend**: Next.js 16 (App Router with React Server Components), Vite 6 + React 19 SPA, Tailwind CSS v4.
+- **State & Forms**: TanStack React Query (`@tanstack/react-query`), Zustand, React Hook Form, Zod validation.
+- **Monitoring & Security**: Sentry error monitoring and performance tracing, JWT authentication with refresh token rotation, strict RBAC authorization.
+- **Code Quality**: ESLint 9/10 flat config, Prettier, TypeScript strict mode, Vitest, Jest.
+- **Versioning & CI/CD**: Semantic Release, Conventional Commits, GitHub Actions.
 
-### Utilities
+---
 
-This Turborepo has some additional tools already setup for you:
+## Documentation Hub
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+Detailed documentation is available in the [`docs/`](docs/README.md) directory:
 
-### Build
+| Guide                                                            | Description                                                                        |
+| :--------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| 📖 [**Documentation Catalog**](docs/README.md)                   | Central documentation directory with English and Vietnamese guides.                |
+| 🔐 [**Authentication & RBAC**](docs/AUTH.md)                     | JWT tokens, refresh rotation, Google OAuth, session management, and permissions.   |
+| 🔍 [**Query Builder**](docs/QUERY_BUILDER.md)                    | Backend TypeORM query builder and frontend `@repo/query-builder` usage.            |
+| 📊 [**Data Table Component**](docs/DATATABLE.md)                 | Reusable TanStack Table with server-side pagination, filters, and selection.       |
+| 🔀 [**Sortable Lists**](docs/SORTABLE.md)                        | Accessible drag-and-drop sortable components powered by `@dnd-kit`.                |
+| 💾 [**Filesystem & Storage**](docs/filesystem.md)                | Multi-driver storage abstraction (Local disk and AWS S3 / MinIO).                  |
+| 📤 [**Background File Uploads**](docs/BACKGROUND_FILE_UPLOAD.md) | Resumable chunked file uploads with BullMQ background processing.                  |
+| 📜 [**Activity Log & Audit Trail**](docs/ACTIVITY_LOG.md)        | Automatic and manual activity tracking for security audits.                        |
+| 🛠️ [**Core Utilities**](docs/CORE_UTILITIES.md)                  | Custom NestJS decorators, interceptors, validation pipes, and response formatters. |
+| 🚨 [**Sentry Error Tracking**](docs/SENTRY.md)                   | Error capture, tracing, and exception handling across backend and frontend.        |
+| 🧪 [**Testing Strategy**](docs/TESTING.md)                       | Unit tests, mock providers, and E2E test execution guidelines.                     |
+| 🚀 [**Deployment Guide**](docs/DEPLOYMENT.md)                    | Production Docker configurations, environment variables, and database migrations.  |
+| 📦 [**Release & Versioning**](docs/RELEASE.md)                   | Automated semantic versioning and changelog generation workflow.                   |
 
-To build all apps and packages, run the following command:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Getting Started
 
-```sh
-cd my-turborepo
-turbo build
+### Prerequisites
+
+- **Node.js**: `20.19.0` (Use [nvm](https://github.com/nvm-sh/nvm): `nvm use`)
+- **Package Manager**: **`pnpm`** `10.30.3` (Never use `npm` or `yarn`)
+- **Docker & Docker Compose**: For local PostgreSQL, Redis, and Mailpit services.
+
+Enable `pnpm` via corepack:
+
+```bash
+corepack enable
+corepack prepare pnpm@10.30.3 --activate
 ```
 
-Without global `turbo`, use your package manager:
+### Installation & Environment Setup
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm exec turbo build
-pnpm exec turbo build
+Run the automated setup script from the repository root:
+
+```bash
+pnpm run setup
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+The setup script performs the following tasks:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+1. Copies environment templates (`.env.example` -> `.env`) across root, `apps/api`, `apps/web`, and `apps/client`.
+2. Installs all monorepo workspace dependencies via `pnpm install`.
+3. Validates required tools and node versions.
 
-```sh
-turbo build --filter=docs
+### Start Local Infrastructure
+
+Start PostgreSQL, Redis, and Mailpit using Docker Compose:
+
+```bash
+docker compose up -d
 ```
 
-Without global `turbo`:
+Service endpoints:
 
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+- **PostgreSQL**: `localhost:5432` (database: `monorepo_dev`)
+- **Redis**: `localhost:6379`
+- **Mailpit Web UI**: [http://localhost:8025](http://localhost:8025) (SMTP: `localhost:1025`)
+
+### Run Database Migrations
+
+Apply database schema migrations to PostgreSQL:
+
+```bash
+pnpm --filter api migration:run
 ```
 
-### Develop
+To seed initial database data:
 
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+pnpm --filter api seed:run
 ```
 
-Without global `turbo`, use your package manager:
+### Start Development Servers
 
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+Run all workspaces concurrently via Turborepo:
+
+```bash
+pnpm dev
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Alternatively, start a specific application:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
+```bash
+pnpm --filter api dev      # NestJS backend at http://localhost:3000 (Swagger: /api/docs)
+pnpm --filter web dev      # Vite admin portal at http://localhost:5173
+pnpm --filter client dev   # Next.js client at http://localhost:3001
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+## Common CLI Commands
+
+All development tasks are orchestrated via **Turborepo** (`turbo.json`):
+
+| Command            | Action                                                                   |
+| :----------------- | :----------------------------------------------------------------------- |
+| `pnpm dev`         | Starts development servers for all applications concurrently             |
+| `pnpm build`       | Compiles and builds production bundles for all workspaces                |
+| `pnpm lint`        | Runs ESLint across all packages and applications                         |
+| `pnpm check-types` | Executes TypeScript static type-checking (`tsc --noEmit`)                |
+| `pnpm test`        | Runs unit and integration test suites via Vitest and Jest                |
+| `pnpm clean`       | Cleans build artifacts (`dist`, `.turbo`, `.next`) across the repository |
+
+---
+
+## Git Workflow & Conventions
+
+### Conventional Commits
+
+Commit messages must adhere strictly to the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>(<scope>): <short description>
 ```
 
-### Remote Caching
+- **Types**: `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `perf`, `chore`, `ci`, `build`.
+- **Scope**: Target workspace or component (e.g., `api`, `web`, `client`, `query-builder`, `auth`).
+- **Subject length**: Maximum 100 characters enforced by Commitlint.
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+Example:
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+```bash
+git commit -m "feat(query-builder): add rest-query-builder implementation"
 ```
 
-Without global `turbo`, use your package manager:
+### Release Automation
 
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
+Releases and automated semantic version tags are generated by **Semantic Release** on GitHub Actions. Refer to [`docs/RELEASE.md`](docs/RELEASE.md) for full release guidelines.
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+---
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## License
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+This project is proprietary and confidential. All rights reserved.

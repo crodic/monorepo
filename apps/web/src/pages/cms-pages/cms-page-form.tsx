@@ -203,7 +203,7 @@ export function CmsPageForm({
         className='bg-background flex h-full min-h-0 flex-col overflow-hidden'
       >
         <div className='border-border flex h-14 shrink-0 items-center justify-between border-b px-4'>
-          <div className='flex items-center gap-3'>
+          <div className='flex min-w-0 items-center gap-3'>
             <div className='truncate text-sm font-medium'>
               {initialData
                 ? t('cmsPages.form.editTitle')
@@ -213,7 +213,7 @@ export function CmsPageForm({
               {currentSlug || t('cmsPages.form.draftPage')}
             </div>
           </div>
-          <div className='flex items-center gap-4'>
+          <div className='flex shrink-0 items-center gap-4'>
             <div className='border-border flex items-center gap-2 border-r pr-4'>
               <FormLabel>{t('cmsPages.form.locale')}:</FormLabel>
               <Select value={currentLocale} onValueChange={setCurrentLocale}>
@@ -248,7 +248,7 @@ export function CmsPageForm({
         </div>
 
         <div className='flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden'>
-          <div className='flex-1 p-4 md:p-6 lg:overflow-y-auto'>
+          <div className='min-w-0 flex-1 p-4 md:p-6 lg:overflow-y-auto'>
             <div className='mx-auto max-w-4xl space-y-4'>
               <FormField
                 control={form.control}

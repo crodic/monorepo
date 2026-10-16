@@ -8,7 +8,7 @@ const getEslintWorkspaces = () => {
     "apps/api",
     "apps/client",
     "apps/web",
-    "packages/ui",
+    "packages/query-builder",
   ];
   return candidateWorkspaces.filter((ws) =>
     fs.existsSync(path.join(process.cwd(), ws)),

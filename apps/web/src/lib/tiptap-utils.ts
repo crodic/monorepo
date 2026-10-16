@@ -16,7 +16,7 @@ export const duplicateContent = (editor: Editor) => {
     .chain()
     .insertContentAt(
       selection.to,
-       
+
       // @ts-nocheck
       selection.content().content.firstChild?.toJSON(),
       {

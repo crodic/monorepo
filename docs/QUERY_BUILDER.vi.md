@@ -37,6 +37,7 @@ Package này cho phép ứng dụng frontend lọc dữ liệu (filter), sắp x
 - [Chế độ nghiêm ngặt & Xử lý lỗi (`Strict Mode`)](#chế-độ-nghiêm-ngặt--xử-lý-lỗi-strict-mode)
 - [Tích hợp Swagger OpenAPI (`@ApiQueryBuilderDocs`)](#tích-hợp-swagger-openapi-apiquerybuilderdocs)
 - [Bảo mật](#bảo-mật)
+- [Query Builder ở Frontend (`@repo/query-builder`)](#query-builder-ở-frontend-repoquery-builder)
 
 ---
 
@@ -515,3 +516,54 @@ findAll(@Query() query: QueryParams) {
 1. **Tuyệt đối không dùng chuỗi SQL raw**: Tất cả các giá trị filter đều được truyền qua TypeORM parameter binding (`:paramName`) để chống SQL Injection.
 2. **Whitelist bắt buộc**: Client không thể tự ý chèn bất kỳ cột nào ngoài danh sách khai báo tại `allowedFilters`, `allowedSorts`, `allowedIncludes`, `allowedFields`.
 3. **Giới hạn kích thước trang (`maxLimit`)**: Luôn chặn đứng các request lạm dụng (ví dụ `?limit=999999`) bằng `maxLimit` (mặc định 100) để chống DoS.
+
+---
+
+## Query Builder ở Frontend (`@repo/query-builder`)
+
+Monorepo cung cấp sẵn package dùng chung [`@repo/query-builder`](file:///packages/query-builder) (có thể import qua `@/lib/query-builder` hoặc `@repo/query-builder` trong cả `apps/web` và `apps/client`).
+
+### 1. `RestQueryBuilder` (Khuyên dùng khi gọi NestJS Backend)
+
+`RestQueryBuilder` tạo ra chuỗi query string chuẩn REST / JSON:API khớp trực tiếp với QueryBuilder của NestJS backend:
+
+```typescript
+import { RestQueryBuilder } from "@repo/query-builder";
+// hoặc: import { RestQueryBuilder } from "@/lib/query-builder";
+
+const queryString = new RestQueryBuilder()
+  .filter("status", "ACTIVE")
+  .filter("roles", ["ADMIN", "MANAGER"])
+  .sortBy("createdAt", "desc")
+  .sortBy("name", "asc")
+  .include("profile", "roles")
+  .fieldsFor("user", ["id", "name", "email"])
+  .search("john")
+  .paginate(1, 20)
+  .toQueryString();
+
+// Chuỗi query sinh ra:
+// filter[status]=ACTIVE&filter[roles]=ADMIN,MANAGER&sort=-createdAt,name&include=profile,roles&fields[user]=id,name,email&q=john&page=1&limit=20
+```
+
+### 2. `NestjsPaginateQueryBuilder` (Dành cho API cũ dùng `nestjs-paginate`)
+
+Dành cho các endpoint backend vẫn đang dùng package thư viện `nestjs-paginate`:
+
+```typescript
+import { PaginateQueryBuilder } from "@repo/query-builder";
+
+const queryString = new PaginateQueryBuilder()
+  .page(1)
+  .limit(20)
+  .sortBy("createdAt", "DESC")
+  .eq("status", "ACTIVE")
+  .in("role", ["ADMIN", "USER"])
+  .btw("age", [18, 65])
+  .search("john")
+  .searchBy(["email", "name"])
+  .toQueryString();
+
+// Chuỗi query sinh ra:
+// page=1&limit=20&sort=createdAt:DESC&filter.status=$eq:ACTIVE&filter.role=$in:ADMIN,USER&filter.age=$btw:18,65&search=john&searchBy=email&searchBy=name
+```

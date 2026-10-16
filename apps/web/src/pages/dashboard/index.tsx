@@ -2,10 +2,7 @@ import axios from 'axios'
 import { formatDistanceToNow } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ActivityIcon,
   AlertTriangleIcon,
-  BarChart3Icon,
-  BugIcon,
   CheckCircle2Icon,
   CpuIcon,
   DatabaseIcon,
@@ -14,16 +11,11 @@ import {
   LayersIcon,
   RefreshCwIcon,
   ServerIcon,
-  ShieldCheckIcon,
-  UsersIcon,
   WorkflowIcon,
   XCircleIcon,
 } from 'lucide-react'
 import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
-import http from '@/lib/http'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,11 +31,6 @@ import { Main } from '@/components/layout/main'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import {
-  emptySnapshot,
-  usePresenceSnapshot,
-  type OnlinePresence,
-} from './presence-queries'
 
 type HealthIndicator = {
   status?: string
@@ -57,62 +44,7 @@ type HealthCheckResponse = {
   details?: Record<string, HealthIndicator>
 }
 
-type SentryIssue = {
-  id: string
-  shortId?: string
-  title?: string
-  culprit?: string
-  level?: string
-  status?: string
-  count: number
-  userCount: number
-  firstSeen?: string
-  lastSeen?: string
-  permalink?: string
-}
-
-type SentrySummary = {
-  configured: boolean
-  unavailable?: boolean
-  reason?: string
-  organizationSlug?: string
-  projectSlug?: string
-  environments?: string[]
-  generatedAt?: string
-  metrics?: {
-    totalErrorsToday: number
-    affectedUsersToday: number
-    unresolvedIssues: number
-  }
-  errorsByEnvironment?: Array<{
-    environment: string
-    unresolvedIssues: number
-    eventsApprox: number
-    affectedUsersApprox: number
-  }>
-  topIssues?: SentryIssue[]
-  latestIssues?: SentryIssue[]
-  trend?: Array<{
-    date: string
-    errors: number
-  }>
-  releaseHealth?: {
-    sessions: number
-    users: number
-    crashFreeSessions: number | null
-    crashFreeUsers: number | null
-  }
-  weeklyReport?: {
-    currentErrors: number
-    previousErrors: number
-    changePercent: number
-    periodStart: string
-    periodEnd: string
-  }
-}
-
 const HEALTH_QUERY_KEY = ['system_health'] as const
-const SENTRY_SUMMARY_QUERY_KEY = ['sentry_summary'] as const
 const QUEUE_STATS_QUERY_KEY = ['queue_stats'] as const
 
 type QueueStats = {
@@ -155,17 +87,8 @@ async function apiGetQueueStats(): Promise<QueueStatsResponse> {
   return response.data
 }
 
-async function apiGetSentrySummary(): Promise<SentrySummary> {
-  const response = await http.get<SentrySummary>('/sentry/summary')
-
-  return response.data
-}
-
 export function Dashboard() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const presenceQuery = usePresenceSnapshot(30_000)
-  const snapshot = presenceQuery.data ?? emptySnapshot
   const healthQuery = useQuery({
     queryKey: HEALTH_QUERY_KEY,
     queryFn: apiGetSystemHealth,
@@ -175,11 +98,6 @@ export function Dashboard() {
     queryKey: QUEUE_STATS_QUERY_KEY,
     queryFn: apiGetQueueStats,
     refetchInterval: 15_000,
-  })
-  const sentryQuery = useQuery({
-    queryKey: SENTRY_SUMMARY_QUERY_KEY,
-    queryFn: apiGetSentrySummary,
-    refetchInterval: 60_000,
   })
 
   return (
@@ -206,29 +124,8 @@ export function Dashboard() {
             {t('dashboard.title')}
           </h1>
           <p className='text-muted-foreground'>
-            {t('dashboard.realtime.onlineAdminsDesc')}
+            {t('dashboard.systemHealth.description')}
           </p>
-        </div>
-
-        <div className='grid gap-4 md:grid-cols-3'>
-          <PresenceMetricCard
-            title={t('dashboard.realtime.onlineAdmins')}
-            value={snapshot.counts.admins}
-            description={t('dashboard.realtime.onlineAdminsDesc')}
-            icon={<ShieldCheckIcon className='size-5' />}
-          />
-          <PresenceMetricCard
-            title={t('dashboard.realtime.onlineUsers')}
-            value={snapshot.counts.users}
-            description={t('dashboard.realtime.onlineUsersDesc')}
-            icon={<UsersIcon className='size-5' />}
-          />
-          <PresenceMetricCard
-            title={t('dashboard.realtime.totalOnline')}
-            value={snapshot.counts.total}
-            description={t('dashboard.realtime.totalOnlineDesc')}
-            icon={<ActivityIcon className='size-5' />}
-          />
         </div>
 
         <SystemHealthSection
@@ -244,314 +141,8 @@ export function Dashboard() {
           isLoading={queueQuery.isFetching}
           onRefresh={() => queueQuery.refetch()}
         />
-
-        <SentryHealthSection
-          summary={sentryQuery.data}
-          isLoading={sentryQuery.isFetching}
-          isError={sentryQuery.isError}
-          updatedAt={sentryQuery.dataUpdatedAt}
-          onRefresh={() => sentryQuery.refetch()}
-        />
-
-        <div className='grid gap-4 xl:grid-cols-2'>
-          <OnlinePresenceList
-            title={t('dashboard.realtime.adminsOnlineTitle')}
-            description={t('dashboard.realtime.adminsOnlineDesc')}
-            emptyText={t('dashboard.realtime.noAdminsOnline')}
-            items={snapshot.admins}
-            onSelect={(item) => navigate(`/admins/${item.id}/show`)}
-          />
-          <OnlinePresenceList
-            title={t('dashboard.realtime.usersOnlineTitle')}
-            description={t('dashboard.realtime.usersOnlineDesc')}
-            emptyText={t('dashboard.realtime.noUsersOnline')}
-            items={snapshot.users}
-            onSelect={(item) => navigate(`/users/${item.id}/show`)}
-          />
-        </div>
       </Main>
     </>
-  )
-}
-
-function SentryHealthSection({
-  summary,
-  isLoading,
-  isError,
-  updatedAt,
-  onRefresh,
-}: {
-  summary?: SentrySummary
-  isLoading: boolean
-  isError: boolean
-  updatedAt: number
-  onRefresh: () => void
-}) {
-  const { t } = useTranslation()
-  const unavailable = isError || summary?.unavailable
-  const configured = summary?.configured ?? true
-  const weeklyChange = summary?.weeklyReport?.changePercent ?? 0
-
-  return (
-    <Card>
-      <CardHeader className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div className='space-y-1.5'>
-          <CardTitle className='flex items-center gap-2'>
-            <BugIcon className='text-primary size-5' />
-            {t('dashboard.sentry.title')}
-          </CardTitle>
-          <CardDescription>{t('dashboard.sentry.description')}</CardDescription>
-        </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <Badge
-            variant={!configured || unavailable ? 'destructive' : 'secondary'}
-            className={
-              configured && !unavailable
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                : ''
-            }
-          >
-            {!configured
-              ? 'Not configured'
-              : unavailable
-                ? 'Unavailable'
-                : 'Connected'}
-          </Badge>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={onRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCwIcon
-              className={isLoading ? 'size-4 animate-spin' : 'size-4'}
-            />
-            {t('dashboard.systemHealth.refresh')}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className='space-y-4'>
-        {!configured || unavailable ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-            {summary?.reason ||
-              'Sentry summary is not available. Check Sentry dashboard environment variables and API token scopes.'}
-          </div>
-        ) : (
-          <>
-            <div className='grid gap-3 md:grid-cols-4'>
-              <HealthSummaryItem
-                label={t('dashboard.sentry.errorsToday')}
-                value={formatNumber(summary?.metrics?.totalErrorsToday)}
-                tone={
-                  (summary?.metrics?.totalErrorsToday ?? 0) > 0
-                    ? 'critical'
-                    : 'healthy'
-                }
-              />
-              <HealthSummaryItem
-                label={t('dashboard.sentry.affectedUsers')}
-                value={formatNumber(summary?.metrics?.affectedUsersToday)}
-                tone='neutral'
-              />
-              <HealthSummaryItem
-                label={t('dashboard.sentry.crashFreeSessions')}
-                value={formatPercent(summary?.releaseHealth?.crashFreeSessions)}
-                tone={getCrashFreeTone(
-                  summary?.releaseHealth?.crashFreeSessions
-                )}
-              />
-              <HealthSummaryItem
-                label={t('dashboard.sentry.weeklyChange')}
-                value={`${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(
-                  1
-                )}%`}
-                tone={weeklyChange > 0 ? 'critical' : 'healthy'}
-              />
-            </div>
-
-            <div className='grid gap-4 xl:grid-cols-[1fr_1.2fr]'>
-              <SentryTrendCard trend={summary?.trend ?? []} />
-              <SentryEnvironmentCard
-                environments={summary?.errorsByEnvironment ?? []}
-              />
-            </div>
-
-            <div className='grid gap-4 xl:grid-cols-2'>
-              <SentryIssueList
-                title={t('dashboard.sentry.topErrorsTitle')}
-                description={t('dashboard.sentry.topErrorsDesc')}
-                issues={summary?.topIssues ?? []}
-              />
-              <SentryIssueList
-                title={t('dashboard.sentry.latestErrorsTitle')}
-                description={t('dashboard.sentry.latestErrorsDesc')}
-                issues={summary?.latestIssues ?? []}
-              />
-            </div>
-
-            <p className='text-muted-foreground text-xs'>
-              {t('dashboard.sentry.lastSynced')}{' '}
-              {updatedAt
-                ? formatDistanceToNow(new Date(updatedAt), { addSuffix: true })
-                : 'never'}
-            </p>
-          </>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function SentryTrendCard({
-  trend,
-}: {
-  trend: Array<{ date: string; errors: number }>
-}) {
-  const { t } = useTranslation()
-  const max = Math.max(...trend.map((item) => item.errors), 1)
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2 text-base'>
-          <BarChart3Icon className='size-4' />
-          {t('dashboard.sentry.errorTrend')}
-        </CardTitle>
-        <CardDescription>
-          {t('dashboard.sentry.errorTrendDesc')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {trend.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-            {t('dashboard.sentry.noTrendData')}
-          </div>
-        ) : (
-          <div className='flex h-32 items-end gap-1'>
-            {trend.map((item) => (
-              <div
-                key={item.date}
-                className='group bg-primary/15 hover:bg-primary/30 flex flex-1 items-end rounded-sm transition-colors'
-                title={`${new Date(item.date).toLocaleDateString()}: ${
-                  item.errors
-                } errors`}
-              >
-                <div
-                  className='bg-primary w-full rounded-sm'
-                  style={{
-                    height: `${Math.max((item.errors / max) * 100, 4)}%`,
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function SentryEnvironmentCard({
-  environments,
-}: {
-  environments: NonNullable<SentrySummary['errorsByEnvironment']>
-}) {
-  const { t } = useTranslation()
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='text-base'>
-          {t('dashboard.sentry.errorsByEnvironment')}
-        </CardTitle>
-        <CardDescription>
-          {t('dashboard.sentry.errorsByEnvDesc')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-2'>
-        {environments.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-            {t('dashboard.sentry.noEnvData')}
-          </div>
-        ) : (
-          environments.map((item) => (
-            <div
-              key={item.environment}
-              className='flex items-center justify-between gap-4 rounded-md border p-3'
-            >
-              <div>
-                <p className='font-medium'>{item.environment}</p>
-                <p className='text-muted-foreground text-xs'>
-                  {formatNumber(item.unresolvedIssues)}{' '}
-                  {t('dashboard.sentry.unresolvedIssues')} ·{' '}
-                  {formatNumber(item.affectedUsersApprox)}{' '}
-                  {t('dashboard.sentry.affectedUsers')}
-                </p>
-              </div>
-              <Badge
-                variant={item.eventsApprox > 0 ? 'destructive' : 'secondary'}
-              >
-                {formatNumber(item.eventsApprox)}
-              </Badge>
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function SentryIssueList({
-  title,
-  description,
-  issues,
-}: {
-  title: string
-  description: string
-  issues: SentryIssue[]
-}) {
-  const { t } = useTranslation()
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className='text-base'>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-2'>
-        {issues.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-            {t('dashboard.sentry.noIssuesFound')}
-          </div>
-        ) : (
-          issues.map((issue) => (
-            <a
-              key={issue.id}
-              href={issue.permalink}
-              target='_blank'
-              rel='noreferrer'
-              className='hover:bg-muted/60 flex items-start justify-between gap-3 rounded-md border p-3 transition-colors'
-            >
-              <div className='min-w-0'>
-                <div className='flex flex-wrap items-center gap-2'>
-                  <p className='truncate font-medium'>{issue.title}</p>
-                  {issue.level && (
-                    <Badge variant='outline'>{issue.level}</Badge>
-                  )}
-                </div>
-                <p className='text-muted-foreground mt-1 truncate text-xs'>
-                  {issue.culprit || issue.shortId || issue.id}
-                </p>
-                <p className='text-muted-foreground mt-1 text-xs'>
-                  {formatNumber(issue.count)} {t('dashboard.sentry.events')} ·{' '}
-                  {formatNumber(issue.userCount)} {t('dashboard.sentry.users')}
-                </p>
-              </div>
-              <ExternalLinkIcon className='text-muted-foreground mt-1 size-4 shrink-0' />
-            </a>
-          ))
-        )}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -960,133 +551,4 @@ function formatIndicatorDetail(detail: HealthIndicator) {
 
 function formatNumber(value?: number | null) {
   return new Intl.NumberFormat().format(value ?? 0)
-}
-
-function formatPercent(value?: number | null) {
-  if (value === null || value === undefined) {
-    return 'N/A'
-  }
-
-  return `${value.toFixed(2)}%`
-}
-
-function getCrashFreeTone(value?: number | null) {
-  if (value === null || value === undefined) {
-    return 'neutral'
-  }
-
-  if (value >= 99.5) {
-    return 'healthy'
-  }
-
-  if (value >= 98) {
-    return 'warning'
-  }
-
-  return 'critical'
-}
-
-function PresenceMetricCard({
-  title,
-  value,
-  description,
-  icon,
-}: {
-  title: string
-  value: number
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className='flex items-center justify-between gap-4'>
-        <div className='space-y-1'>
-          <p className='text-muted-foreground text-sm font-medium'>{title}</p>
-          <p className='text-3xl font-bold'>{value}</p>
-          <p className='text-muted-foreground text-xs'>{description}</p>
-        </div>
-        <div className='bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-md'>
-          {icon}
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function OnlinePresenceList({
-  title,
-  description,
-  emptyText,
-  items,
-  onSelect,
-}: {
-  title: string
-  description: string
-  emptyText: string
-  items: OnlinePresence[]
-  onSelect: (item: OnlinePresence) => void
-}) {
-  const { t } = useTranslation()
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-2'>
-        {items.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-            {emptyText}
-          </div>
-        ) : (
-          items.map((item) => (
-            <button
-              key={`${item.type}:${item.id}`}
-              type='button'
-              onClick={() => onSelect(item)}
-              className='hover:bg-muted/60 focus-visible:ring-ring flex w-full items-center gap-3 rounded-md border p-3 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none'
-            >
-              <Avatar className='size-10'>
-                <AvatarImage src={item.avatar} alt={item.fullName} />
-                <AvatarFallback>{getInitials(item)}</AvatarFallback>
-              </Avatar>
-              <div className='min-w-0 flex-1'>
-                <div className='flex flex-wrap items-center gap-2'>
-                  <p className='truncate font-medium'>
-                    {item.fullName || item.email}
-                  </p>
-                  <Badge variant='secondary' className='gap-1'>
-                    <span className='size-1.5 rounded-full bg-emerald-500' />
-                    {t('common.online', { defaultValue: 'Online' })}
-                  </Badge>
-                </div>
-                <p className='text-muted-foreground truncate text-sm'>
-                  {item.email}
-                </p>
-              </div>
-              <div className='text-muted-foreground hidden text-right text-xs sm:block'>
-                <p>
-                  {t('dashboard.realtime.seen', { defaultValue: 'Seen' })}{' '}
-                  {formatDistanceToNow(new Date(item.lastSeenAt), {
-                    addSuffix: true,
-                  })}
-                </p>
-              </div>
-            </button>
-          ))
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function getInitials(item: OnlinePresence) {
-  const source = item.fullName || item.email
-
-  return source
-    .split(/\s|@/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
 }

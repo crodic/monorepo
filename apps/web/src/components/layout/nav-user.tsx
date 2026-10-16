@@ -4,7 +4,6 @@ import {
   ChevronsUpDown,
   Lock,
   LogOut,
-  Bell,
   PaletteIcon,
   UserCheck,
 } from 'lucide-react'
@@ -116,12 +115,6 @@ export function NavUser() {
                   <Link to='/settings/password'>
                     <Lock />
                     {t('settings.password.title')}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to='/settings/notifications'>
-                    <Bell />
-                    {t('navigation.other.notifications')}
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
