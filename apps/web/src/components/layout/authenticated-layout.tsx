@@ -4,7 +4,6 @@ import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { LayoutProvider } from '@/context/layout-provider'
 import { SearchProvider } from '@/context/search-provider'
-import { usePresenceHeartbeat } from '@/hooks/use-presence-heartbeat'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import Loader from '@/components/loader'
@@ -16,7 +15,6 @@ type AuthenticatedLayoutProps = {
 }
 
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
-  usePresenceHeartbeat()
   const defaultOpen = getCookie('sidebar_state') !== 'false'
   // const userId = useAuthStore((state) => state.id)
   return (
