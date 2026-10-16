@@ -8,6 +8,7 @@ import xior from "xior";
 import { LoginResponseData } from "@/types/apis";
 import { useQueryClient } from "@tanstack/react-query";
 import { PROFILE_QUERY_KEY } from "@/hooks/use-profile";
+import { useAuthStore } from "@/store/use-auth-store";
 
 export default function OAuthCallback() {
   const t = useTranslations("Auth.oauth");
@@ -42,6 +43,8 @@ export default function OAuthCallback() {
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
         });
+
+        useAuthStore.getState().setTokens({ accessToken: data.accessToken });
 
         await queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
         toast.success(t("successToast"));

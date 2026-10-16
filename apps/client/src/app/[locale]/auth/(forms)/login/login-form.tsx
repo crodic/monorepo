@@ -34,6 +34,7 @@ import { AUTH_CODE, AUTH_QUERY_PARAM, AuthCode } from "@/constants/auth";
 import { Link } from "@/i18n/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { PROFILE_QUERY_KEY } from "@/hooks/use-profile";
+import { useAuthStore } from "@/store/use-auth-store";
 
 export default function LoginForm() {
   const t = useTranslations("Auth.login");
@@ -114,6 +115,8 @@ export default function LoginForm() {
         accessToken,
         refreshToken,
       });
+
+      useAuthStore.getState().setTokens({ accessToken });
 
       // Clear the cached null profile so /profile fetches fresh user data
       await queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
