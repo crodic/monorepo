@@ -19,11 +19,13 @@ import {
 interface DataTablePaginationProps<TData> extends React.ComponentProps<'div'> {
   table: Table<TData>
   pageSizeOptions?: number[]
+  totalRows?: number
 }
 
 export function DataTablePagination<TData>({
   table,
   pageSizeOptions = [10, 20, 30, 40, 50],
+  totalRows,
   className,
   ...props
 }: DataTablePaginationProps<TData>) {
@@ -40,7 +42,7 @@ export function DataTablePagination<TData>({
       <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap'>
         {t('dataTable.pagination.selectedRows', {
           selected: table.getFilteredSelectedRowModel().rows.length,
-          total: table.getFilteredRowModel().rows.length,
+          total: totalRows ?? table.getFilteredRowModel().rows.length,
         })}
       </div>
       <div className='flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8'>

@@ -1,9 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import { LockClosedIcon } from '@radix-ui/react-icons'
 import type { Table } from '@tanstack/react-table'
-import { Check, RotateCcw, Settings2 } from 'lucide-react'
+import { Check, Lock, RotateCcw, Settings2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -106,7 +105,7 @@ export function DataTableViewOptions<TData>({
                     </span>
                     <div className='ml-auto flex items-center gap-2'>
                       {!canHide ? (
-                        <LockClosedIcon className='text-muted-foreground size-3.5 shrink-0' />
+                        <Lock className='text-muted-foreground size-3.5 shrink-0' />
                       ) : (
                         <Check
                           className={cn(

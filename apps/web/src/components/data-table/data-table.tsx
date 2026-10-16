@@ -38,6 +38,7 @@ interface DataTableProps<TData> extends React.ComponentProps<'div'> {
   onVirtualEndReached?: () => void
   virtualEndReachedThreshold?: number
   hidePagination?: boolean
+  totalRows?: number
 }
 
 export function DataTable<TData>({
@@ -58,6 +59,7 @@ export function DataTable<TData>({
   onVirtualEndReached,
   virtualEndReachedThreshold = 10,
   hidePagination,
+  totalRows,
   ...props
 }: DataTableProps<TData>) {
   const { t } = useTranslation()
@@ -153,7 +155,9 @@ export function DataTable<TData>({
         )}
       </div>
       <div className='flex flex-col gap-2.5'>
-        {!hidePagination && <DataTablePagination table={table} />}
+        {!hidePagination && (
+          <DataTablePagination table={table} totalRows={totalRows} />
+        )}
         {actionBar &&
           table.getFilteredSelectedRowModel().rows.length > 0 &&
           actionBar}
