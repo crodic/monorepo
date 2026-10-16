@@ -86,13 +86,17 @@ When introducing a new domain feature (e.g., `articles`, `products`, `invoices`)
 
 ### Step 1: Database Entity & Migration (`apps/api`)
 
-1. Create the TypeORM entity in `apps/api/src/api/<feature>/entities/<feature>.entity.ts`.
-2. Generate and run the TypeORM migration:
+1. Define or update the TypeORM entity in `apps/api/src/api/<feature>/entities/<feature>.entity.ts`. Ensure all column types, defaults, indexes, and relations are declared via entity decorators.
+2. **NEVER manually write or handcraft migrations** (avoid `migration:create` or hand-coding SQL/MigrationInterface files). Hand-written migrations inevitably cause schema drift between the physical database and TypeORM entity metadata.
+3. **ALWAYS generate migrations via `migration:generate`**:
    ```bash
+   # Automatically diff TypeORM entities against the database
    pnpm --filter api migration:generate src/database/migrations/<FeatureName>
+
+   # Inspect generated SQL, then execute:
    pnpm --filter api migration:run
    ```
-3. Never use TypeORM `synchronize: true` in production. Always use migrations.
+4. Never use TypeORM `synchronize: true` in production. Always rely on generated migrations.
 
 ### Step 2: DTOs & Validation Decorators (`apps/api`)
 
@@ -194,6 +198,7 @@ const queryString = new RestQueryBuilder()
 - **Logging**: Use NestJS `Logger` service (`new Logger(Service.name)`). Never use `console.log`.
 - **N+1 Query Prevention**: Always use `allowedIncludes`, explicit joins, or relation loaders. Never execute queries inside loops.
 - **QueryBuilder Whitelists**: Every list endpoint must declare explicit `allowedFilters`, `allowedSorts`, `allowedIncludes`, and `maxLimit` (default: 100) to protect against SQL injection and DoS attacks.
+- **Strict Migration Policy**: **Never manually write or handcraft TypeORM migrations** (`migration:create` or raw SQL scripts). Always update or create the TypeORM entity class first, then execute `pnpm --filter api migration:generate src/database/migrations/<Name>`. Hand-crafted migrations create dangerous schema drift between PostgreSQL and TypeORM entity metadata, leading to diff errors and database corruption.
 
 ### Language & Documentation Standards
 

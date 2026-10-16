@@ -384,7 +384,10 @@ export const AppDataSource = new DataSource({
   poolSize: 10,
 
   // SSL (for production)
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
 // Initialize connection
@@ -459,7 +462,7 @@ export class CreateUsers1234567890 implements MigrationInterface {
           },
         ],
       }),
-      true
+      true,
     );
 
     await queryRunner.createIndex(
@@ -467,7 +470,7 @@ export class CreateUsers1234567890 implements MigrationInterface {
       new TableIndex({
         name: "IDX_USERS_EMAIL",
         columnNames: ["email"],
-      })
+      }),
     );
   }
 
@@ -585,6 +588,10 @@ Never use `synchronize: true` in production. Always use migrations:
 // Development: Use migrations, not sync
 synchronize: false,
 ```
+
+### Always Generate Migrations (Avoid Manual Migration Creation)
+
+Never write migrations by hand or with `migration:create`. Always modify entity classes and generate migrations using `migration:generate` (`pnpm --filter api migration:generate src/database/migrations/<Name>`). Manual migrations cause schema drift where the live database differs from the TypeORM entity metadata.
 
 ### Eager vs Lazy Loading
 
