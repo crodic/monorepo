@@ -32,4 +32,3 @@ Welcome to the central documentation index for this monorepo. This directory con
 - **[`apps/web`](../apps/web)**: Vite 6 + React 19 admin management portal.
 - **[`apps/client`](../apps/client)**: Next.js 16 App Router customer-facing application with i18n.
 - **[`packages/query-builder`](../packages/query-builder)**: Shared type-safe query builder library.
-- **[`packages/ui`](../packages/ui)**: Shared primitive UI components.

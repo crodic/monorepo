@@ -32,4 +32,3 @@ Chào mừng bạn đến với trung tâm tài liệu kỹ thuật của monore
 - **[`apps/web`](../apps/web)**: Trang quản trị Vite 6 + React 19.
 - **[`apps/client`](../apps/client)**: Ứng dụng khách hàng Next.js 16 App Router với đa ngôn ngữ i18n.
 - **[`packages/query-builder`](../packages/query-builder)**: Thư viện tạo query REST và NestJS Paginate dùng chung.
-- **[`packages/ui`](../packages/ui)**: Bộ component giao diện dùng chung.

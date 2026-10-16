@@ -22,7 +22,6 @@ monorepo/
 │   └── web/                    # Vite 6 + React 19 admin management portal
 ├── packages/
 │   ├── query-builder/          # Shared type-safe query builders (RestQueryBuilder & PaginateQueryBuilder)
-│   ├── ui/                     # Shared Radix UI & Tailwind primitive components
 │   ├── eslint-config/          # Shared ESLint flat configurations
 │   ├── typescript-config/      # Shared tsconfig definitions
 │   ├── prettier-config/        # Shared Prettier formatting rules
@@ -39,7 +38,6 @@ monorepo/
 | **[`apps/client`](apps/client)**                       | Application | Next.js 16 (App Router), React 19, Turbopack, TailwindCSS v4, next-intl | Public-facing client web application featuring server components, SEO metadata, and multi-language support. |
 | **[`apps/web`](apps/web)**                             | Application | Vite 6, React 19, TailwindCSS v4, TanStack Query, Radix UI, Tiptap      | Admin management portal with rich data tables, sortable lists, theme editor, and file managers.             |
 | **[`packages/query-builder`](packages/query-builder)** | Package     | TypeScript, Vitest                                                      | Dual-mode query builder supporting standard RESTful / JSON:API queries and `nestjs-paginate`.               |
-| **[`packages/ui`](packages/ui)**                       | Package     | React, Radix UI, Tailwind CSS                                           | Headless UI primitives and shared components across frontends.                                              |
 
 ---
 
