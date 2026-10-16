@@ -1,0 +1,9 @@
+{
+  "validation": {
+    "error": "共通バリデーションエラー"
+  },
+  "error": {
+    "internal_server_error": "内部サーバーエラーが発生しました",
+    "entity_not_found": "リクエストされたデータが見つかりません"
+  }
+}

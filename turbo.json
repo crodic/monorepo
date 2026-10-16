@@ -1,15 +1,31 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": ["NODE_ENV", "APP_PORT"],
+  "globalPassThroughEnv": [
+    "DATABASE_*",
+    "APP_*",
+    "API_*",
+    "REDIS_*",
+    "MAIL_*",
+    "FILESYSTEM_*",
+    "AWS_*",
+    "AUTH_*",
+    "USER_AUTH_*",
+    "GOOGLE_*",
+    "BULL_*",
+    "ADMIN_*",
+    "SENTRY_*"
+  ],
   "tasks": {
     "build": {
       "description": "Compiles TypeScript and bundles the application",
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
     },
     "lint": {
-      "description": "Checks code style and catches common errors", 
+      "description": "Checks code style and catches common errors",
       "dependsOn": ["^lint"]
     },
     "check-types": {

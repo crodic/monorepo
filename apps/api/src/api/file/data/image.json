@@ -1,0 +1,126 @@
+{
+  "image": {
+    "width": {
+      "pattern": "w_{number}",
+      "example": "w_300",
+      "description": "Set image width."
+    },
+    "height": {
+      "pattern": "h_{number}",
+      "example": "h_200",
+      "description": "Set image height."
+    },
+    "crop": {
+      "pattern": "c_{mode}",
+      "example": "c_fill",
+      "modes": [
+        "fill",
+        "cover",
+        "fit",
+        "crop",
+        "limit",
+        "pad",
+        "lfill",
+        "thumb"
+      ],
+      "description": "Image cropping mode."
+    },
+    "gravity": {
+      "pattern": "g_{direction}",
+      "example": "g_face",
+      "directions": [
+        "north",
+        "south",
+        "east",
+        "west",
+        "center",
+        "face",
+        "auto"
+      ],
+      "description": "Preferred anchor position for cover or thumbnail crop."
+    },
+    "format": {
+      "pattern": "f_{format}",
+      "example": "f_webp",
+      "formats": ["jpg", "jpeg", "png", "webp"],
+      "description": "Output format."
+    },
+    "quality": {
+      "pattern": "q_{1-100}",
+      "example": "q_80",
+      "description": "Output image quality (1–100)."
+    },
+    "aspect_ratio": {
+      "pattern": "ar_{ratio}",
+      "example": "ar_16:9",
+      "description": "Change image aspect ratio."
+    },
+    "overlay": {
+      "pattern": "l_{value}",
+      "examples": [
+        "l_logo",
+        "l_text:Hello",
+        "l_fetch:https://domain.com/wm.png"
+      ],
+      "description": "Overlay logo, text, or URL (processed by ImageTransformer)."
+    },
+    "effect": {
+      "pattern": "e_{type}:{value?}",
+      "examples": ["e_blur:100", "e_sharpen:50", "e_grayscale"],
+      "types": [
+        "blur",
+        "sharpen",
+        "pixelate",
+        "grayscale",
+        "brightness",
+        "contrast",
+        "gamma",
+        "colorize"
+      ],
+      "description": "Apply effect to image."
+    },
+    "rotation": {
+      "pattern": "a_{degrees}",
+      "example": "a_90",
+      "description": "Rotate image by degrees (90, 180, 270...)."
+    },
+    "flip": {
+      "pattern": "a_vflip or a_hflip",
+      "examples": ["a_vflip", "a_hflip"],
+      "description": "Flip image vertically or horizontally."
+    },
+    "auto_orient": {
+      "pattern": "a_auto",
+      "example": "a_auto",
+      "description": "Auto rotate image based on EXIF."
+    },
+    "background": {
+      "pattern": "b_{value}",
+      "examples": ["b_black", "b_auto", "b_rgb:ff00aa"],
+      "description": "Background color for flatten or pad."
+    }
+  },
+
+  "video": {
+    "bitrate": {
+      "pattern": "br_{value}",
+      "example": "br_500k",
+      "description": "Video bitrate."
+    },
+    "fps": {
+      "pattern": "fps_{number}",
+      "example": "fps_30",
+      "description": "Frames per second."
+    },
+    "start": {
+      "pattern": "start_{seconds}",
+      "example": "start_1.25",
+      "description": "Video start offset time in seconds."
+    },
+    "duration": {
+      "pattern": "dur_{seconds}",
+      "example": "dur_2.5",
+      "description": "Duration of clip to process in seconds."
+    }
+  }
+}

@@ -1,0 +1,380 @@
+import { UserChangePasswordResDto } from '../../user/dto/user-change-password.res.dto';
+import { UserResDto } from '../../user/dto/user.res.dto';
+import { AutoIncrementID } from '../../../common/types/common.type';
+import { ESessionUserType } from '../../../common/constants/entity.enum';
+import { CurrentUser } from '../../../decorators/current-user.decorator';
+import {
+  ApiAuth,
+  ApiAuthOptional,
+  ApiPublic,
+} from '../../../decorators/http.decorators';
+import { SkipPolicies } from '../../../decorators/skip-policies.decorator';
+import { GoogleOAuthGuard } from '../../../guards/google-oauth.guard';
+import { UserAuthGuard } from '../../../guards/user-auth.guard';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Request,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { ChangePasswordReqDto } from '../dto/change-password.req.dto';
+import { ForgotPasswordReqDto } from '../dto/forgot-password.req.dto';
+import { ForgotPasswordResDto } from '../dto/forgot-password.res.dto';
+import { RefreshReqDto } from '../dto/refresh.req.dto';
+import { RefreshResDto } from '../dto/refresh.res.dto';
+import { RegisterResDto } from '../dto/register.res.dto';
+import { ResendEmailVerifyReqDto } from '../dto/resend-email-verify.req.dto';
+import { ResendEmailVerifyResDto } from '../dto/resend-email-verify.res.dto';
+import { ResetPasswordReqDto } from '../dto/reset-password.req.dto';
+import { ResetPasswordResDto } from '../dto/reset-password.res.dto';
+import { SessionResDto } from '../dto/session.res.dto';
+import { SetupInitialPasswordReqDto } from '../dto/users/setup-initial-password.req.dto';
+import { SocialAccountResDto } from '../dto/users/social-account.res.dto';
+import { SocialExchangeReqDto } from '../dto/users/social-exchange.req.dto';
+import { SocialLinkUrlResDto } from '../dto/users/social-link-url.res.dto';
+import { UpdateAuthUserMeReqDto } from '../dto/users/update-me.req.dto';
+import { UserLoginReqDto } from '../dto/users/user-login.req.dto';
+import { UserLoginResDto } from '../dto/users/user-login.res.dto';
+import { UserRegisterReqDto } from '../dto/users/user-register.req.dto';
+import { ProdOnlyThrottleGuard } from '../guards/ProdOnlyThrottle.guard';
+import { AuthSessionService } from '../services/auth-session.service';
+import { UserAccountRecoveryService } from '../services/user-account-recovery.service';
+import { UserAuthService } from '../services/user-auth.service';
+import { JwtPayloadType } from '../types/jwt-payload.type';
+import { clearAuthCookies, setAuthCookies } from '../utils/auth-cookie.util';
+
+@ApiTags('User Authentication')
+@Controller({
+  path: 'user/auth',
+  version: '1',
+})
+@UseGuards(UserAuthGuard, ProdOnlyThrottleGuard)
+export class UserAuthenticationController {
+  constructor(
+    private readonly userAuthService: UserAuthService,
+    private readonly authSessionService: AuthSessionService,
+    private readonly userAccountRecoveryService: UserAccountRecoveryService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  @ApiPublic({
+    type: UserLoginResDto,
+    summary: 'Sign-in',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('login')
+  async signIn(
+    @Body() userLoginDto: UserLoginReqDto,
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<UserLoginResDto> {
+    const result = await this.userAuthService.signIn(userLoginDto, {
+      ipAddress: req.ip,
+      userAgent: req.headers?.['user-agent'],
+    });
+    setAuthCookies({
+      res,
+      configService: this.configService,
+      prefix: 'user',
+      tokens: result,
+    });
+    return result;
+  }
+
+  @ApiPublic({
+    type: RegisterResDto,
+    summary: 'Sign-up',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('register')
+  async signUp(@Body() dto: UserRegisterReqDto): Promise<RegisterResDto> {
+    return await this.userAuthService.signUp(dto);
+  }
+
+  @ApiPublic({
+    type: RefreshResDto,
+    summary: 'Refresh token',
+  })
+  @SkipThrottle()
+  @Post('refresh')
+  async refresh(
+    @Body() dto: RefreshReqDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<RefreshResDto> {
+    const result = await this.userAuthService.refreshToken(dto);
+    setAuthCookies({
+      res,
+      configService: this.configService,
+      prefix: 'user',
+      tokens: result,
+    });
+    return result;
+  }
+
+  @ApiAuthOptional({
+    summary: 'Logout for client',
+    errorResponses: [304, 500, 401, 403],
+    statusCode: 204,
+  })
+  @SkipThrottle()
+  @SkipPolicies()
+  @Post('logout')
+  async logout(
+    @CurrentUser() userToken?: JwtPayloadType,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<void> {
+    if (userToken) {
+      await this.authSessionService.logout(userToken, ESessionUserType.USER);
+    }
+    if (res) {
+      clearAuthCookies({
+        res,
+        configService: this.configService,
+        prefix: 'user',
+      });
+    }
+  }
+
+  @ApiAuth({
+    type: SessionResDto,
+    summary: 'List current user sessions',
+  })
+  @SkipThrottle()
+  @Get('sessions')
+  async sessions(@CurrentUser() userToken: JwtPayloadType) {
+    return this.authSessionService.listSessions(
+      userToken,
+      ESessionUserType.USER,
+    );
+  }
+
+  @ApiAuth({ summary: 'Revoke all current user sessions' })
+  @SkipThrottle()
+  @Delete('sessions')
+  async revokeAllSessions(@CurrentUser() userToken: JwtPayloadType) {
+    return this.authSessionService.revokeAllSessions(
+      userToken,
+      ESessionUserType.USER,
+    );
+  }
+
+  @ApiAuth({ summary: 'Revoke one current user session' })
+  @SkipThrottle()
+  @Delete('sessions/:id')
+  async revokeSession(
+    @CurrentUser() userToken: JwtPayloadType,
+    @Param('id') sessionId: AutoIncrementID,
+  ) {
+    return this.authSessionService.revokeSessionById(
+      userToken,
+      ESessionUserType.USER,
+      sessionId,
+    );
+  }
+
+  @ApiPublic({ type: ForgotPasswordResDto, summary: 'Forgot password' })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('forgot-password')
+  async forgotPassword(
+    @Body() dto: ForgotPasswordReqDto,
+  ): Promise<ForgotPasswordResDto> {
+    return await this.userAccountRecoveryService.forgotPassword(dto);
+  }
+
+  @ApiPublic({ type: ResetPasswordResDto, summary: 'Reset password' })
+  @ApiQuery({ name: 'token', type: 'string' })
+  @Post('reset-password')
+  async resetPassword(
+    @Query('token') token: string,
+    @Body() dto: ResetPasswordReqDto,
+  ): Promise<ResetPasswordResDto> {
+    return await this.userAccountRecoveryService.resetPassword(token, dto);
+  }
+
+  @ApiPublic({ summary: 'Verify email' })
+  @ApiQuery({ name: 'token', type: 'string' })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Get('verify/email')
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+    try {
+      await this.userAccountRecoveryService.verifyAccount(token);
+      return res.redirect(this.getVerificationRedirectUrl('success'));
+    } catch {
+      return res.redirect(this.getVerificationRedirectUrl('failed'));
+    }
+  }
+
+  @ApiPublic({
+    type: ResendEmailVerifyResDto,
+    summary: 'Resend verify email',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('verify/email/resend')
+  async resendVerifyEmail(
+    @Body() dto: ResendEmailVerifyReqDto,
+  ): Promise<ResendEmailVerifyResDto> {
+    return this.userAccountRecoveryService.resendVerifyEmail(dto);
+  }
+
+  @ApiPublic({ summary: 'Start Google OAuth login' })
+  @Get('social/google')
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuth() {
+    return;
+  }
+
+  @ApiPublic({ summary: 'Handle Google OAuth callback' })
+  @Get('social/google/callback')
+  @UseGuards(GoogleOAuthGuard)
+  async googleAuthRedirect(@Request() req: any, @Res() res: Response) {
+    try {
+      const redirectUrl = await this.userAuthService.handleSocialLoginCallback(
+        req.user,
+        req.query?.state,
+        {
+          ipAddress: req.ip,
+          userAgent: req.headers?.['user-agent'],
+        },
+      );
+
+      return res.redirect(redirectUrl);
+    } catch {
+      return res.redirect(this.getSocialRedirectUrl('failed'));
+    }
+  }
+
+  @ApiPublic({ type: UserLoginResDto, summary: 'Exchange social login token' })
+  @Post('social/exchange')
+  async exchangeSocialLogin(
+    @Body() dto: SocialExchangeReqDto,
+  ): Promise<UserLoginResDto> {
+    return this.userAuthService.exchangeSocialLogin(dto);
+  }
+
+  @ApiAuth({
+    type: SocialLinkUrlResDto,
+    summary: 'Create Google link account URL',
+  })
+  @SkipThrottle()
+  @Post('me/social/google/link')
+  async createGoogleLinkUrl(
+    @CurrentUser() userToken: JwtPayloadType,
+  ): Promise<SocialLinkUrlResDto> {
+    return this.userAuthService.createGoogleLinkUrl(userToken);
+  }
+
+  @ApiAuth({
+    type: SocialAccountResDto,
+    summary: 'List linked social accounts',
+  })
+  @SkipThrottle()
+  @Get('me/social-accounts')
+  async listSocialAccounts(
+    @CurrentUser() userToken: JwtPayloadType,
+  ): Promise<SocialAccountResDto[]> {
+    return this.userAuthService.listSocialAccounts(userToken);
+  }
+
+  @ApiAuth({
+    type: UserChangePasswordResDto,
+    summary: 'Change password',
+    errorResponses: [400, 401, 403, 404, 500],
+  })
+  @SkipThrottle()
+  @Post('me/change-password')
+  async changePassword(
+    @CurrentUser() userToken: JwtPayloadType,
+    @Body() reqDto: ChangePasswordReqDto,
+  ): Promise<UserChangePasswordResDto> {
+    return this.userAuthService.changePassword(
+      userToken.id as AutoIncrementID,
+      reqDto,
+      userToken.sessionId,
+    );
+  }
+
+  @ApiAuth({
+    type: UserChangePasswordResDto,
+    summary: 'Setup initial password for social-login users',
+    errorResponses: [400, 401, 403, 404, 500],
+  })
+  @SkipThrottle()
+  @Post('me/setup-password')
+  async setupInitialPassword(
+    @CurrentUser('id') userId: AutoIncrementID,
+    @Body() reqDto: SetupInitialPasswordReqDto,
+  ): Promise<UserChangePasswordResDto> {
+    return this.userAuthService.setupInitialPassword(userId, reqDto);
+  }
+
+  @ApiAuth({
+    type: UserResDto,
+    summary: 'Get current user',
+  })
+  @SkipThrottle()
+  @Get('me')
+  async getCurrentUser(
+    @CurrentUser() userToken: JwtPayloadType,
+  ): Promise<UserResDto> {
+    return await this.userAuthService.me(userToken);
+  }
+
+  @Put('me')
+  @ApiAuth({
+    type: UserResDto,
+    summary: 'Update current user',
+  })
+  @SkipThrottle()
+  async updateMe(
+    @CurrentUser('id') userId: AutoIncrementID,
+    @Body() reqDto: UpdateAuthUserMeReqDto,
+  ): Promise<{ message: string }> {
+    return await this.userAuthService.updateMe(userId, reqDto);
+  }
+
+  private getVerificationRedirectUrl(status: 'success' | 'failed') {
+    const clientUrl =
+      this.getOriginFromUrl(
+        this.configService.get<string>('auth.clientResetPasswordUrl'),
+      ) || 'http://localhost:3000';
+    const url = new URL('/auth/login', clientUrl);
+
+    url.searchParams.set('verification', status);
+
+    return url.toString();
+  }
+
+  private getSocialRedirectUrl(status: 'failed') {
+    const clientUrl =
+      this.configService.get<string>('auth.clientUrl') ||
+      'http://localhost:3000';
+    const url = new URL('/auth/login', clientUrl);
+
+    url.searchParams.set('social', status);
+
+    return url.toString();
+  }
+
+  private getOriginFromUrl(url?: string) {
+    if (!url) {
+      return null;
+    }
+
+    try {
+      return new URL(url).origin;
+    } catch {
+      return null;
+    }
+  }
+}

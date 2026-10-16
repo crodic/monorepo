@@ -1,0 +1,359 @@
+import { ApiAuth } from '../../decorators/http.decorators';
+import { FilesystemService } from '../../filesystem/filesystem.service';
+import { AdminAuthGuard } from '../../guards/admin-auth.guard';
+import { SettingKeyValidationPipe } from '../../pipes/setting-key-validation.pipe';
+import { getPackageVersion } from '../../utils/app-version.util';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  WEBSITE_MAX_FILE_SIZE,
+  websiteUploadOptions,
+} from './configs/multer.config';
+import { UpdateWebsiteSettingReqDto } from './dto/update-website-setting.req.dto';
+import { WebsiteSettingResDto } from './dto/website-setting.res.dto';
+import { SettingsService } from './settings.service';
+import { ValidSettingKey } from './validations/valid-setting-key.validate';
+
+@ApiTags('Settings')
+@Controller({
+  path: 'settings',
+  version: '1',
+})
+export class SettingsController {
+  private readonly uploadFolder = 'website';
+
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly storage: FilesystemService,
+  ) {}
+
+  @Get(':key')
+  async getSettingByKey(
+    @Param('key', SettingKeyValidationPipe) key: string,
+  ): Promise<WebsiteSettingResDto> {
+    if (!ValidSettingKey.isValid(key)) {
+      throw new NotFoundException('Invalid key');
+    }
+
+    const setting = await this.settingsService.get<WebsiteSettingResDto>(
+      key,
+      {},
+    );
+
+    return this.toWebsiteSettingDto(setting);
+  }
+
+  @Post(':key')
+  @ApiConsumes('multipart/form-data')
+  @ApiAuth({
+    summary: 'Update website settings',
+    type: WebsiteSettingResDto,
+  })
+  @ApiBody({
+    description: 'Upload a logo and favicon',
+    schema: {
+      type: 'object',
+      properties: {
+        site_logo: {
+          type: 'string',
+          format: 'binary',
+        },
+        site_dark_logo: {
+          type: 'string',
+          format: 'binary',
+        },
+        site_favicon: {
+          type: 'string',
+          format: 'binary',
+        },
+        og_image: {
+          type: 'string',
+          format: 'binary',
+        },
+        twitter_image: {
+          type: 'string',
+          format: 'binary',
+        },
+        site_brand: {
+          type: 'string',
+        },
+        site_title: {
+          type: 'string',
+        },
+        site_tagline: {
+          type: 'string',
+        },
+        meta_title: {
+          type: 'string',
+        },
+        meta_description: {
+          type: 'string',
+        },
+        canonical_url: {
+          type: 'string',
+        },
+        og_title: {
+          type: 'string',
+        },
+        og_description: {
+          type: 'string',
+        },
+        twitter_title: {
+          type: 'string',
+        },
+        twitter_description: {
+          type: 'string',
+        },
+        remove_site_logo: {
+          type: 'boolean',
+        },
+        remove_site_dark_logo: {
+          type: 'boolean',
+        },
+        remove_site_favicon: {
+          type: 'boolean',
+        },
+        remove_og_image: {
+          type: 'boolean',
+        },
+        remove_twitter_image: {
+          type: 'boolean',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'site_logo', maxCount: 1 },
+        { name: 'site_dark_logo', maxCount: 1 },
+        { name: 'site_favicon', maxCount: 1 },
+        { name: 'og_image', maxCount: 1 },
+        { name: 'twitter_image', maxCount: 1 },
+      ],
+      websiteUploadOptions,
+    ),
+  )
+  @UseGuards(AdminAuthGuard)
+  async updateWebsiteSetting(
+    @Param('key', SettingKeyValidationPipe) key: string,
+    @Body() dto: UpdateWebsiteSettingReqDto,
+    @UploadedFiles()
+    files: {
+      site_logo?: Express.Multer.File[];
+      site_dark_logo?: Express.Multer.File[];
+      site_favicon?: Express.Multer.File[];
+      og_image?: Express.Multer.File[];
+      twitter_image?: Express.Multer.File[];
+    } = {},
+  ) {
+    if (!ValidSettingKey.isValid(key)) {
+      throw new NotFoundException('Invalid key');
+    }
+
+    this.validateWebsiteUploadFiles(files);
+
+    const setting = await this.settingsService.get<WebsiteSettingResDto>(
+      key,
+      {},
+    );
+    const removeSiteLogo = this.isRemoveRequested(dto.remove_site_logo);
+    const removeSiteDarkLogo = this.isRemoveRequested(
+      dto.remove_site_dark_logo,
+    );
+    const removeSiteFavicon = this.isRemoveRequested(dto.remove_site_favicon);
+    const removeOgImage = this.isRemoveRequested(dto.remove_og_image);
+    const removeTwitterImage = this.isRemoveRequested(dto.remove_twitter_image);
+
+    const [site_logo, site_dark_logo, site_favicon, og_image, twitter_image] =
+      await Promise.all([
+        this.resolveWebsiteAsset(
+          files.site_logo?.[0],
+          removeSiteLogo,
+          setting.site_logo,
+        ),
+        this.resolveWebsiteAsset(
+          files.site_dark_logo?.[0],
+          removeSiteDarkLogo,
+          setting.site_dark_logo,
+        ),
+        this.resolveWebsiteAsset(
+          files.site_favicon?.[0],
+          removeSiteFavicon,
+          setting.site_favicon,
+        ),
+        this.resolveWebsiteAsset(
+          files.og_image?.[0],
+          removeOgImage,
+          setting.og_image,
+        ),
+        this.resolveWebsiteAsset(
+          files.twitter_image?.[0],
+          removeTwitterImage,
+          setting.twitter_image,
+        ),
+      ]);
+
+    const payload = {
+      site_brand: dto.site_brand,
+      site_title: dto.site_title,
+      site_tagline: dto.site_tagline,
+      meta_title: dto.meta_title,
+      meta_description: dto.meta_description,
+      canonical_url: dto.canonical_url,
+      og_title: dto.og_title,
+      og_description: dto.og_description,
+      twitter_title: dto.twitter_title,
+      twitter_description: dto.twitter_description,
+      site_logo,
+      site_dark_logo,
+      site_favicon,
+      og_image,
+      twitter_image,
+    };
+
+    const newSetting = { ...setting, ...payload };
+    await this.cleanupUnusedWebsiteAssets(setting, newSetting);
+    await this.settingsService.set(key, newSetting);
+
+    return this.toWebsiteSettingDto(newSetting);
+  }
+
+  private toWebsiteSettingDto(
+    setting: WebsiteSettingResDto,
+  ): WebsiteSettingResDto {
+    return plainToInstance(
+      WebsiteSettingResDto,
+      {
+        ...setting,
+        backend_version: getPackageVersion(),
+      },
+      {
+        excludeExtraneousValues: true,
+      },
+    );
+  }
+
+  private async cleanupUnusedWebsiteAssets(
+    currentSetting: WebsiteSettingResDto,
+    nextSetting: WebsiteSettingResDto,
+  ): Promise<void> {
+    await Promise.all([
+      this.deleteUnusedWebsiteAsset(
+        currentSetting.site_logo,
+        nextSetting.site_logo,
+      ),
+      this.deleteUnusedWebsiteAsset(
+        currentSetting.site_dark_logo,
+        nextSetting.site_dark_logo,
+      ),
+      this.deleteUnusedWebsiteAsset(
+        currentSetting.site_favicon,
+        nextSetting.site_favicon,
+      ),
+      this.deleteUnusedWebsiteAsset(
+        currentSetting.og_image,
+        nextSetting.og_image,
+      ),
+      this.deleteUnusedWebsiteAsset(
+        currentSetting.twitter_image,
+        nextSetting.twitter_image,
+      ),
+    ]);
+  }
+
+  private async deleteUnusedWebsiteAsset(
+    currentValue?: string | null,
+    nextValue?: string | null,
+  ): Promise<void> {
+    if (!currentValue || currentValue === nextValue) {
+      return;
+    }
+
+    let relativePath: string | null = null;
+    const folderPrefix = `${this.uploadFolder}/`;
+    if (currentValue.includes(folderPrefix)) {
+      const parts = currentValue.split(folderPrefix);
+      const filename = parts[parts.length - 1]?.split('?')[0]?.split('#')[0];
+      if (filename) {
+        relativePath = `${this.uploadFolder}/${filename}`;
+      }
+    }
+
+    if (relativePath) {
+      try {
+        await this.storage.disk().delete(relativePath);
+      } catch {
+        // Ignore deletion errors gracefully
+      }
+    }
+  }
+
+  private async resolveWebsiteAsset(
+    file: Express.Multer.File | undefined,
+    shouldRemove: boolean | undefined,
+    currentValue: string | null | undefined,
+  ): Promise<string | null | undefined> {
+    if (file) {
+      const ext = extname(file.originalname);
+      const filename = `${uuidv4()}${ext}`;
+      const relativePath = `${this.uploadFolder}/${filename}`;
+      await this.storage.disk().put(relativePath, file.buffer, {
+        mimeType: file.mimetype,
+        visibility: 'public',
+      });
+      return this.storage.disk().url(relativePath);
+    }
+
+    if (shouldRemove) {
+      return null;
+    }
+
+    return currentValue;
+  }
+
+  private isRemoveRequested(value: boolean | string | undefined): boolean {
+    return value === true || value === 'true';
+  }
+
+  private validateWebsiteUploadFiles(files: {
+    site_logo?: Express.Multer.File[];
+    site_dark_logo?: Express.Multer.File[];
+    site_favicon?: Express.Multer.File[];
+    og_image?: Express.Multer.File[];
+    twitter_image?: Express.Multer.File[];
+  }): void {
+    const uploadedFiles = Object.values(files ?? {}).flatMap(
+      (value) => value ?? [],
+    );
+
+    for (const file of uploadedFiles) {
+      if (file.size > WEBSITE_MAX_FILE_SIZE) {
+        throw new BadRequestException(
+          `Validation failed (expected size is less than ${WEBSITE_MAX_FILE_SIZE})`,
+        );
+      }
+
+      if (!['image/png', 'image/webp'].includes(file.mimetype)) {
+        throw new BadRequestException(
+          'Validation failed (expected type is PNG or WebP)',
+        );
+      }
+    }
+  }
+}
