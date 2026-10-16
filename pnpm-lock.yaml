@@ -582,15 +582,6 @@ importers:
       "@tiptap/extension-color":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/extension-text-style@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0)))
-      "@tiptap/extension-document":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
-      "@tiptap/extension-hard-break":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
-      "@tiptap/extension-heading":
-        specifier: ^3.32.0
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
       "@tiptap/extension-highlight":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
@@ -600,12 +591,6 @@ importers:
       "@tiptap/extension-link":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
-      "@tiptap/extension-list":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
-      "@tiptap/extension-paragraph":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
       "@tiptap/extension-placeholder":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/extensions@3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0))
@@ -615,9 +600,6 @@ importers:
       "@tiptap/extension-superscript":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
-      "@tiptap/extension-text":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
       "@tiptap/extension-text-align":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
@@ -630,9 +612,6 @@ importers:
       "@tiptap/extension-underline":
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))
-      "@tiptap/extensions":
-        specifier: ^3.27.1
-        version: 3.32.0(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
       "@tiptap/pm":
         specifier: ^3.32.0
         version: 3.32.0
@@ -654,9 +633,6 @@ importers:
       cmdk:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      cn:
-        specifier: ^0.3.0
-        version: 0.3.3
       country-flag-icons:
         specifier: ^1.6.4
         version: 1.6.20
@@ -678,9 +654,6 @@ importers:
       i18next-browser-languagedetector:
         specifier: ^8.2.0
         version: 8.2.1
-      immer:
-        specifier: ^10.2.0
-        version: 10.2.0
       input-otp:
         specifier: ^1.4.2
         version: 1.5.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -693,24 +666,15 @@ importers:
       media-chrome:
         specifier: ^4.19.2
         version: 4.19.3(react@19.2.8)
-      motion:
-        specifier: ^12.23.24
-        version: 12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nanoid:
         specifier: ^5.1.6
         version: 5.1.16
-      next-themes:
-        specifier: ^0.4.6
-        version: 0.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nuqs:
         specifier: ^2.7.2
         version: 2.10.2(next@16.1.4(@babel/core@8.0.1)(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.51.0))(react-router@7.18.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
-      qs:
-        specifier: ^6.14.0
-        version: 6.16.0
       radix-ui:
         specifier: ^1.6.0
         version: 1.8.1(@types/react-dom@19.2.5(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -738,15 +702,9 @@ importers:
       react-i18next:
         specifier: ^16.2.0
         version: 16.6.6(i18next@25.10.10(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
-      react-image-crop:
-        specifier: ^11.0.10
-        version: 11.1.2(react@19.2.8)
       react-phone-number-input:
         specifier: ^3.4.13
         version: 3.4.18(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react-resizable-panels:
-        specifier: ^4.11.2
-        version: 4.14.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-router:
         specifier: ^7.9.4
         version: 7.18.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -759,9 +717,6 @@ importers:
       react-top-loading-bar:
         specifier: ^3.0.2
         version: 3.0.2(react@19.2.8)
-      recharts:
-        specifier: ^3.2.1
-        version: 3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@19.3.0)(react@19.2.8)(redux@5.0.1)
       sonner:
         specifier: ^2.0.7
         version: 2.0.8(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -782,7 +737,7 @@ importers:
         version: 4.4.3
       zustand:
         specifier: ^5.0.8
-        version: 5.0.15(@types/react@19.2.18)(immer@10.2.0)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
+        version: 5.0.15(@types/react@19.2.18)(immer@11.1.21)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8))
     devDependencies:
       "@faker-js/faker":
         specifier: ^10.0.0
@@ -820,9 +775,6 @@ importers:
       "@types/qrcode":
         specifier: ^1.5.6
         version: 1.5.6
-      "@types/qs":
-        specifier: ^6.14.0
-        version: 6.15.1
       "@types/react":
         specifier: ^19.2.2
         version: 19.2.18
@@ -6288,20 +6240,6 @@ packages:
       "@opentelemetry/api":
         optional: true
 
-  "@reduxjs/toolkit@2.13.0":
-    resolution:
-      {
-        integrity: sha512-f6jwVRfwW30+tnllz4YcsHHpPYYOE7abcHkyUCovD+P7DyhdAI5prz2Fh/8TLhakjpN+7aIEion1s5L/tvlYlA==,
-      }
-    peerDependencies:
-      react: ^16.9.0 || ^17.0.0 || ^18 || ^19
-      react-redux: ^7.2.1 || ^8.1.3 || ^9.0.0
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-redux:
-        optional: true
-
   "@rolldown/pluginutils@1.0.0-beta.27":
     resolution:
       {
@@ -10203,14 +10141,6 @@ packages:
       react: ^18 || ^19 || ^19.0.0-rc
       react-dom: ^18 || ^19 || ^19.0.0-rc
 
-  cn@0.3.3:
-    resolution:
-      {
-        integrity: sha512-OEiyJkSpYm2kOuNOKQ+c2wmzZRG8orrb9fnObtHTbCGNx/E9KLnGcmcocItOzREKk5KzQN5I2e3BUCj563KEpw==,
-      }
-    engines: { node: ">=20" }
-    hasBin: true
-
   co@4.6.0:
     resolution:
       {
@@ -12569,12 +12499,6 @@ packages:
     resolution:
       {
         integrity: sha512-XXOFtyqDjNDAQxVfYxuF7g9Il/IbWmmlQg2MYKOH8ExIT1qg6xc4zyS3HaEEATgs1btfzxq15ciUiY7gjSXRGQ==,
-      }
-
-  immer@10.2.0:
-    resolution:
-      {
-        integrity: sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==,
       }
 
   immer@11.1.21:
@@ -15861,14 +15785,6 @@ packages:
       typescript:
         optional: true
 
-  react-image-crop@11.1.2:
-    resolution:
-      {
-        integrity: sha512-+0Pc2fxpwKL4u4oLmdKBw8XSwUceFbXbKEHvFOlsl/MGB1OVNic4uBlAPmEHGXYgoJIq+b63xHbc/aJMG0AVkA==,
-      }
-    peerDependencies:
-      react: ">=16.13.1"
-
   react-is@16.13.1:
     resolution:
       {
@@ -15901,21 +15817,6 @@ packages:
     peerDependencies:
       react: ">=16.8"
       react-dom: ">=16.8"
-
-  react-redux@9.3.0:
-    resolution:
-      {
-        integrity: sha512-KQopgqFo/p/fgmAs5qz6p5RWaNAzq40WAu7fJIXnQpYxFPbJYtsJPWvGeF2rOBaY/kEuV77AVsX8TsQzKm+A/g==,
-      }
-    peerDependencies:
-      "@types/react": ^18.2.25 || ^19
-      react: ^18.0 || ^19
-      redux: ^5.0.0
-    peerDependenciesMeta:
-      "@types/react":
-        optional: true
-      redux:
-        optional: true
 
   react-refresh@0.17.0:
     resolution:
@@ -16122,17 +16023,6 @@ packages:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  recharts@3.10.1:
-    resolution:
-      {
-        integrity: sha512-QXFrvt6IVcw7eeZCoyXTwkIJAX3Dv1nyVhMicXJ47GsGDDpcN8z6o644DibE9XjpBTThtsomLKnTV6lc+cVFUA==,
-      }
-    engines: { node: ">=18" }
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-is: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   redent@3.0.0:
     resolution:
       {
@@ -16159,20 +16049,6 @@ packages:
         integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==,
       }
     engines: { node: ">=4" }
-
-  redux-thunk@3.1.0:
-    resolution:
-      {
-        integrity: sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==,
-      }
-    peerDependencies:
-      redux: ^5.0.0
-
-  redux@5.0.1:
-    resolution:
-      {
-        integrity: sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==,
-      }
 
   reflect-metadata@0.2.2:
     resolution:
@@ -16238,12 +16114,6 @@ packages:
     resolution:
       {
         integrity: sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==,
-      }
-
-  reselect@5.2.0:
-    resolution:
-      {
-        integrity: sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==,
       }
 
   resolve-alpn@1.2.1:
@@ -18140,12 +18010,6 @@ packages:
     resolution:
       {
         integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==,
-      }
-
-  victory-vendor@37.3.6:
-    resolution:
-      {
-        integrity: sha512-SbPDPdDBYp+5MJHhBCAyI7wKM3d5ivekigc2Dk2s7pgbZ9wIgIBYGVw4zGHBml/qTFbexrofXW6Gu4noGxrOwQ==,
       }
 
   vite@7.3.7:
@@ -22856,18 +22720,6 @@ snapshots:
     optionalDependencies:
       "@opentelemetry/api": 1.9.1
 
-  "@reduxjs/toolkit@2.13.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)":
-    dependencies:
-      "@standard-schema/spec": 1.1.0
-      "@standard-schema/utils": 0.3.0
-      immer: 11.1.21
-      redux: 5.0.1
-      redux-thunk: 3.1.0(redux@5.0.1)
-      reselect: 5.2.0
-    optionalDependencies:
-      react: 19.2.8
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
-
   "@rolldown/pluginutils@1.0.0-beta.27": {}
 
   "@rolldown/pluginutils@1.0.1": {}
@@ -25467,8 +25319,6 @@ snapshots:
       - "@types/react"
       - "@types/react-dom"
 
-  cn@0.3.3: {}
-
   co@4.6.0: {}
 
   collect-v8-coverage@1.0.3: {}
@@ -26724,15 +26574,6 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  framer-motion@12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      motion-dom: 12.43.0
-      motion-utils: 12.39.0
-      tslib: 2.8.1
-    optionalDependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
   fresh@2.0.0: {}
 
   fs-extra@11.4.1:
@@ -27048,9 +26889,8 @@ snapshots:
 
   immediate@3.0.6: {}
 
-  immer@10.2.0: {}
-
-  immer@11.1.21: {}
+  immer@11.1.21:
+    optional: true
 
   immutable@4.3.9:
     optional: true
@@ -28201,14 +28041,6 @@ snapshots:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  motion@12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      framer-motion: 12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      tslib: 2.8.1
-    optionalDependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
   mrmime@2.0.1: {}
 
   ms@2.1.3: {}
@@ -28321,11 +28153,6 @@ snapshots:
     dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-
-  next-themes@0.4.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
 
   next@16.1.4(@babel/core@7.29.7(supports-color@10.2.2))(@opentelemetry/api@1.9.1)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
@@ -29267,10 +29094,6 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
       typescript: 5.9.3
 
-  react-image-crop@11.1.2(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-
   react-is@16.13.1: {}
 
   react-is@17.0.2: {}
@@ -29288,15 +29111,6 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-
-  react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1):
-    dependencies:
-      "@types/use-sync-external-store": 0.0.6
-      react: 19.2.8
-      use-sync-external-store: 1.7.0(react@19.2.8)
-    optionalDependencies:
-      "@types/react": 19.2.18
-      redux: 5.0.1
 
   react-refresh@0.17.0: {}
 
@@ -29342,11 +29156,6 @@ snapshots:
     dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-
-  react-resizable-panels@4.14.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
 
   react-router@7.18.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -29505,26 +29314,6 @@ snapshots:
       tiny-invariant: 1.3.3
       victory-vendor: 36.9.2
 
-  recharts@3.10.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-is@19.3.0)(react@19.2.8)(redux@5.0.1):
-    dependencies:
-      "@reduxjs/toolkit": 2.13.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
-      clsx: 2.1.1
-      decimal.js-light: 2.5.1
-      es-toolkit: 1.52.0
-      eventemitter3: 5.0.4
-      immer: 11.1.21
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      react-is: 19.3.0
-      react-redux: 9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1)
-      reselect: 5.2.0
-      tiny-invariant: 1.3.3
-      use-sync-external-store: 1.7.0(react@19.2.8)
-      victory-vendor: 37.3.6
-    transitivePeerDependencies:
-      - "@types/react"
-      - redux
-
   redent@3.0.0:
     dependencies:
       indent-string: 4.0.0
@@ -29539,12 +29328,6 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
-
-  redux-thunk@3.1.0(redux@5.0.1):
-    dependencies:
-      redux: 5.0.1
-
-  redux@5.0.1: {}
 
   reflect-metadata@0.2.2: {}
 
@@ -29588,8 +29371,6 @@ snapshots:
       - supports-color
 
   require-main-filename@2.0.0: {}
-
-  reselect@5.2.0: {}
 
   resolve-alpn@1.2.1: {}
 
@@ -30929,23 +30710,6 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  victory-vendor@37.3.6:
-    dependencies:
-      "@types/d3-array": 3.2.2
-      "@types/d3-ease": 3.0.2
-      "@types/d3-interpolate": 3.0.4
-      "@types/d3-scale": 4.0.9
-      "@types/d3-shape": 3.2.0
-      "@types/d3-time": 3.0.4
-      "@types/d3-timer": 3.0.2
-      d3-array: 3.2.4
-      d3-ease: 3.0.1
-      d3-interpolate: 3.0.1
-      d3-scale: 4.0.2
-      d3-shape: 3.2.0
-      d3-time: 3.1.0
-      d3-timer: 3.0.1
-
   vite@7.3.7(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(yaml@2.9.1):
     dependencies:
       esbuild: 0.28.2
@@ -31331,16 +31095,16 @@ snapshots:
 
   zod@4.4.3: {}
 
-  zustand@5.0.15(@types/react@19.2.18)(immer@10.2.0)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8)):
-    optionalDependencies:
-      "@types/react": 19.2.18
-      immer: 10.2.0
-      react: 19.2.8
-      use-sync-external-store: 1.7.0(react@19.2.8)
-
   zustand@5.0.15(@types/react@19.2.18)(immer@11.1.21)(react@19.2.3)(use-sync-external-store@1.7.0(react@19.2.3)):
     optionalDependencies:
       "@types/react": 19.2.18
       immer: 11.1.21
       react: 19.2.3
       use-sync-external-store: 1.7.0(react@19.2.3)
+
+  zustand@5.0.15(@types/react@19.2.18)(immer@11.1.21)(react@19.2.8)(use-sync-external-store@1.7.0(react@19.2.8)):
+    optionalDependencies:
+      "@types/react": 19.2.18
+      immer: 11.1.21
+      react: 19.2.8
+      use-sync-external-store: 1.7.0(react@19.2.8)
