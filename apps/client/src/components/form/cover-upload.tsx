@@ -19,11 +19,15 @@ import {
   XIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type CoverPosition = {
-  x: number;
-  y: number;
-};
+import {
+  type CoverPosition,
+  DEFAULT_POSITION,
+  clampPosition,
+  normalizePosition,
+  cropCoverFile,
+  createObjectUrl,
+} from "./cover-upload-utils";
+import { CoverProgressOverlay } from "./cover-progress-overlay";
 
 export interface CoverUploadProps {
   maxSize?: number;
@@ -34,103 +38,6 @@ export interface CoverUploadProps {
   onChange?: (value: File | null) => void;
   disabled?: boolean;
   name?: string;
-}
-
-const DEFAULT_POSITION: CoverPosition = { x: 50, y: 50 };
-const COVER_ASPECT_RATIO = 21 / 9;
-const OUTPUT_WIDTH = 1200;
-const OUTPUT_HEIGHT = Math.round(OUTPUT_WIDTH / COVER_ASPECT_RATIO);
-
-function clampPosition(value: number) {
-  return Math.min(100, Math.max(0, value));
-}
-
-function normalizePosition(position: Partial<CoverPosition>) {
-  return {
-    x: clampPosition(position.x ?? DEFAULT_POSITION.x),
-    y: clampPosition(position.y ?? DEFAULT_POSITION.y),
-  };
-}
-
-function createObjectUrl(file: File) {
-  return URL.createObjectURL(file);
-}
-
-async function loadImage(url: string) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not load image"));
-    image.src = url;
-  });
-}
-
-async function cropCoverFile(file: File, position: CoverPosition) {
-  const url = createObjectUrl(file);
-
-  try {
-    const image = await loadImage(url);
-    const sourceWidth = image.naturalWidth;
-    const sourceHeight = image.naturalHeight;
-    const sourceAspectRatio = sourceWidth / sourceHeight;
-
-    let cropX = 0;
-    let cropY = 0;
-    let cropWidth = sourceWidth;
-    let cropHeight = sourceHeight;
-
-    if (sourceAspectRatio > COVER_ASPECT_RATIO) {
-      cropWidth = sourceHeight * COVER_ASPECT_RATIO;
-    } else if (sourceAspectRatio < COVER_ASPECT_RATIO) {
-      cropHeight = sourceWidth / COVER_ASPECT_RATIO;
-    }
-
-    cropX = (sourceWidth - cropWidth) * (position.x / 100);
-    cropY = (sourceHeight - cropHeight) * (position.y / 100);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = OUTPUT_WIDTH;
-    canvas.height = OUTPUT_HEIGHT;
-
-    const context = canvas.getContext("2d");
-    if (!context) {
-      throw new Error("Canvas is not supported");
-    }
-
-    context.drawImage(
-      image,
-      cropX,
-      cropY,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      OUTPUT_WIDTH,
-      OUTPUT_HEIGHT,
-    );
-
-    const mimeType = file.type || "image/jpeg";
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (nextBlob) => {
-          if (nextBlob) {
-            resolve(nextBlob);
-          } else {
-            reject(new Error("Could not crop image"));
-          }
-        },
-        mimeType,
-        0.92,
-      );
-    });
-
-    return new File([blob], file.name, {
-      type: mimeType,
-      lastModified: Date.now(),
-    });
-  } finally {
-    URL.revokeObjectURL(url);
-  }
 }
 
 export default function CoverUpload({
@@ -467,40 +374,11 @@ export default function CoverUpload({
               </div>
             )}
 
-            {(isUploading || isCropping) && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <div className="relative">
-                  <svg className="size-16 -rotate-90" viewBox="0 0 64 64">
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      className="text-white/20"
-                    />
-                    <circle
-                      cx="32"
-                      cy="32"
-                      r="28"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      strokeDasharray={`${2 * Math.PI * 28}`}
-                      strokeDashoffset={`${2 * Math.PI * 28 * (1 - uploadProgress / 100)}`}
-                      className="text-white transition-all duration-300"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white select-none">
-                      {isCropping ? "Crop" : `${Math.round(uploadProgress)}%`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <CoverProgressOverlay
+              isUploading={isUploading}
+              isCropping={isCropping}
+              uploadProgress={uploadProgress}
+            />
           </div>
         ) : (
           <div

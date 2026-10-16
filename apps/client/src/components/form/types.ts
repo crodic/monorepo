@@ -21,6 +21,16 @@ export interface ExistingImage {
   alt?: string;
 }
 
+// Upload progress tracking (UI-only, not part of form state)
+export interface UploadProgress {
+  tempId: string;
+  fileName: string;
+  fileSize: number;
+  progress: number;
+  status: "uploading" | "completed" | "error";
+  error?: string;
+}
+
 // Helper to extract non-deleted payloads for order computation
 export function getActivePayloads(
   payloads: ImagePayload[],

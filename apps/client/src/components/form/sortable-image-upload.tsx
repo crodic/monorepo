@@ -15,18 +15,7 @@ import {
   rectSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import {
-  ChevronLeft,
-  ChevronRight,
-  CircleX,
-  CloudUpload,
-  GripVertical,
-  ImageIcon,
-  Plus,
-  Star,
-  TriangleAlert,
-  XIcon,
-} from "lucide-react";
+import { Plus, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Sortable,
@@ -42,19 +31,17 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import type { ExistingImage, ImagePayload, UIImage } from "./types";
-
-// Upload progress tracking (UI-only, not part of form state)
-interface UploadProgress {
-  tempId: string;
-  fileName: string;
-  fileSize: number;
-  progress: number;
-  status: "uploading" | "completed" | "error";
-  error?: string;
-}
+import { formatBytes } from "@/hooks/use-file-upload";
+import type {
+  ExistingImage,
+  ImagePayload,
+  UIImage,
+  UploadProgress,
+} from "./types";
+import { ImageLightbox } from "./image-lightbox";
+import { UploadProgressList } from "./upload-progress-list";
+import { UploadDropzone } from "./upload-dropzone";
+import { SortableImageTile } from "./sortable-image-tile";
 
 type OverlaySize = {
   width: number;
@@ -534,55 +521,6 @@ export default function SortableImageUpload({
     setLightboxIndex(index);
   }, []);
 
-  const showPreviousImage = useCallback(() => {
-    setLightboxIndex((current) => {
-      if (current === null || uiImages.length === 0) return current;
-      const normalizedIndex = Math.min(current, uiImages.length - 1);
-      return (normalizedIndex - 1 + uiImages.length) % uiImages.length;
-    });
-  }, [uiImages.length]);
-
-  const showNextImage = useCallback(() => {
-    setLightboxIndex((current) => {
-      if (current === null || uiImages.length === 0) return current;
-      const normalizedIndex = Math.min(current, uiImages.length - 1);
-      return (normalizedIndex + 1) % uiImages.length;
-    });
-  }, [uiImages.length]);
-
-  useEffect(() => {
-    if (lightboxIndex === null || uiImages.length === 0) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeLightbox();
-      }
-
-      if (event.key === "ArrowLeft") {
-        showPreviousImage();
-      }
-
-      if (event.key === "ArrowRight") {
-        showNextImage();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [
-    closeLightbox,
-    lightboxIndex,
-    showNextImage,
-    showPreviousImage,
-    uiImages.length,
-  ]);
-
   // Drag and drop handlers for upload zone
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -658,12 +596,6 @@ export default function SortableImageUpload({
     coverIndex < uiImages.length
       ? coverIndex
       : null;
-  const safeLightboxIndex =
-    lightboxIndex !== null && uiImages.length > 0
-      ? Math.min(lightboxIndex, uiImages.length - 1)
-      : null;
-  const lightboxImage =
-    safeLightboxIndex !== null ? uiImages[safeLightboxIndex] : undefined;
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -692,95 +624,20 @@ export default function SortableImageUpload({
     );
   }, []);
   const renderImageTile = useCallback(
-    (item: UIImage, index: number, isOverlay = false) => {
-      const isCover = canSelectCover && index === normalizedCoverIndex;
-
-      return (
-        <div
-          className={cn(
-            "bg-accent/50 group border-border hover:bg-accent/70 relative flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-md border shadow-none transition-all duration-200 hover:z-10 data-[dragging=true]:z-50",
-            isOverlay && "z-50 shadow-lg",
-          )}
-          style={
-            isOverlay && overlaySize
-              ? {
-                  width: overlaySize.width,
-                  height: overlaySize.height,
-                }
-              : undefined
-          }
-          onClick={isOverlay ? undefined : () => openLightbox(index)}
-        >
-          <img
-            src={item.src || "/placeholder.svg"}
-            className="pointer-events-none h-full w-full rounded-md object-cover"
-            alt={item.alt}
-          />
-
-          {/* Source indicator badge */}
-          <span
-            className={cn(
-              "absolute start-2 bottom-2 rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-              item.source === "existing"
-                ? "bg-background/80 text-foreground"
-                : "bg-primary/80 text-primary-foreground",
-            )}
-          >
-            {item.source === "existing" ? "Saved" : "New"}
-          </span>
-
-          <div className="bg-background/80 text-muted-foreground pointer-events-none absolute start-2 top-2 flex size-8 items-center justify-center rounded-full opacity-100 shadow-sm sm:size-6 sm:opacity-0 sm:group-hover:opacity-100">
-            <GripVertical className="size-4 sm:size-3.5" />
-          </div>
-
-          {canSelectCover && !isOverlay && (
-            <Button
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                onCoverIndexChange?.(index);
-              }}
-              variant={isCover ? "default" : "outline"}
-              size="icon"
-              type="button"
-              disabled={isDisabled}
-              aria-label={
-                isCover ? "Current cover image" : "Set as cover image"
-              }
-              className={cn(
-                "absolute end-2 top-2 size-8 rounded-full shadow-sm sm:size-6",
-                !isCover &&
-                  "bg-background/80 opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
-              )}
-            >
-              <Star
-                className={cn("size-4 sm:size-3.5", isCover && "fill-current")}
-              />
-            </Button>
-          )}
-
-          {/* Remove Button */}
-          {!isDisabled && !isOverlay && (
-            <Button
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                removeImage(item.id);
-              }}
-              variant="outline"
-              size="icon"
-              type="button"
-              className={cn(
-                "bg-background/80 absolute size-8 rounded-full opacity-100 shadow-sm sm:size-6 sm:opacity-0 sm:group-hover:opacity-100",
-                canSelectCover ? "end-2 bottom-2" : "end-2 top-2",
-              )}
-            >
-              <XIcon className="size-4 sm:size-3.5" />
-            </Button>
-          )}
-        </div>
-      );
-    },
+    (item: UIImage, index: number, isOverlay = false) => (
+      <SortableImageTile
+        item={item}
+        index={index}
+        isOverlay={isOverlay}
+        overlaySize={overlaySize}
+        isCover={canSelectCover && index === normalizedCoverIndex}
+        canSelectCover={canSelectCover}
+        disabled={isDisabled}
+        onOpenLightbox={openLightbox}
+        onSelectCover={onCoverIndexChange}
+        onRemove={removeImage}
+      />
+    ),
     [
       canSelectCover,
       isDisabled,
@@ -887,93 +744,24 @@ export default function SortableImageUpload({
 
       {/* Upload Area */}
       {!loading && uiImages.length === 0 && (
-        <Card
-          className={cn(
-            "rounded-md border-dashed shadow-none transition-colors",
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50",
-            isDisabled && "pointer-events-none opacity-50",
-          )}
+        <UploadDropzone
+          isDragging={isDragging}
+          disabled={isDisabled}
+          maxSize={maxSize}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-        >
-          <CardContent className="text-center">
-            <div className="border-border mx-auto mb-3 flex size-[32px] items-center justify-center rounded-full border">
-              <CloudUpload className="size-4" />
-            </div>
-            <h3 className="text-2sm text-foreground mb-0.5 font-semibold">
-              Choose a file or drag & drop here.
-            </h3>
-            <span className="text-secondary-foreground mb-3 block text-xs font-normal">
-              JPEG, PNG, up to {formatBytes(maxSize)}.
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={openFileDialog}
-              disabled={isDisabled}
-              type="button"
-            >
-              Browse File
-            </Button>
-          </CardContent>
-        </Card>
+          onBrowseClick={openFileDialog}
+        />
       )}
 
       {/* Upload Progress Cards */}
-      {progressEntries.length > 0 && (
-        <div className="mt-6 space-y-3">
-          {progressEntries.map((item) => (
-            <Card key={item.tempId} className="rounded-md shadow-none">
-              <CardContent className="flex items-center gap-2 p-3">
-                <div className="border-border flex size-[32px] shrink-0 items-center justify-center rounded-md border">
-                  <ImageIcon className="text-muted-foreground size-4" />
-                </div>
-                <div className="flex w-full flex-col gap-1.5">
-                  <div className="-mt-2 flex w-full items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-foreground text-xs leading-none font-medium">
-                        {item.fileName}
-                      </span>
-                      <span className="text-muted-foreground text-xs leading-none font-normal">
-                        {formatBytes(item.fileSize)}
-                      </span>
-                      {item.status === "uploading" && (
-                        <p className="text-muted-foreground text-xs">
-                          Uploading... {Math.round(item.progress)}%
-                        </p>
-                      )}
-                      {item.status === "completed" && (
-                        <p className="text-xs text-green-600">Completed</p>
-                      )}
-                    </div>
-                    <Button
-                      onClick={() => removeImage(item.tempId)}
-                      variant="ghost"
-                      size="icon"
-                      className="size-6"
-                      disabled={isDisabled}
-                    >
-                      <CircleX className="size-3.5" />
-                    </Button>
-                  </div>
-
-                  <Progress
-                    value={item.progress}
-                    className={cn(
-                      "h-1 transition-all duration-300",
-                      "[&>div]:bg-zinc-950 dark:[&>div]:bg-zinc-50",
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <UploadProgressList
+        entries={progressEntries}
+        onRemove={removeImage}
+        disabled={isDisabled}
+      />
 
       {/* Error Messages */}
       {errors.length > 0 && (
@@ -994,76 +782,13 @@ export default function SortableImageUpload({
         </Alert>
       )}
 
-      {lightboxImage && safeLightboxIndex !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Image preview"
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95"
-          onClick={closeLightbox}
-        >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute end-4 top-4 z-10 size-10 rounded-full text-white hover:bg-white/15 hover:text-white"
-            onClick={(event) => {
-              event.stopPropagation();
-              closeLightbox();
-            }}
-            aria-label="Close image preview"
-          >
-            <XIcon className="size-5" />
-          </Button>
-
-          {uiImages.length > 1 && (
-            <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute start-4 top-1/2 z-10 size-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white sm:start-6 sm:size-14"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  showPreviousImage();
-                }}
-                aria-label="Previous image"
-              >
-                <ChevronLeft className="size-7" />
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute end-4 top-1/2 z-10 size-12 -translate-y-1/2 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white sm:end-6 sm:size-14"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  showNextImage();
-                }}
-                aria-label="Next image"
-              >
-                <ChevronRight className="size-7" />
-              </Button>
-            </>
-          )}
-
-          <div
-            className="flex h-full w-full items-center justify-center px-4 py-16 sm:px-20 sm:py-10"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <img
-              src={lightboxImage.src || "/placeholder.svg"}
-              alt={lightboxImage.alt}
-              className="max-h-full max-w-full object-contain shadow-2xl"
-            />
-          </div>
-
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-sm font-medium text-white">
-            {safeLightboxIndex + 1}/{uiImages.length}
-          </div>
-        </div>
-      )}
+      {/* Lightbox Modal */}
+      <ImageLightbox
+        images={uiImages}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onIndexChange={setLightboxIndex}
+      />
     </div>
   );
 }
