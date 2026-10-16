@@ -6,8 +6,7 @@ WORKDIR /app
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-RUN corepack enable \
-  && corepack prepare pnpm@11.25.0 --activate
+RUN npm install -g pnpm@11.25.0
 
 FROM base AS deps
 
