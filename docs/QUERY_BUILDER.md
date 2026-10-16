@@ -37,6 +37,7 @@ It enables frontends to filter, sort, include relations, select sparse fieldsets
 - [Strict Mode & Exception Handling](#strict-mode--exception-handling)
 - [Swagger OpenAPI Integration (`@ApiQueryBuilderDocs`)](#swagger-openapi-integration-apiquerybuilderdocs)
 - [Security Best Practices](#security-best-practices)
+- [Frontend Query Builder (`@repo/query-builder`)](#frontend-query-builder-repoquery-builder)
 
 ---
 
@@ -516,3 +517,54 @@ findAll(@Query() query: QueryParams) {
 1. **Never use raw strings from queries in SQL**: Parameter values are always parameterized (`:paramName`).
 2. **Whitelist everything**: Never allow arbitrary client-defined columns without `allowedFilters`, `allowedSorts`, `allowedIncludes`, or `allowedFields`.
 3. **Cap pagination limits**: Always enforce `maxLimit` (default: 100) to protect against DoS attacks via huge `?limit=999999` requests.
+
+---
+
+## Frontend Query Builder (`@repo/query-builder`)
+
+The monorepo provides a shared, type-safe client library [`@repo/query-builder`](file:///packages/query-builder) (accessible via `@/lib/query-builder` or `@repo/query-builder` in both `apps/web` and `apps/client`).
+
+### 1. `RestQueryBuilder` (Recommended for NestJS Backend)
+
+The `RestQueryBuilder` creates standardized REST / JSON:API query strings that seamlessly map to this backend QueryBuilder:
+
+```typescript
+import { RestQueryBuilder } from "@repo/query-builder";
+// or: import { RestQueryBuilder } from "@/lib/query-builder";
+
+const queryString = new RestQueryBuilder()
+  .filter("status", "ACTIVE")
+  .filter("roles", ["ADMIN", "MANAGER"])
+  .sortBy("createdAt", "desc")
+  .sortBy("name", "asc")
+  .include("profile", "roles")
+  .fieldsFor("user", ["id", "name", "email"])
+  .search("john")
+  .paginate(1, 20)
+  .toQueryString();
+
+// Output:
+// filter[status]=ACTIVE&filter[roles]=ADMIN,MANAGER&sort=-createdAt,name&include=profile,roles&fields[user]=id,name,email&q=john&page=1&limit=20
+```
+
+### 2. `NestjsPaginateQueryBuilder` (Legacy / `nestjs-paginate`)
+
+For endpoints backed by the `nestjs-paginate` library:
+
+```typescript
+import { PaginateQueryBuilder } from "@repo/query-builder";
+
+const queryString = new PaginateQueryBuilder()
+  .page(1)
+  .limit(20)
+  .sortBy("createdAt", "DESC")
+  .eq("status", "ACTIVE")
+  .in("role", ["ADMIN", "USER"])
+  .btw("age", [18, 65])
+  .search("john")
+  .searchBy(["email", "name"])
+  .toQueryString();
+
+// Output:
+// page=1&limit=20&sort=createdAt:DESC&filter.status=$eq:ACTIVE&filter.role=$in:ADMIN,USER&filter.age=$btw:18,65&search=john&searchBy=email&searchBy=name
+```
