@@ -383,6 +383,9 @@ importers:
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.3)
@@ -489,9 +492,6 @@ importers:
       babel-plugin-react-compiler:
         specifier: 1.0.0
         version: 1.0.0
-      dotenv-cli:
-        specifier: ^11.0.0
-        version: 11.0.0
       eslint:
         specifier: ^9
         version: 9.39.5(jiti@2.7.0)(supports-color@10.2.2)
