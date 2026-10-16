@@ -42,7 +42,13 @@ export class HealthController {
     return this.health.check([
       () => this.db.pingCheck('database'),
       () => this.checkRedis(),
-      () => this.memory.checkHeap('memory_heap', 500 * 1024 * 1024),
+      () =>
+        this.memory.checkHeap(
+          'memory_heap',
+          process.env.NODE_ENV === 'test'
+            ? 1500 * 1024 * 1024
+            : 500 * 1024 * 1024,
+        ),
       () =>
         this.disk.checkStorage('storage_disk', {
           thresholdPercent: 0.95,

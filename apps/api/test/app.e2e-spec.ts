@@ -1,23 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 import request from 'supertest';
-import { ConfigService } from '@nestjs/config';
-import { AppModule } from '../src/app.module';
-import { GlobalExceptionFilter } from '../src/filters/global-exception.filter';
+import { createTestApp } from './test-utils';
 
 describe('App (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    const configService = app.get(ConfigService);
-    app.useGlobalFilters(new GlobalExceptionFilter(configService));
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
@@ -32,7 +22,7 @@ describe('App (e2e)', () => {
 
   it('unhandled route should return formatted ErrorDto via GlobalExceptionFilter', async () => {
     const res = await request(app.getHttpServer())
-      .get('/non-existent-endpoint')
+      .get('/api/v1/non-existent-endpoint')
       .expect(404);
 
     expect(res.body).toHaveProperty('timestamp');

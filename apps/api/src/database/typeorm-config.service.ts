@@ -15,7 +15,9 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
     );
 
     const isDev =
-      this.configService.get<string>('app.nodeEnv') !== 'production';
+      this.configService.get<string>('app.nodeEnv') === 'development' ||
+      this.configService.get<string>('app.nodeEnv') === 'local';
+    const isTest = this.configService.get<string>('app.nodeEnv') === 'test';
 
     return {
       type: 'postgres',
@@ -35,7 +37,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         isDev ? ['error', 'warn', 'migration', 'schema'] : ['error', 'warn'],
       ),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+      migrations: isTest ? [] : [__dirname + '/migrations/**/*{.ts,.js}'],
       namingStrategy: new SnakeNamingStrategy(),
       extra: {
         max: this.configService.get<number>('database.maxConnections', 100),

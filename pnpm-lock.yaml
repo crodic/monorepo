@@ -284,6 +284,9 @@ importers:
       "@types/uuid":
         specifier: ^11.0.0
         version: 11.0.0
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
       eslint:
         specifier: ^10.9.1
         version: 10.9.1(jiti@2.6.1)(supports-color@10.2.2)

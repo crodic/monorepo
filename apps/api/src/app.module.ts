@@ -57,7 +57,10 @@ import loggerFactory from './utils/logger-factory';
         sentryConfig,
         authConfig,
       ],
-      envFilePath: ['.env'],
+      envFilePath:
+        process.env.NODE_ENV === Environment.TEST
+          ? ['.env.testing', '.env']
+          : ['.env'],
     }),
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
