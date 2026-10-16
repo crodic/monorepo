@@ -115,11 +115,6 @@ const PageRoleEdit = lazy(() =>
   import('@/pages/roles/edit').then((m) => ({ default: m.PageRoleEdit }))
 )
 const PageRoleShow = lazy(() => import('@/pages/roles/show'))
-const PageSendNotifications = lazy(() =>
-  import('@/pages/send-notifications').then((m) => ({
-    default: m.PageSendNotifications,
-  }))
-)
 const Settings = lazy(() =>
   import('@/pages/settings').then((m) => ({ default: m.Settings }))
 )
@@ -136,11 +131,6 @@ const SettingsAppearance = lazy(() =>
 const SettingsDisplay = lazy(() =>
   import('@/pages/settings/display').then((m) => ({
     default: m.SettingsDisplay,
-  }))
-)
-const SettingsNotifications = lazy(() =>
-  import('@/pages/settings/notifications').then((m) => ({
-    default: m.SettingsNotifications,
   }))
 )
 const SettingsPassword = lazy(() =>
@@ -271,14 +261,6 @@ const appRoutes: RouteObject[] = [
         ],
       },
       {
-        path: '/send-notifications',
-        element: (
-          <RouteAuthorize requireSuperAdmin>
-            <PageSendNotifications />
-          </RouteAuthorize>
-        ),
-      },
-      {
         path: '/permissions',
         children: [
           {
@@ -385,14 +367,6 @@ const appRoutes: RouteObject[] = [
             element: (
               <RouteAuthorize isAnyPermission>
                 <SettingsAppearance />
-              </RouteAuthorize>
-            ),
-          },
-          {
-            path: 'notifications',
-            element: (
-              <RouteAuthorize isAnyPermission>
-                <SettingsNotifications />
               </RouteAuthorize>
             ),
           },

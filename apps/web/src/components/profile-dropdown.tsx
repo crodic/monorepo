@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Bell, Lock, LogOutIcon, PaletteIcon, UserCheck } from 'lucide-react'
+import { Lock, LogOutIcon, PaletteIcon, UserCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import useDialogState from '@/hooks/use-dialog-state'
@@ -15,7 +15,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { NotificationDropdown } from '@/components/notification-dropdown'
 import { SignOutDialog } from '@/components/sign-out-dialog'
 import { apiGetMe } from '@/pages/auth/queries'
 import { SidebarMenuSkeleton } from './ui/sidebar'
@@ -33,8 +32,6 @@ export function ProfileDropdown() {
 
   return (
     <>
-      <NotificationDropdown />
-
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
@@ -76,12 +73,6 @@ export function ProfileDropdown() {
               <Link to='/settings/password'>
                 <Lock />
                 {t('settings.password.title')}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to='/settings/notifications'>
-                <Bell />
-                {t('navigation.other.notifications')}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuGroup>

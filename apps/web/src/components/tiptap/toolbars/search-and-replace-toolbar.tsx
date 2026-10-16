@@ -1,6 +1,5 @@
 'use client'
 
- 
 // @ts-nocheck
 import { useEffect, useState } from 'react'
 import { ArrowLeftIcon, ArrowRightIcon, X, Repeat } from 'lucide-react'

@@ -25,7 +25,6 @@ export default {
   'navigation.other.helpCenter': 'Help Center',
   'navigation.other.password': 'Password',
   'navigation.other.security': 'Security',
-  'navigation.other.notifications': 'Notifications',
   'navigation.other.website': 'Website',
   'navigation.dev.title': 'Development',
   'navigation.dev.playground': 'Playground',
@@ -673,43 +672,8 @@ export default {
   'imagePicker.uploadImage': 'Upload Image',
   'imagePicker.uploadSuccess': 'Image uploaded successfully',
   'imagePicker.uploadFailed': 'Failed to upload image',
-  'navigation.orders.sendNotifications': 'Send Notifications',
-  'sendNotifications.success': 'Notification sent successfully!',
-  'sendNotifications.error': 'Failed to send notification',
-  'sendNotifications.title': 'Send Notifications',
-  'sendNotifications.description':
-    'Send real-time alerts or messages to other administrators.',
-  'sendNotifications.compose.title': 'Compose Message',
-  'sendNotifications.compose.description':
-    'Draft your notification. Leave recipient selection empty to send to all admins.',
-  'sendNotifications.form.title': 'Title',
-  'sendNotifications.form.titlePlaceholder': 'Notification title...',
-  'sendNotifications.form.message': 'Message',
-  'sendNotifications.form.messagePlaceholder': 'Type your message here...',
-  'sendNotifications.form.sendToCount': 'Send to {{count}} Admin(s)',
-  'sendNotifications.form.sendToAll': 'Send to All Admins',
-  'sendNotifications.recipients.title': 'Select Recipients',
-  'sendNotifications.recipients.description':
-    'Choose specific administrators to receive this notification, or select none to broadcast to everyone.',
-  'sendNotifications.table.status': 'Status',
-  'sendNotifications.table.online': 'Online',
-  'sendNotifications.table.offline': 'Offline',
   'navigation.general.cmsPages': 'CMS Pages',
-  'notificationDetail.title': 'Notification Detail',
-  'notificationDetail.message': 'Message',
-  'notificationDetail.type': 'Type',
-  'notificationDetail.status': 'Status',
-  'notificationDetail.statusRead': 'Read',
-  'notificationDetail.statusUnread': 'Unread',
-  'notificationDetail.created': 'Created',
-  'notificationDetail.readAt': 'Read at',
-  'notificationDetail.notReadYet': 'Not read yet',
-  'notificationDetail.data': 'Data',
-  'notificationDetail.types.admin.manual.message': 'Admin Message',
   'imagePicker.storedInLibrary': 'Stored in file library',
-  'settings.notifications.title': 'Notifications',
-  'settings.notifications.description':
-    'Configure how you receive notifications and alerts.',
   'errors.forbidden.title': 'Access Forbidden',
   'errors.forbidden.description':
     "You don't have necessary permission to view this resource.",
@@ -1067,9 +1031,6 @@ export default {
   'settings.display.sidebarDesc':
     'Select the items you want to display in the sidebar.',
   'settings.display.submit': 'Update display',
-  'settings.notifications.submit': 'Update notifications',
-  'settings.notifications.success':
-    'Notification settings updated successfully',
   'settings.website.brandIdentity': 'Brand identity',
   'settings.website.brandIdentityDesc':
     'These values are used across navigation, browser metadata, and product-facing copy.',
@@ -1159,13 +1120,6 @@ export default {
   'configDrawer.whiteLabelDisabledDesc':
     'Using standard built-in color palette.',
   'configDrawer.color': 'Color',
-  'notificationDropdown.title': 'Notifications',
-  'notificationDropdown.markAllRead': 'Mark all read',
-  'notificationDropdown.loading': 'Loading notifications...',
-  'notificationDropdown.emptyTitle': 'No notifications yet',
-  'notificationDropdown.emptyDesc':
-    'Security and email updates will appear here.',
-  'notificationDropdown.delete': 'Delete notification',
   'helpCenter.guide': 'Boilerplate portal guide',
   'helpCenter.title': 'Help Center',
   'helpCenter.description':

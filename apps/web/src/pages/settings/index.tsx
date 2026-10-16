@@ -1,11 +1,4 @@
-import {
-  Bell,
-  LockIcon,
-  Palette,
-  ShieldCheck,
-  UserCog,
-  Wrench,
-} from 'lucide-react'
+import { LockIcon, Palette, ShieldCheck, UserCog, Wrench } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { Separator } from '@/components/ui/separator'
@@ -37,11 +30,6 @@ const sidebarNavItems = [
     title: 'navigation.other.security',
     href: '/settings/security',
     icon: <ShieldCheck size={18} />,
-  },
-  {
-    title: 'navigation.other.notifications',
-    href: '/settings/notifications',
-    icon: <Bell size={18} />,
   },
   {
     title: 'navigation.other.appearance',

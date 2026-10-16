@@ -12,7 +12,6 @@ import {
   Files,
   FlaskConicalIcon,
   BookOpenText,
-  Send,
   MapPin,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
@@ -103,12 +102,6 @@ export const sidebarLink: SidebarData = {
     {
       title: 'navigation.other.title',
       items: [
-        {
-          title: 'navigation.orders.sendNotifications',
-          url: '/send-notifications',
-          icon: Send,
-          permission: 'ADMIN',
-        },
         {
           title: 'navigation.other.helpCenter',
           url: '/help-center',
