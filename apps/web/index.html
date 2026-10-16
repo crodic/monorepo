@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/images/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <title>ADMIN DASHBOARD</title>
+    <meta name="title" content="Vite Admin Dashboard" />
+    <meta
+      name="description"
+      content="Admin Dashboard UI built with Shadcn and Vite."
+    />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="" />
+    <meta property="og:title" content="Shadcn Admin" />
+    <meta
+      property="og:description"
+      content="Admin Dashboard UI built with Shadcn and Vite."
+    />
+    <meta property="og:image" content="" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="" />
+    <meta property="twitter:title" content="Shadcn Admin" />
+    <meta
+      property="twitter:description"
+      content="Admin Dashboard UI built with Shadcn and Vite."
+    />
+    <meta property="twitter:image" content="" />
+
+    <!-- font family -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <meta name="theme-color" content="#fff" />
+    <script>
+      ;(() => {
+        try {
+          const defaults = {
+            title: 'ADMIN DASHBOARD',
+            description: 'Admin Dashboard UI built with Shadcn and Vite.',
+            favicon: '/images/favicon.png',
+          }
+          const raw = localStorage.getItem('website_settings_cache')
+          const settings = raw ? JSON.parse(raw) : null
+          const pick = (...values) =>
+            values.map((value) => value?.trim?.()).find(Boolean)
+          const title =
+            pick(
+              settings?.meta_title,
+              settings?.site_title,
+              settings?.site_brand
+            ) || defaults.title
+          const description =
+            pick(settings?.meta_description, settings?.site_tagline) ||
+            defaults.description
+          const canonicalUrl = pick(settings?.canonical_url) || ''
+          const ogTitle = pick(settings?.og_title) || title
+          const ogDescription = pick(settings?.og_description) || description
+          const twitterTitle = pick(settings?.twitter_title) || ogTitle
+          const twitterDescription =
+            pick(settings?.twitter_description) || ogDescription
+          const favicon = settings?.site_favicon || defaults.favicon
+          const ogImage =
+            settings?.og_image ||
+            settings?.twitter_image ||
+            settings?.site_logo ||
+            settings?.site_favicon ||
+            ''
+          const twitterImage = settings?.twitter_image || ogImage
+          const setMeta = (
+            selector,
+            attributeName,
+            attributeValue,
+            content
+          ) => {
+            let meta = document.head.querySelector(selector)
+
+            if (!meta) {
+              meta = document.createElement('meta')
+              meta.setAttribute(attributeName, attributeValue)
+              document.head.appendChild(meta)
+            }
+
+            meta.content = content
+          }
+          const icons = Array.from(
+            document.head.querySelectorAll('link[rel~="icon"]')
+          )
+          const icon = icons[0] || document.createElement('link')
+
+          document.title = title
+          setMeta('meta[name="title"]', 'name', 'title', title)
+          setMeta(
+            'meta[name="description"]',
+            'name',
+            'description',
+            description
+          )
+          setMeta('meta[property="og:title"]', 'property', 'og:title', ogTitle)
+          setMeta(
+            'meta[property="og:description"]',
+            'property',
+            'og:description',
+            ogDescription
+          )
+          setMeta('meta[property="og:url"]', 'property', 'og:url', canonicalUrl)
+          setMeta('meta[property="og:image"]', 'property', 'og:image', ogImage)
+          setMeta(
+            'meta[property="twitter:title"]',
+            'property',
+            'twitter:title',
+            twitterTitle
+          )
+          setMeta(
+            'meta[property="twitter:description"]',
+            'property',
+            'twitter:description',
+            twitterDescription
+          )
+          setMeta(
+            'meta[property="twitter:url"]',
+            'property',
+            'twitter:url',
+            canonicalUrl
+          )
+          setMeta(
+            'meta[property="twitter:image"]',
+            'property',
+            'twitter:image',
+            twitterImage
+          )
+
+          icon.rel = 'icon'
+          icon.href = favicon
+          icon.type = favicon.endsWith('.ico') ? 'image/x-icon' : 'image/png'
+          icons.slice(1).forEach((extraIcon) => extraIcon.remove())
+
+          if (!icon.parentElement) {
+            document.head.appendChild(icon)
+          }
+        } catch {}
+      })()
+    </script>
+    <script>
+      ;(() => {
+        try {
+          const THEME_CACHE_VERSION = 'v1.0.0'
+          const currentVersion = localStorage.getItem('theme-cache-version')
+          if (currentVersion !== THEME_CACHE_VERSION) {
+            localStorage.removeItem('runtime-theme:admin')
+            localStorage.removeItem('runtime-theme:current')
+            localStorage.removeItem('active-white-label:admin')
+            localStorage.removeItem('active-white-label')
+            localStorage.setItem('theme-cache-version', THEME_CACHE_VERSION)
+          }
+
+          const isWhiteLabelEnabled =
+            localStorage.getItem('vite-ui-white-label-enabled') !== 'false'
+          const raw = isWhiteLabelEnabled
+            ? localStorage.getItem('runtime-theme:admin')
+            : null
+          const theme = raw ? JSON.parse(raw) : null
+          const preference =
+            document.cookie
+              .split('; ')
+              .find((row) => row.startsWith('vite-ui-theme='))
+              ?.split('=')[1] || 'system'
+          const mode =
+            preference === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : preference
+
+          document.documentElement.classList.remove('light', 'dark')
+          document.documentElement.classList.add(mode)
+
+          if (!theme?.styles?.[mode]) return
+
+          const requiredKeys = [
+            'background',
+            'foreground',
+            'card',
+            'card-foreground',
+            'popover',
+            'popover-foreground',
+            'primary',
+            'primary-foreground',
+            'secondary',
+            'secondary-foreground',
+            'muted',
+            'muted-foreground',
+            'accent',
+            'accent-foreground',
+            'destructive',
+            'border',
+            'input',
+            'ring',
+            'chart-1',
+            'chart-2',
+            'chart-3',
+            'chart-4',
+            'chart-5',
+            'sidebar',
+            'sidebar-foreground',
+            'sidebar-primary',
+            'sidebar-primary-foreground',
+            'sidebar-accent',
+            'sidebar-accent-foreground',
+            'sidebar-border',
+            'sidebar-ring',
+            'font-sans',
+            'font-serif',
+            'font-mono',
+            'radius',
+            'shadow-color',
+            'shadow-opacity',
+            'shadow-blur',
+            'shadow-spread',
+            'shadow-offset-x',
+            'shadow-offset-y',
+            'letter-spacing',
+            'spacing',
+          ]
+
+          if (
+            !requiredKeys.every(
+              (key) =>
+                typeof theme.styles[mode][key] === 'string' &&
+                theme.styles[mode][key].length > 0
+            )
+          ) {
+            localStorage.removeItem('runtime-theme:admin')
+            return
+          }
+
+          Object.entries(theme.styles[mode]).forEach(([key, value]) => {
+            document.documentElement.style.setProperty(`--${key}`, value)
+          })
+          if (theme.styles[mode]['font-sans']) {
+            document.documentElement.style.fontFamily =
+              theme.styles[mode]['font-sans']
+          }
+        } catch {}
+      })()
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

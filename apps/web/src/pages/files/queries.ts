@@ -1,0 +1,261 @@
+import z from 'zod'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import {
+  type ApiMetadata,
+  apiMetadataSchema,
+  type PaginateQueryParams,
+} from '@/global'
+import http from '@/lib/http'
+import {
+  createFolderSchema,
+  fileSchema,
+  folderSchema,
+  type CreateFolderSchema,
+  type FileSchema,
+  type UpdateFileSchema,
+  updateFileSchema,
+} from './schema'
+
+export const MANAGED_FILE_UPLOAD_MAX_SIZE = 500 * 1024 * 1024
+export const FILE_UPLOAD_CHUNK_SIZE = 6 * 1024 * 1024
+
+export const storageDiskSchema = z.object({
+  name: z.string(),
+  driver: z.string(),
+  visibility: z.enum(['public', 'private']),
+  isDefault: z.boolean(),
+})
+
+export type StorageDiskInfo = z.infer<typeof storageDiskSchema>
+
+const chunkUploadSessionSchema = z.object({
+  sessionId: z.string(),
+  chunkSize: z.number(),
+  totalChunks: z.number(),
+  uploadedChunks: z.array(z.number()),
+})
+
+export const fileQueryKeys = {
+  all: ['files'] as const,
+  list: (params: PaginateQueryParams) => [...fileQueryKeys.all, params],
+  infiniteList: (params: PaginateQueryParams) => [
+    ...fileQueryKeys.all,
+    'infinite',
+    params,
+  ],
+  detail: (publicId: string) => [...fileQueryKeys.all, publicId],
+  folders: ['file-folders'] as const,
+  disks: ['file-disks'] as const,
+}
+
+export async function apiGetFileListing(
+  params: PaginateQueryParams
+): Promise<ApiMetadata & { data: FileSchema[] }> {
+  const response = await http.get('/files', { params })
+
+  return apiMetadataSchema
+    .extend({ data: z.array(fileSchema) })
+    .parse(response.data)
+}
+
+export async function apiGetFileByPublicId(publicId: string) {
+  const response = await http.get(`/files/${publicId}`)
+  return fileSchema.parse(response.data)
+}
+
+export async function apiGetAvailableDisks(): Promise<StorageDiskInfo[]> {
+  const response = await http.get('/files/disks')
+  return z.array(storageDiskSchema).parse(response.data)
+}
+
+export async function apiUploadFile({
+  file,
+  folder,
+  disk,
+  onProgress,
+}: {
+  file: File
+  folder?: string | null
+  disk?: string
+  onProgress?: (progress: number) => void
+}) {
+  return apiUploadFileInChunks({ file, folder, disk, onProgress })
+}
+
+async function apiUploadFileInChunks({
+  file,
+  folder,
+  disk,
+  onProgress,
+}: {
+  file: File
+  folder?: string | null
+  disk?: string
+  onProgress?: (progress: number) => void
+}) {
+  const totalChunks = Math.ceil(file.size / FILE_UPLOAD_CHUNK_SIZE)
+  const sessionResponse = await http.post('/files/uploads/sessions', {
+    originalName: file.name,
+    mime: file.type || 'application/octet-stream',
+    size: file.size,
+    folder,
+    disk,
+    totalChunks,
+    chunkSize: FILE_UPLOAD_CHUNK_SIZE,
+  })
+  const session = chunkUploadSessionSchema.parse(sessionResponse.data)
+
+  try {
+    for (let index = 0; index < totalChunks; index++) {
+      const start = index * FILE_UPLOAD_CHUNK_SIZE
+      const end = Math.min(start + FILE_UPLOAD_CHUNK_SIZE, file.size)
+      const chunk = file.slice(start, end)
+      const formData = new FormData()
+      formData.append('chunk', chunk, `${file.name}.part-${index}`)
+      formData.append('index', String(index))
+
+      await http.post(`/files/uploads/${session.sessionId}/chunks`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (event) => {
+          const chunkProgress = event.total ? event.loaded / event.total : 0
+          const loaded = start + chunk.size * chunkProgress
+          onProgress?.(Math.min(99, Math.round((loaded / file.size) * 100)))
+        },
+      })
+    }
+
+    const completeResponse = await http.post(
+      `/files/uploads/${session.sessionId}/complete`
+    )
+    onProgress?.(100)
+
+    return fileSchema.parse(completeResponse.data)
+  } catch (error) {
+    await http
+      .delete(`/files/uploads/${session.sessionId}`)
+      .catch(() => undefined)
+    throw error
+  }
+}
+
+export async function apiUpdateFile({
+  publicId,
+  data,
+}: {
+  publicId: string
+  data: UpdateFileSchema
+}) {
+  const response = await http.put(
+    `/files/${publicId}`,
+    updateFileSchema.parse(data)
+  )
+
+  return fileSchema.parse(response.data)
+}
+
+export async function apiDeleteFile(publicId: string) {
+  return http.delete(`/files/${publicId}`)
+}
+
+export async function apiDeleteFiles(publicIds: string[]) {
+  return Promise.all(publicIds.map((publicId) => apiDeleteFile(publicId)))
+}
+
+export async function apiGetFileFolders() {
+  const response = await http.get('/files/folders')
+  return z.array(folderSchema).parse(response.data)
+}
+
+export async function apiCreateFolder(data: CreateFolderSchema) {
+  const response = await http.post(
+    '/files/folders',
+    createFolderSchema.parse(data)
+  )
+  return folderSchema.parse(response.data)
+}
+
+export async function apiRenameFolder({
+  folder,
+  data,
+}: {
+  folder: string
+  data: CreateFolderSchema
+}) {
+  const response = await http.put(
+    `/files/folders/${encodeURIComponent(folder)}`,
+    createFolderSchema.parse(data)
+  )
+  return folderSchema.parse(response.data)
+}
+
+export async function apiDeleteFolder({
+  folder,
+  deleteFiles = false,
+}: {
+  folder: string
+  deleteFiles?: boolean
+}) {
+  return http.delete(`/files/folders/${encodeURIComponent(folder)}`, {
+    params: { deleteFiles },
+  })
+}
+
+export async function apiGetTemporaryUrl({
+  publicId,
+  expiresIn = 900,
+}: {
+  publicId: string
+  expiresIn?: number
+}) {
+  const response = await http.get(`/files/${publicId}/temporary-url`, {
+    params: { expiresIn },
+  })
+  return z
+    .object({
+      url: z.string(),
+      expiresIn: z.number(),
+      expiresAt: z.string(),
+    })
+    .parse(response.data)
+}
+
+export const useDataFileOverview = (
+  params: PaginateQueryParams,
+  options?: { enabled?: boolean }
+) =>
+  useQuery({
+    queryKey: fileQueryKeys.list(params),
+    queryFn: () => apiGetFileListing(params),
+    ...options,
+  })
+
+export const useInfiniteDataFileOverview = (
+  params: PaginateQueryParams,
+  options?: { enabled?: boolean }
+) =>
+  useInfiniteQuery({
+    queryKey: fileQueryKeys.infiniteList(params),
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      apiGetFileListing({
+        ...params,
+        page: pageParam as number,
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.currentPage < lastPage.meta.totalPages
+        ? lastPage.meta.currentPage + 1
+        : undefined,
+    ...options,
+  })
+
+export const useDataFileFolders = () =>
+  useQuery({
+    queryKey: fileQueryKeys.folders,
+    queryFn: apiGetFileFolders,
+  })
+
+export const useDataFileDisks = () =>
+  useQuery({
+    queryKey: fileQueryKeys.disks,
+    queryFn: apiGetAvailableDisks,
+  })

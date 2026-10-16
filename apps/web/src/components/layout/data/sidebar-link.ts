@@ -1,0 +1,131 @@
+import {
+  LayoutDashboard,
+  HelpCircle,
+  UserCog2,
+  Group,
+  UserLock,
+  FileClock,
+  ShieldCheck,
+  Globe,
+  MailSearch,
+  PaintbrushIcon,
+  Files,
+  FlaskConicalIcon,
+  BookOpenText,
+  Send,
+  MapPin,
+} from 'lucide-react'
+import { type SidebarData } from '../types'
+
+export const sidebarLink: SidebarData = {
+  navGroups: [
+    {
+      title: 'navigation.general.title',
+      items: [
+        {
+          title: 'navigation.general.dashboard',
+          url: '/',
+          icon: LayoutDashboard,
+        },
+        {
+          title: 'navigation.general.activityLogs',
+          url: '/logs',
+          icon: FileClock,
+          permission: 'LOG',
+        },
+
+        {
+          title: 'navigation.general.emailLogs',
+          url: '/email-logs',
+          icon: MailSearch,
+          permission: 'EMAIL_LOG',
+        },
+        {
+          title: 'navigation.general.website',
+          url: '/website-settings',
+          icon: Globe,
+        },
+        {
+          title: 'navigation.general.cmsPages',
+          url: '/cms-pages',
+          icon: BookOpenText,
+          permission: 'PAGE',
+        },
+      ],
+    },
+    {
+      title: 'navigation.management.title',
+      items: [
+        {
+          title: 'navigation.management.admins',
+          url: '/admins',
+          icon: UserCog2,
+          permission: 'ADMIN',
+        },
+        {
+          title: 'navigation.management.roles',
+          icon: Group,
+          url: '/roles',
+          permission: 'ROLE',
+        },
+        {
+          title: 'navigation.management.permissions',
+          icon: ShieldCheck,
+          url: '/permissions',
+          permission: 'ROLE',
+        },
+        {
+          title: 'navigation.management.users',
+          url: '/users',
+          icon: UserLock,
+          permission: 'USER',
+        },
+        {
+          title: 'navigation.management.whiteLabels',
+          url: '/white-labels',
+          icon: PaintbrushIcon,
+          permission: 'WHITE_LABEL' as const,
+        },
+        {
+          title: 'navigation.management.files',
+          url: '/files',
+          icon: Files,
+          permission: 'FILE',
+        },
+        {
+          title: 'navigation.management.locations',
+          url: '/locations',
+          icon: MapPin,
+          permission: 'LOCATION',
+        },
+      ],
+    },
+    {
+      title: 'navigation.other.title',
+      items: [
+        {
+          title: 'navigation.orders.sendNotifications',
+          url: '/send-notifications',
+          icon: Send,
+          permission: 'ADMIN',
+        },
+        {
+          title: 'navigation.other.helpCenter',
+          url: '/help-center',
+          icon: HelpCircle,
+        },
+      ],
+    },
+    {
+      title: 'navigation.dev.title',
+      onlyDevMode: true,
+      items: [
+        {
+          title: 'navigation.dev.playground',
+          url: '/dev',
+          icon: FlaskConicalIcon,
+        },
+      ],
+    },
+  ],
+}

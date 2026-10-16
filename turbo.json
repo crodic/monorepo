@@ -15,7 +15,13 @@
     "GOOGLE_*",
     "BULL_*",
     "ADMIN_*",
-    "SENTRY_*"
+    "SENTRY_*",
+    "VITE_*",
+    "PORT",
+    "DEV",
+    "PROD",
+    "MODE",
+    "VERCEL_URL"
   ],
   "tasks": {
     "build": {
