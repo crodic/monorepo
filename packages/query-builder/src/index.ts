@@ -3,8 +3,8 @@
  *
  * Unified query builder library supporting both:
  * 1. `nestjs-paginate` style queries (`PaginateQueryBuilder` / `NestjsPaginateQueryBuilder`)
- * 2. Laravel / Spatie QueryBuilder style queries (`SpatieQueryBuilder` / `LaravelQueryBuilder`)
+ * 2. Standard RESTful query builder (`RestQueryBuilder`)
  */
 
-export * from "./nestjs-paginate";
-export * from "./spatie";
+export * from "./nestjs-paginate-query-builder";
+export * from "./rest-query-builder";

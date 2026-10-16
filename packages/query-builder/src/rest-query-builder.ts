@@ -1,7 +1,7 @@
 /**
  * Direction for sorting queries: ascending or descending.
  */
-export type SpatieSortDirection = "asc" | "desc" | "ASC" | "DESC";
+export type RestSortDirection = "asc" | "desc" | "ASC" | "DESC";
 
 /**
  * Trashed filter mode for soft-deletable models.
@@ -9,12 +9,12 @@ export type SpatieSortDirection = "asc" | "desc" | "ASC" | "DESC";
  * - 'only': Only return soft-deleted records
  * - 'without': Exclude soft-deleted records (default)
  */
-export type SpatieTrashedMode = "with" | "only" | "without";
+export type RestTrashedMode = "with" | "only" | "without";
 
 /**
- * Structured query parameters representing a Spatie/Laravel query builder request.
+ * Structured query parameters representing a RESTful query request.
  */
-export interface SpatieQueryParams {
+export interface RestQueryParams {
   filter?: Record<string, any>;
   sort?: string;
   include?: string;
@@ -26,24 +26,27 @@ export interface SpatieQueryParams {
   [key: string]: any;
 }
 
-export interface SpatieBuilderOptions {
+/**
+ * Configuration options for RestQueryBuilder serialization.
+ */
+export interface RestBuilderOptions {
   /**
    * If true, pagination will serialize as `page[number]=1&page[size]=15`.
    * If false (default), pagination serializes as `page=1&limit=15`.
    */
   bracketPagination?: boolean;
   /**
-   * Character or strategy used for array filter values.
-   * 'comma' (default): `filter[status]=active,pending`
-   * 'bracket': `filter[status][]=active&filter[status][]=pending`
+   * Strategy used for formatting array filter values.
+   * - 'comma' (default): `filter[status]=active,pending`
+   * - 'bracket': `filter[status][]=active&filter[status][]=pending`
    */
   arrayFormat?: "comma" | "bracket";
 }
 
 /**
- * Fluent Query Builder for Laravel / Spatie Query Builder style APIs.
+ * Fluent Query Builder for standard RESTful / JSON:API style APIs.
  *
- * Compatible with backend Spatie query builder:
+ * Supports common REST query parameters:
  * - Filters: `filter[status]=active&filter[roles]=admin,editor`
  * - Sorts: `sort=-createdAt,name` (prefix '-' denotes descending)
  * - Includes: `include=roles,profile,commentsCount`
@@ -54,7 +57,7 @@ export interface SpatieBuilderOptions {
  *
  * @example
  * ```ts
- * const query = new SpatieQueryBuilder()
+ * const query = new RestQueryBuilder()
  *   .filter('status', 'active')
  *   .filter('age', [18, 30])
  *   .sortBy('createdAt', 'desc')
@@ -66,7 +69,7 @@ export interface SpatieBuilderOptions {
  * // => "filter[status]=active&filter[age]=18,30&sort=-createdAt&include=roles,permissions&fields[user]=id,name,email&page=1&limit=20"
  * ```
  */
-export class SpatieQueryBuilder {
+export class RestQueryBuilder {
   private filterParams: Record<string, any> = {};
   private sortList: string[] = [];
   private includeList: string[] = [];
@@ -77,11 +80,11 @@ export class SpatieQueryBuilder {
   private limitParam?: number;
   private searchParam?: string;
   private extraParams: Record<string, any> = {};
-  private options: SpatieBuilderOptions;
+  private options: RestBuilderOptions;
 
   constructor(
-    initialParams?: SpatieQueryParams,
-    options: SpatieBuilderOptions = {},
+    initialParams?: RestQueryParams,
+    options: RestBuilderOptions = {},
   ) {
     this.options = {
       bracketPagination: false,
@@ -101,7 +104,7 @@ export class SpatieQueryBuilder {
     return true;
   }
 
-  private loadFromParams(params: SpatieQueryParams): void {
+  private loadFromParams(params: RestQueryParams): void {
     if (!params || typeof params !== "object") return;
 
     if (params.filter && typeof params.filter === "object") {
@@ -194,14 +197,21 @@ export class SpatieQueryBuilder {
 
   /**
    * Set builder configuration options.
+   *
+   * @param options Partial builder options
+   * @returns The builder instance for chaining
    */
-  public setOptions(options: Partial<SpatieBuilderOptions>): this {
+  public setOptions(options: Partial<RestBuilderOptions>): this {
     this.options = { ...this.options, ...options };
     return this;
   }
 
   /**
    * Add a filter condition: `filter[name]=value`
+   *
+   * @param name Field or filter name
+   * @param value Filter value or array of values
+   * @returns The builder instance for chaining
    */
   public filter(name: string, value: any): this {
     if (!this.isValidValue(value)) {
@@ -225,6 +235,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Merge an object of filters: `.filters({ status: 'active', role: 'admin' })`
+   *
+   * @param filters Map of filter key-value pairs
+   * @returns The builder instance for chaining
    */
   public filters(filters: Record<string, any>): this {
     for (const key of Object.keys(filters)) {
@@ -234,42 +247,66 @@ export class SpatieQueryBuilder {
   }
 
   /**
-   * Alias for `.filter(name, value)`
+   * Exact match filter.
+   *
+   * @param name Field name
+   * @param value Target value
+   * @returns The builder instance for chaining
    */
   public filterExact(name: string, value: any): this {
     return this.filter(name, value);
   }
 
   /**
-   * Alias for `.filter(name, value)`
+   * Partial match filter.
+   *
+   * @param name Field name
+   * @param value Substring to match
+   * @returns The builder instance for chaining
    */
   public filterPartial(name: string, value: any): this {
     return this.filter(name, value);
   }
 
   /**
-   * Alias for `.filter(name, value)`
+   * Prefix match filter.
+   *
+   * @param name Field name
+   * @param value Prefix string to match
+   * @returns The builder instance for chaining
    */
   public filterStartsWith(name: string, value: any): this {
     return this.filter(name, value);
   }
 
   /**
-   * Alias for `.filter(name, value)`
+   * Suffix match filter.
+   *
+   * @param name Field name
+   * @param value Suffix string to match
+   * @returns The builder instance for chaining
    */
   public filterEndsWith(name: string, value: any): this {
     return this.filter(name, value);
   }
 
   /**
-   * Alias for `.filter(name, value)`
+   * Generic operator filter.
+   *
+   * @param name Field name
+   * @param value Filter value
+   * @returns The builder instance for chaining
    */
   public filterOperator(name: string, value: any): this {
     return this.filter(name, value);
   }
 
   /**
-   * Scope filter: `.filterScope('search', 'john')`
+   * Custom scope filter: `.filterScope('search', 'john')`
+   *
+   * @param name Scope name
+   * @param value Argument value for the scope
+   * @returns The builder instance for chaining
    */
   public filterScope(name: string, value: any): this {
     return this.filter(name, value);
@@ -277,13 +314,19 @@ export class SpatieQueryBuilder {
 
   /**
    * Trashed filter for soft deletes: `filter[trashed]=with|only|without`
+   *
+   * @param mode Soft delete mode ('with', 'only', or 'without')
+   * @returns The builder instance for chaining
    */
-  public filterTrashed(mode: SpatieTrashedMode = "with"): this {
+  public filterTrashed(mode: RestTrashedMode = "with"): this {
     return this.filter("trashed", mode);
   }
 
   /**
    * Add one or more sort fields: `.sort('-createdAt', 'name')`
+   *
+   * @param fields Field names (prefix with '-' for descending)
+   * @returns The builder instance for chaining
    */
   public sort(...fields: string[]): this {
     for (const f of fields) {
@@ -299,8 +342,12 @@ export class SpatieQueryBuilder {
 
   /**
    * Add a single sort with explicit direction: `.sortBy('createdAt', 'desc')` -> `-createdAt`
+   *
+   * @param field Field name to sort on
+   * @param direction 'asc' or 'desc'
+   * @returns The builder instance for chaining
    */
-  public sortBy(field: string, direction: SpatieSortDirection = "asc"): this {
+  public sortBy(field: string, direction: RestSortDirection = "asc"): this {
     if (!field || typeof field !== "string") return this;
     const isDesc = direction.toLowerCase() === "desc";
     const sortKey = isDesc ? `-${field}` : field;
@@ -315,6 +362,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Clear all current sorts and set given sorts.
+   *
+   * @param fields Replacement sort fields
+   * @returns The builder instance for chaining
    */
   public setSort(...fields: string[]): this {
     this.sortList = [];
@@ -323,6 +373,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Include relationships: `include=roles,profile,commentsCount`
+   *
+   * @param relations Relationship paths to include
+   * @returns The builder instance for chaining
    */
   public include(...relations: string[]): this {
     for (const r of relations) {
@@ -338,6 +391,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Set root flat sparse fieldset: `fields=id,name,email`
+   *
+   * @param fields List of fields to select
+   * @returns The builder instance for chaining
    */
   public fields(...fields: string[]): this {
     for (const f of fields) {
@@ -353,6 +409,10 @@ export class SpatieQueryBuilder {
 
   /**
    * Set scoped sparse fieldset: `fields[user]=id,name`
+   *
+   * @param scope Table or relation model name
+   * @param fields Array or comma-delimited list of fields
+   * @returns The builder instance for chaining
    */
   public fieldsFor(scope: string, fields: string[] | string): this {
     if (!scope || typeof scope !== "string") return this;
@@ -371,6 +431,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Add appends: `append=fullName,avatarUrl`
+   *
+   * @param appends Computed attributes to append
+   * @returns The builder instance for chaining
    */
   public append(...appends: string[]): this {
     for (const a of appends) {
@@ -386,6 +449,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Global search query: `q=keyword`
+   *
+   * @param query Search query text
+   * @returns The builder instance for chaining
    */
   public search(query?: string): this {
     if (query && query.trim() !== "") {
@@ -398,6 +464,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Set page number: `page=1` or `page[number]=1`
+   *
+   * @param page Target page number (>= 1)
+   * @returns The builder instance for chaining
    */
   public page(page?: number): this {
     if (page && page > 0) {
@@ -410,6 +479,9 @@ export class SpatieQueryBuilder {
 
   /**
    * Set page size / limit: `limit=15` or `page[size]=15`
+   *
+   * @param limit Items per page
+   * @returns The builder instance for chaining
    */
   public limit(limit?: number): this {
     if (limit && limit > 0) {
@@ -422,13 +494,20 @@ export class SpatieQueryBuilder {
 
   /**
    * Alias for `.limit(limit)`
+   *
+   * @param limit Items per page
+   * @returns The builder instance for chaining
    */
   public perPage(limit?: number): this {
     return this.limit(limit);
   }
 
   /**
-   * Set both page and limit
+   * Set both page and limit in a single call.
+   *
+   * @param page Target page number
+   * @param limit Items per page
+   * @returns The builder instance for chaining
    */
   public paginate(page?: number, limit?: number): this {
     this.page(page);
@@ -437,7 +516,11 @@ export class SpatieQueryBuilder {
   }
 
   /**
-   * Add custom extra query parameter
+   * Add custom extra query parameter.
+   *
+   * @param key Parameter key
+   * @param value Parameter value
+   * @returns The builder instance for chaining
    */
   public param(key: string, value: any): this {
     if (this.isValidValue(value)) {
@@ -449,7 +532,10 @@ export class SpatieQueryBuilder {
   }
 
   /**
-   * Merge custom extra query parameters
+   * Merge custom extra query parameters.
+   *
+   * @param params Key-value map of extra query parameters
+   * @returns The builder instance for chaining
    */
   public params(params: Record<string, any>): this {
     for (const key of Object.keys(params)) {
@@ -459,10 +545,12 @@ export class SpatieQueryBuilder {
   }
 
   /**
-   * Build clean parameters object.
+   * Build clean structured query parameters object.
+   *
+   * @returns The structured query parameters object
    */
-  public build(): SpatieQueryParams {
-    const params: SpatieQueryParams = {};
+  public build(): RestQueryParams {
+    const params: RestQueryParams = {};
 
     if (Object.keys(this.filterParams).length > 0) {
       params.filter = { ...this.filterParams };
@@ -515,8 +603,11 @@ export class SpatieQueryBuilder {
 
   /**
    * Convert the QueryBuilder state to an encoded URL query string.
+   *
+   * @param customParams Optional parameters override
+   * @returns Encoded query string without leading '?'
    */
-  public toQueryString(customParams?: SpatieQueryParams): string {
+  public toQueryString(customParams?: RestQueryParams): string {
     const p = customParams || this.build();
     const parts: string[] = [];
 
@@ -617,5 +708,3 @@ export class SpatieQueryBuilder {
     return parts.join("&");
   }
 }
-
-export { SpatieQueryBuilder as LaravelQueryBuilder };

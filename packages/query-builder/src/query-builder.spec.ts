@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   NestjsPaginateQueryBuilder,
   PaginateQueryBuilder,
-} from "./nestjs-paginate";
-import { LaravelQueryBuilder, SpatieQueryBuilder } from "./spatie";
+} from "./nestjs-paginate-query-builder";
+import { RestQueryBuilder } from "./rest-query-builder";
 
 describe("NestJS Paginate Query Builder", () => {
   it("should build basic pagination and sort params", () => {
@@ -42,9 +42,9 @@ describe("NestJS Paginate Query Builder", () => {
   });
 });
 
-describe("Spatie / Laravel Query Builder", () => {
-  it("should format filters, sorts, and includes in Spatie style", () => {
-    const qb = new SpatieQueryBuilder()
+describe("REST Query Builder", () => {
+  it("should format filters, sorts, and includes in REST style", () => {
+    const qb = new RestQueryBuilder()
       .filter("status", "active")
       .filter("category", ["electronics", "books"])
       .sortBy("createdAt", "desc")
@@ -65,7 +65,7 @@ describe("Spatie / Laravel Query Builder", () => {
   });
 
   it("should support scoped sparse fields", () => {
-    const qb = new LaravelQueryBuilder()
+    const qb = new RestQueryBuilder()
       .fieldsFor("users", ["id", "name"])
       .fieldsFor("posts", ["id", "title"]);
 
@@ -75,7 +75,7 @@ describe("Spatie / Laravel Query Builder", () => {
   });
 
   it("should support bracket pagination if enabled", () => {
-    const qb = new SpatieQueryBuilder(undefined, { bracketPagination: true })
+    const qb = new RestQueryBuilder(undefined, { bracketPagination: true })
       .page(3)
       .limit(50);
 
@@ -85,7 +85,7 @@ describe("Spatie / Laravel Query Builder", () => {
   });
 
   it("should support bracket array filtering if enabled", () => {
-    const qb = new SpatieQueryBuilder(undefined, {
+    const qb = new RestQueryBuilder(undefined, {
       arrayFormat: "bracket",
     }).filter("status", ["active", "pending"]);
 

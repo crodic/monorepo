@@ -6,9 +6,10 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./nestjs-paginate": "./src/nestjs-paginate.ts",
-    "./spatie": "./src/spatie.ts",
-    "./laravel": "./src/spatie.ts"
+    "./nestjs-paginate-query-builder": "./src/nestjs-paginate-query-builder.ts",
+    "./nestjs-paginate": "./src/nestjs-paginate-query-builder.ts",
+    "./rest-query-builder": "./src/rest-query-builder.ts",
+    "./rest": "./src/rest-query-builder.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
