@@ -1,6 +1,6 @@
 # Hướng Dẫn & Kiến Trúc Xác Thực (Authentication)
 
-> [English](AUTH.md) | **Tiếng Việt**
+> [English](../en/AUTH.md) | **Tiếng Việt**
 >
 > **Kiến trúc quản lý vòng đời xác thực & phiên làm việc (Session Lifecycle) cấp doanh nghiệp** trên toàn bộ Monorepo (`apps/api`, `apps/client`, `apps/web`), nổi bật với cơ chế Xoay vòng Refresh Token (RTR), Kiểm soát đồng thời Single-Flight, Bảo vệ Route không dùng trick và Xử lý lỗi kiên cường (Resilient Error Handling).
 

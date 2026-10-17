@@ -1,6 +1,6 @@
 # Hệ Thống Activity & Audit Log Cho NestJS & TypeORM
 
-> [English](ACTIVITY_LOG.md) | **Tiếng Việt**
+> [English](../en/ACTIVITY_LOG.md) | **Tiếng Việt**
 
 Kiến trúc ghi nhận nhật ký hoạt động (Activity & Audit Log) tự động và linh hoạt dành cho NestJS và TypeORM.
 

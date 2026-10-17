@@ -1,6 +1,6 @@
 # DataTable Guide
 
-> **English** | [Tiếng Việt](DATATABLE.vi.md)
+> **English** | [Tiếng Việt](../vi/DATA_TABLE.md)
 
 This document explains how to use the shared DataTable system in `apps/web`.
 It is written for pages that need admin-style tables with URL-driven pagination,

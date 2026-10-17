@@ -1,6 +1,6 @@
 # Tải Lên Hình Ảnh Kèm Sắp Xếp (Sortable Image Upload)
 
-> [English](SORTABLE.md) | **Tiếng Việt**
+> [English](../en/SORTABLE.md) | **Tiếng Việt**
 
 Tài liệu này giải thích cách sử dụng `SortableImageUpload` trên frontend và cách thiết kế cấu trúc API phía backend để xử lý danh sách ảnh hỗ trợ tải lên, xóa bỏ, sắp xếp lại thứ tự (drag & drop), và gửi dữ liệu thông qua `FormData`.
 

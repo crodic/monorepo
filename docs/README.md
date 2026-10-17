@@ -1,28 +1,28 @@
 # Monorepo Documentation Hub
 
-> **English** | [Tiếng Việt](README.vi.md)
+Welcome to the documentation hub for this enterprise monorepo. Documentation is organized by language:
 
-Welcome to the central documentation index for this monorepo. This directory contains detailed architectural, operational, and development guides for all applications and shared packages.
+- 🇬🇧 **[English Documentation Hub](en/README.md)**
+- 🇻🇳 **[Trung Tâm Tài Liệu Tiếng Việt](vi/README.md)**
 
 ---
 
-## Documentation Catalog
+## Quick Navigation / Danh Mục Nhanh
 
-| Document                                                 | Description                                                                                                                                    | Languages                                                                         |
-| :------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
-| [**Architecture & Overview**](../README.md)              | High-level monorepo architecture, application roles, package structure, and quickstart.                                                        | [English](../README.md)                                                           |
-| [**Authentication & RBAC**](AUTH.md)                     | JWT authentication, refresh token rotation, Google OAuth, sessions, roles, and granular permissions.                                           | [English](AUTH.md) · [Tiếng Việt](AUTH.vi.md)                                     |
-| [**Query Builder**](QUERY_BUILDER.md)                    | Fluent whitelist-based query builder for NestJS/TypeORM and frontend `@repo/query-builder` (`RestQueryBuilder`, `NestjsPaginateQueryBuilder`). | [English](QUERY_BUILDER.md) · [Tiếng Việt](QUERY_BUILDER.vi.md)                   |
-| [**Data Table Component**](DATATABLE.md)                 | Reusable TanStack Table component for `apps/web` with sorting, filtering, selection, and server-side pagination.                               | [English](DATATABLE.md) · [Tiếng Việt](DATATABLE.vi.md)                           |
-| [**Sortable & Drag-and-Drop**](SORTABLE.md)              | Accessible drag-and-drop sortable lists, table rows, and nested trees using `@dnd-kit`.                                                        | [English](SORTABLE.md) · [Tiếng Việt](SORTABLE.vi.md)                             |
-| [**Filesystem & Storage**](filesystem.md)                | Multi-driver storage abstraction layer supporting local disk and AWS S3 / MinIO storage.                                                       | [English](filesystem.md) · [Tiếng Việt](filesystem.vi.md)                         |
-| [**Background File Uploads**](BACKGROUND_FILE_UPLOAD.md) | Chunked and resumable file uploads processed asynchronously with BullMQ worker queues.                                                         | [English](BACKGROUND_FILE_UPLOAD.md) · [Tiếng Việt](BACKGROUND_FILE_UPLOAD.vi.md) |
-| [**Activity Log & Audit Trail**](ACTIVITY_LOG.md)        | Automatic and manual user activity logging, change tracking, and audit trails.                                                                 | [English](ACTIVITY_LOG.md) · [Tiếng Việt](ACTIVITY_LOG.vi.md)                     |
-| [**Core Utilities**](CORE_UTILITIES.md)                  | Common NestJS decorators, interceptors, validation pipes, standardized API responses, and exception filters.                                   | [English](CORE_UTILITIES.md) · [Tiếng Việt](CORE_UTILITIES.vi.md)                 |
-| [**Sentry Monitoring**](SENTRY.md)                       | Error tracking, distributed tracing, and exception capturing across backend and frontend.                                                      | [English](SENTRY.md) · [Tiếng Việt](SENTRY.vi.md)                                 |
-| [**Testing Strategy**](TESTING.md)                       | Unit tests, service mocks, controller tests, and E2E testing workflows using Vitest and Jest.                                                  | [English](TESTING.md) · [Tiếng Việt](TESTING.vi.md)                               |
-| [**Deployment Guide**](DEPLOYMENT.md)                    | Production Docker configurations, environment variables, PostgreSQL migrations, and service provisioning.                                      | [English](DEPLOYMENT.md) · [Tiếng Việt](DEPLOYMENT.vi.md)                         |
-| [**Release & Versioning**](RELEASE.md)                   | Automated semantic versioning, changelog generation, and GitHub Releases via Semantic Release.                                                 | [English](RELEASE.md) · [Tiếng Việt](RELEASE.vi.md)                               |
+| Document / Tài liệu               | English                                       | Tiếng Việt                                           |
+| :-------------------------------- | :-------------------------------------------- | :--------------------------------------------------- |
+| **Deployment with Coolify (VPS)** | [English Guide](en/DEPLOYMENT.md)             | [Hướng dẫn Tiếng Việt](vi/DEPLOYMENT.md)             |
+| **Authentication & RBAC**         | [English Guide](en/AUTH.md)                   | [Hướng dẫn Tiếng Việt](vi/AUTH.md)                   |
+| **Query Builder**                 | [English Guide](en/QUERY_BUILDER.md)          | [Hướng dẫn Tiếng Việt](vi/QUERY_BUILDER.md)          |
+| **Data Table Component**          | [English Guide](en/DATA_TABLE.md)             | [Hướng dẫn Tiếng Việt](vi/DATA_TABLE.md)             |
+| **Filesystem & Storage**          | [English Guide](en/FILESYSTEM.md)             | [Hướng dẫn Tiếng Việt](vi/FILESYSTEM.md)             |
+| **Background File Uploads**       | [English Guide](en/BACKGROUND_FILE_UPLOAD.md) | [Hướng dẫn Tiếng Việt](vi/BACKGROUND_FILE_UPLOAD.md) |
+| **Sortable & Drag-and-Drop**      | [English Guide](en/SORTABLE.md)               | [Hướng dẫn Tiếng Việt](vi/SORTABLE.md)               |
+| **Activity Log & Audit Trail**    | [English Guide](en/ACTIVITY_LOG.md)           | [Hướng dẫn Tiếng Việt](vi/ACTIVITY_LOG.md)           |
+| **Core Utilities**                | [English Guide](en/CORE_UTILITIES.md)         | [Hướng dẫn Tiếng Việt](vi/CORE_UTILITIES.md)         |
+| **Sentry Monitoring**             | [English Guide](en/SENTRY.md)                 | [Hướng dẫn Tiếng Việt](vi/SENTRY.md)                 |
+| **Testing Strategy**              | [English Guide](en/TESTING.md)                | [Hướng dẫn Tiếng Việt](vi/TESTING.md)                |
+| **Release & Versioning**          | [English Guide](en/RELEASE.md)                | [Hướng dẫn Tiếng Việt](vi/RELEASE.md)                |
 
 ---
 

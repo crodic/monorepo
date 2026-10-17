@@ -1,6 +1,6 @@
 # Sortable Image Upload
 
-> **English** | [Tiếng Việt](SORTABLE.vi.md)
+> **English** | [Tiếng Việt](../vi/SORTABLE.md)
 
 This document explains how to use `SortableImageUpload` on the frontend and how to structure backend APIs to handle image lists that support upload, deletion, reordering, and submission via `FormData`.
 

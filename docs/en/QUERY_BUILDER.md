@@ -1,6 +1,6 @@
 # QueryBuilder for NestJS & TypeORM
 
-> **English** | [Tiếng Việt](QUERY_BUILDER.vi.md)
+> **English** | [Tiếng Việt](../vi/QUERY_BUILDER.md)
 
 A fluent, secure, whitelist-based query builder for NestJS and TypeORM.
 

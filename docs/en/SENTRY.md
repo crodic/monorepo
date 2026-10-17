@@ -1,6 +1,6 @@
 # Sentry Error Tracking & Performance Monitoring
 
-> **English** | [Tiếng Việt](SENTRY.vi.md)
+> **English** | [Tiếng Việt](../vi/SENTRY.md)
 
 This document describes how Sentry is set up in `apps/api` using `@sentry/nestjs` for error tracking, exception capturing, and performance tracing.
 

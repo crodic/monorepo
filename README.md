@@ -56,21 +56,21 @@ monorepo/
 
 Detailed documentation is available in the [`docs/`](docs/README.md) directory:
 
-| Guide                                                            | Description                                                                        |
-| :--------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
-| 📖 [**Documentation Catalog**](docs/README.md)                   | Central documentation directory with English and Vietnamese guides.                |
-| 🔐 [**Authentication & RBAC**](docs/AUTH.md)                     | JWT tokens, refresh rotation, Google OAuth, session management, and permissions.   |
-| 🔍 [**Query Builder**](docs/QUERY_BUILDER.md)                    | Backend TypeORM query builder and frontend `@repo/query-builder` usage.            |
-| 📊 [**Data Table Component**](docs/DATATABLE.md)                 | Reusable TanStack Table with server-side pagination, filters, and selection.       |
-| 🔀 [**Sortable Lists**](docs/SORTABLE.md)                        | Accessible drag-and-drop sortable components powered by `@dnd-kit`.                |
-| 💾 [**Filesystem & Storage**](docs/filesystem.md)                | Multi-driver storage abstraction (Local disk and AWS S3 / MinIO).                  |
-| 📤 [**Background File Uploads**](docs/BACKGROUND_FILE_UPLOAD.md) | Resumable chunked file uploads with BullMQ background processing.                  |
-| 📜 [**Activity Log & Audit Trail**](docs/ACTIVITY_LOG.md)        | Automatic and manual activity tracking for security audits.                        |
-| 🛠️ [**Core Utilities**](docs/CORE_UTILITIES.md)                  | Custom NestJS decorators, interceptors, validation pipes, and response formatters. |
-| 🚨 [**Sentry Error Tracking**](docs/SENTRY.md)                   | Error capture, tracing, and exception handling across backend and frontend.        |
-| 🧪 [**Testing Strategy**](docs/TESTING.md)                       | Unit tests, mock providers, and E2E test execution guidelines.                     |
-| 🚀 [**Deployment Guide**](docs/DEPLOYMENT.md)                    | Production Docker configurations, environment variables, and database migrations.  |
-| 📦 [**Release & Versioning**](docs/RELEASE.md)                   | Automated semantic versioning and changelog generation workflow.                   |
+| Guide                                                               | Description                                                                                                       | Languages                                                                                      |
+| :------------------------------------------------------------------ | :---------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| 📖 [**Documentation Catalog**](docs/README.md)                      | Central documentation directory with English and Vietnamese guides.                                               | [English](docs/en/README.md) · [Tiếng Việt](docs/vi/README.md)                                 |
+| 🚀 [**Deployment Guide (Coolify)**](docs/en/DEPLOYMENT.md)          | Turnkey single-VPS deployment with Coolify, automated Let's Encrypt SSL, PostgreSQL 16, Redis 7, and auto-deploy. | [English](docs/en/DEPLOYMENT.md) · [Tiếng Việt](docs/vi/DEPLOYMENT.md)                         |
+| 🔐 [**Authentication & RBAC**](docs/en/AUTH.md)                     | JWT tokens, refresh rotation, Google OAuth, session management, and permissions.                                  | [English](docs/en/AUTH.md) · [Tiếng Việt](docs/vi/AUTH.md)                                     |
+| 🔍 [**Query Builder**](docs/en/QUERY_BUILDER.md)                    | Backend TypeORM query builder and frontend `@repo/query-builder` usage.                                           | [English](docs/en/QUERY_BUILDER.md) · [Tiếng Việt](docs/vi/QUERY_BUILDER.md)                   |
+| 📊 [**Data Table Component**](docs/en/DATA_TABLE.md)                | Reusable TanStack Table with server-side pagination, filters, and selection.                                      | [English](docs/en/DATA_TABLE.md) · [Tiếng Việt](docs/vi/DATA_TABLE.md)                         |
+| 🔀 [**Sortable Lists**](docs/en/SORTABLE.md)                        | Accessible drag-and-drop sortable components powered by `@dnd-kit`.                                               | [English](docs/en/SORTABLE.md) · [Tiếng Việt](docs/vi/SORTABLE.md)                             |
+| 💾 [**Filesystem & Storage**](docs/en/FILESYSTEM.md)                | Multi-driver storage abstraction (Local disk and AWS S3 / MinIO).                                                 | [English](docs/en/FILESYSTEM.md) · [Tiếng Việt](docs/vi/FILESYSTEM.md)                         |
+| 📤 [**Background File Uploads**](docs/en/BACKGROUND_FILE_UPLOAD.md) | Resumable chunked file uploads with BullMQ background processing.                                                 | [English](docs/en/BACKGROUND_FILE_UPLOAD.md) · [Tiếng Việt](docs/vi/BACKGROUND_FILE_UPLOAD.md) |
+| 📜 [**Activity Log & Audit Trail**](docs/en/ACTIVITY_LOG.md)        | Automatic and manual activity tracking for security audits.                                                       | [English](docs/en/ACTIVITY_LOG.md) · [Tiếng Việt](docs/vi/ACTIVITY_LOG.md)                     |
+| 🛠️ [**Core Utilities**](docs/en/CORE_UTILITIES.md)                  | Custom NestJS decorators, interceptors, validation pipes, and response formatters.                                | [English](docs/en/CORE_UTILITIES.md) · [Tiếng Việt](docs/vi/CORE_UTILITIES.md)                 |
+| 🚨 [**Sentry Error Tracking**](docs/en/SENTRY.md)                   | Error capture, tracing, and exception handling across backend and frontend.                                       | [English](docs/en/SENTRY.md) · [Tiếng Việt](docs/vi/SENTRY.md)                                 |
+| 🧪 [**Testing Strategy**](docs/en/TESTING.md)                       | Unit tests, mock providers, and E2E test execution guidelines.                                                    | [English](docs/en/TESTING.md) · [Tiếng Việt](docs/vi/TESTING.md)                               |
+| 📦 [**Release & Versioning**](docs/en/RELEASE.md)                   | Automated semantic versioning and changelog generation workflow.                                                  | [English](docs/en/RELEASE.md) · [Tiếng Việt](docs/vi/RELEASE.md)                               |
 
 ---
 
@@ -186,7 +186,7 @@ git commit -m "feat(query-builder): add rest-query-builder implementation"
 
 ### Release Automation
 
-Releases and automated semantic version tags are generated by **Semantic Release** on GitHub Actions. Refer to [`docs/RELEASE.md`](docs/RELEASE.md) for full release guidelines.
+Releases and automated semantic version tags are generated by **Semantic Release** on GitHub Actions. Refer to [`docs/en/RELEASE.md`](docs/en/RELEASE.md) for full release guidelines.
 
 ---
 

@@ -1,6 +1,6 @@
 # 🚀 Release Process & Semantic Release Guide
 
-> **English** | [Tiếng Việt](RELEASE.vi.md)
+> **English** | [Tiếng Việt](../vi/RELEASE.md)
 
 This document provides a detailed guide on the automated release workflow (**Semantic Release**) in this Monorepo project.
 
@@ -77,7 +77,7 @@ GITHUB_TOKEN=<your-github-personal-access-token> pnpm release
 
 ## ⚙️ 4. GitHub Actions Automation
 
-The workflow configuration is located at [../.github/workflows/release.yml](../.github/workflows/release.yml):
+The workflow configuration is located at [../../.github/workflows/release.yml](../../.github/workflows/release.yml):
 
 1. **Branch & Develop:** Create a feature branch (e.g., `feat/user-profile`), write code, and make conventional commits.
 2. **Create Pull Request:** Open a PR targeting `main`. CI checks (Lint, Type-check, Build, Test) are automatically triggered.
@@ -91,7 +91,7 @@ The workflow configuration is located at [../.github/workflows/release.yml](../.
 
 ## 📄 5. Configuration (.releaserc.js)
 
-The configuration file is located at [../.releaserc.js](../.releaserc.js):
+The configuration file is located at [../../.releaserc.js](../../.releaserc.js):
 
 - **`branches`**: Releases from `main`, `master`, `beta`, `alpha`.
 - **`plugins`**:

@@ -1,6 +1,6 @@
 # Bộ QueryBuilder Cho NestJS & TypeORM
 
-> [English](QUERY_BUILDER.md) | **Tiếng Việt**
+> [English](../en/QUERY_BUILDER.md) | **Tiếng Việt**
 
 Bộ QueryBuilder dạng Fluent API theo cơ chế whitelist an toàn cho NestJS và TypeORM.
 

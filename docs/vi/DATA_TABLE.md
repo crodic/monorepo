@@ -1,6 +1,6 @@
 # Hướng Dẫn Sử Dụng DataTable
 
-> [English](DATATABLE.md) | **Tiếng Việt**
+> [English](../en/DATA_TABLE.md) | **Tiếng Việt**
 
 Tài liệu này hướng dẫn cách sử dụng hệ thống DataTable dùng chung trong `apps/web`.
 Nội dung dành cho các trang cần bảng dữ liệu kiểu quản trị admin với phân trang đồng bộ qua URL,

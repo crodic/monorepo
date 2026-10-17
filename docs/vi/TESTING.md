@@ -1,6 +1,6 @@
 # Kiến Trúc Kiểm Thử E2E & Tích Hợp (Testing Architecture)
 
-> [English](TESTING.md) | **Tiếng Việt**
+> [English](../en/TESTING.md) | **Tiếng Việt**
 
 Tài liệu này mô tả chi tiết kiến trúc kiểm thử End-to-End (E2E) và kiểm thử tích hợp (integration testing) cho ứng dụng backend NestJS (`apps/api`).
 

@@ -1,6 +1,6 @@
 # Thiết lập Theo dõi Lỗi & Hiệu năng với Sentry
 
-> [English](SENTRY.md) | **Tiếng Việt**
+> [English](../en/SENTRY.md) | **Tiếng Việt**
 
 Tài liệu này hướng dẫn cách cấu hình và sử dụng Sentry trong `apps/api` với package `@sentry/nestjs` để tự động thu thập lỗi (error tracking), ghi nhận ngoại lệ (exception capturing) và giám sát hiệu năng truy vấn (distributed tracing).
 

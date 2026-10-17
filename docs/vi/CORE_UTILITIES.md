@@ -1,5 +1,7 @@
 # Hạ Tầng Entity & Tiện Ích Cốt Lõi (Core Utilities & Entity Infrastructure)
 
+> [English](../en/CORE_UTILITIES.md) | **Tiếng Việt**
+
 Tài liệu này mô tả chi tiết các tiện ích cốt lõi (utilities), Pipe xử lý query parameters, và hạ tầng database entity được xây dựng trong `apps/api`.
 
 ---

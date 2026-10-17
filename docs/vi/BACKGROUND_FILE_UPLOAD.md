@@ -1,6 +1,6 @@
 # Kiến Trúc Tải Tệp Nền (Background File Upload)
 
-> [English](BACKGROUND_FILE_UPLOAD.md) | **Tiếng Việt**
+> [English](../en/BACKGROUND_FILE_UPLOAD.md) | **Tiếng Việt**
 
 Tài liệu này mô tả kiến trúc tải tệp chạy ngầm được thiết kế để xử lý việc tải lên số lượng lớn tệp (ví dụ: Bộ sưu tập bài viết, Thư viện hình ảnh, Nhập dữ liệu hàng loạt,...).
 

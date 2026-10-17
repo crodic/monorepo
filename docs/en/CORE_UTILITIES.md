@@ -1,5 +1,7 @@
 # Core Utilities & Entity Infrastructure
 
+> **English** | [Tiếng Việt](../vi/CORE_UTILITIES.md)
+
 This document details the core utility functions, request processing pipes, and database entity infrastructure provided by `apps/api`.
 
 ---

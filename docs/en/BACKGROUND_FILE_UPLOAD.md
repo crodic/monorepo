@@ -1,6 +1,6 @@
 # Background File Upload Architecture
 
-> **English** | [Tiếng Việt](BACKGROUND_FILE_UPLOAD.vi.md)
+> **English** | [Tiếng Việt](../vi/BACKGROUND_FILE_UPLOAD.md)
 
 This document describes the background file upload architecture designed to handle bulk file uploads (e.g., Post Collections, Image Galleries, Batch Imports, etc.).
 

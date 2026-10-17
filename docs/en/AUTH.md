@@ -1,6 +1,6 @@
 # Authentication Architecture & Developer Guide
 
-> **English** | [Tiếng Việt](AUTH.vi.md)
+> **English** | [Tiếng Việt](../vi/AUTH.md)
 >
 > **Enterprise-Grade Authentication & Session Lifecycle** across the Monorepo (`apps/api`, `apps/client`, `apps/web`), featuring Refresh Token Rotation (RTR), Single-Flight Concurrency Control, Zero-Trick Route Protection, and Resilient Error Handling.
 

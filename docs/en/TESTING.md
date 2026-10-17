@@ -1,6 +1,6 @@
 # E2E & Integration Testing Architecture
 
-> **English** | [Tiếng Việt](TESTING.vi.md)
+> **English** | [Tiếng Việt](../vi/TESTING.md)
 
 This document describes the End-to-End (E2E) and integration testing architecture for the NestJS API application (`apps/api`).
 

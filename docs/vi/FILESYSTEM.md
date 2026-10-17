@@ -1,6 +1,6 @@
 # Kiến Trúc Quản Lý Tệp & Lưu Trữ (Filesystem Architecture)
 
-> [English](filesystem.md) | **Tiếng Việt**
+> [English](../en/FILESYSTEM.md) | **Tiếng Việt**
 
 Tài liệu này mô tả kiến trúc Filesystem thống nhất được triển khai trong Monorepo. Lấy cảm hứng từ **Hệ thống Storage của Laravel (`Storage::disk()`)**, kiến trúc cung cấp một lớp trừu tượng dựa trên Driver để quản lý tệp tin linh hoạt giữa lưu trữ cục bộ (local storage), tệp tĩnh công khai cục bộ (public disk), AWS S3 và MinIO.
 
@@ -186,7 +186,7 @@ sequenceDiagram
 
 ### 4.3. Tải Lên Hàng Loạt Chạy Ngầm (Queue + Events)
 
-Với các tác vụ tải lên hàng loạt (10+ hình ảnh cùng lúc), hãy xem [docs/BACKGROUND_FILE_UPLOAD.vi.md](./BACKGROUND_FILE_UPLOAD.vi.md) để điều phối tệp qua **BullMQ** và phát sự kiện nghiệp vụ.
+Với các tác vụ tải lên hàng loạt (10+ hình ảnh cùng lúc), hãy xem [BACKGROUND_FILE_UPLOAD.md](BACKGROUND_FILE_UPLOAD.md) để điều phối tệp qua **BullMQ** và phát sự kiện nghiệp vụ.
 
 ---
 

@@ -24,7 +24,11 @@
     "migration:generate": "pnpm typeorm --dataSource=src/database/data-source.ts migration:generate",
     "migration:create": "pnpm typeorm -- migration:create",
     "migration:run": "pnpm typeorm --dataSource=src/database/data-source.ts migration:run",
+    "migration:run:prod": "node ./node_modules/typeorm/cli.js -d dist/database/data-source.js migration:run",
     "migration:revert": "pnpm typeorm --dataSource=src/database/data-source.ts migration:revert",
+    "migration:revert:prod": "node ./node_modules/typeorm/cli.js -d dist/database/data-source.js migration:revert",
+    "seed:run:prod": "node dist/database/seeds/run-seed.js",
+    "permissions:sync:prod": "node dist/database/sync-permissions.js",
     "schema:drop": "pnpm typeorm --dataSource=src/database/data-source.ts schema:drop"
   },
   "dependencies": {

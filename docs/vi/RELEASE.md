@@ -1,6 +1,6 @@
 # 🚀 Quy Trình Phát Hành & Hướng Dẫn Semantic Release
 
-> [English](RELEASE.md) | **Tiếng Việt**
+> [English](../en/RELEASE.md) | **Tiếng Việt**
 
 Tài liệu này cung cấp hướng dẫn chi tiết về quy trình tự động hóa phát hành phiên bản (**Semantic Release**) trong dự án Monorepo này.
 
@@ -77,7 +77,7 @@ GITHUB_TOKEN=<your-github-personal-access-token> pnpm release
 
 ## ⚙️ 4. Tự Động Hóa Với GitHub Actions
 
-Cấu hình workflow nằm tại [../.github/workflows/release.yml](../.github/workflows/release.yml):
+Cấu hình workflow nằm tại [../../.github/workflows/release.yml](../../.github/workflows/release.yml):
 
 1. **Tạo nhánh & Phát triển:** Tạo feature branch (ví dụ: `feat/user-profile`), viết code và tạo commit theo chuẩn conventional.
 2. **Tạo Pull Request:** Mở PR hướng về nhánh `main`. Các bước kiểm tra CI (Lint, Type-check, Build, Test) sẽ được kích hoạt tự động.
@@ -91,7 +91,7 @@ Cấu hình workflow nằm tại [../.github/workflows/release.yml](../.github/w
 
 ## 📄 5. Cấu Hình (.releaserc.js)
 
-Tệp cấu hình nằm tại [../.releaserc.js](../.releaserc.js):
+Tệp cấu hình nằm tại [../../.releaserc.js](../../.releaserc.js):
 
 - **`branches`**: Quản lý release từ các nhánh `main`, `master`, `beta`, `alpha`.
 - **`plugins`**:
