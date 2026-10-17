@@ -85,12 +85,14 @@ export class HealthController {
     const apiUrl =
       this.configService.get('app.url', { infer: true }) ||
       'http://localhost:8000';
-    const apiPrefix =
-      this.configService.get('app.apiPrefix', { infer: true }) || 'api';
-    const cleanPrefix = apiPrefix.replace(/^\/+|\/+$/g, '');
+    const bullBoardPath =
+      this.configService.get('app.bullBoardPath', { infer: true }) || '/queues';
+    const cleanBullBoardPath = bullBoardPath.startsWith('/')
+      ? bullBoardPath
+      : `/${bullBoardPath}`;
 
     return {
-      bullBoardUrl: `${apiUrl}/${cleanPrefix}/queues`,
+      bullBoardUrl: `${apiUrl}${cleanBullBoardPath}`,
       queues: [
         {
           name: QueueName.EMAIL,

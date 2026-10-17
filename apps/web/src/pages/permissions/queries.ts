@@ -17,7 +17,7 @@ import {
 async function apiGetPermissionListing(
   params: PaginateQueryParams
 ): Promise<ApiMetadata & { data: PermissionSchema[] }> {
-  const response = await http.get('/permissions', { params })
+  const response = await http.get('/admin/permissions', { params })
 
   return apiMetadataSchema
     .extend({
@@ -27,7 +27,7 @@ async function apiGetPermissionListing(
 }
 
 async function apiPermissionFormOptions(): Promise<PermissionSchema[]> {
-  const response = await http.get('/permissions/form-options')
+  const response = await http.get('/admin/permissions/form-options')
 
   return permissionSchema
     .array()
@@ -36,7 +36,7 @@ async function apiPermissionFormOptions(): Promise<PermissionSchema[]> {
 }
 
 export async function apiGetPermissionById(id: string) {
-  const response = await http.get(`/permissions/${id}`)
+  const response = await http.get(`/admin/permissions/${id}`)
 
   return permissionSchema.parse(response.data)
 }
@@ -48,7 +48,10 @@ export async function apiEditPermission({
   id: string
   data: PermissionFormSchema
 }) {
-  return await http.put(`/permissions/${id}`, permissionFormSchema.parse(data))
+  return await http.put(
+    `/admin/permissions/${id}`,
+    permissionFormSchema.parse(data)
+  )
 }
 
 export const useDataPermissionOverview = (params: PaginateQueryParams) =>

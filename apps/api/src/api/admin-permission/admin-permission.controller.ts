@@ -18,7 +18,7 @@ import { UpdatePermissionReqDto } from './dto/update-permission.req.dto';
 import { AdminPermissionService } from './admin-permission.service';
 
 @ApiTags('Admin Permissions')
-@Controller({ path: 'admin/permissions', version: '1' })
+@Controller({ path: ['admin/permissions', 'permissions'], version: '1' })
 @UseGuards(AdminAuthGuard, PoliciesGuard)
 export class AdminPermissionController {
   constructor(private readonly permissionService: AdminPermissionService) {}

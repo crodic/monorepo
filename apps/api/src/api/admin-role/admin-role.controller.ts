@@ -28,7 +28,7 @@ import { UpdateAdminRoleReqDto } from './dto/update-admin-role.req.dto';
 import { AdminRoleService } from './admin-role.service';
 
 @ApiTags('Admin Roles')
-@Controller({ path: 'admin/roles', version: '1' })
+@Controller({ path: ['admin/roles', 'roles'], version: '1' })
 @UseGuards(AdminAuthGuard, PoliciesGuard)
 export class AdminRoleController {
   constructor(private readonly roleService: AdminRoleService) {}

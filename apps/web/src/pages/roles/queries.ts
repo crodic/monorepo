@@ -15,7 +15,7 @@ import {
 async function apiGetRoleListing(
   params: PaginateQueryParams
 ): Promise<ApiMetadata & { data: RoleSchema[] }> {
-  const response = await http.get('/roles', { params })
+  const response = await http.get('/admin/roles', { params })
 
   return apiMetadataSchema
     .extend({
@@ -25,22 +25,22 @@ async function apiGetRoleListing(
 }
 
 async function apiRoleFormOptions(): Promise<RoleSchema[]> {
-  const response = await http.get('/roles/form-options')
+  const response = await http.get('/admin/roles/form-options')
 
   return roleSchema.array().parse(response.data)
 }
 
 export async function apiDeleteRole(id: string) {
-  return await http.delete(`/roles/${id}`)
+  return await http.delete(`/admin/roles/${id}`)
 }
 
 export async function apiGetRoleById(id: string) {
-  const response = await http.get(`/roles/${id}`)
+  const response = await http.get(`/admin/roles/${id}`)
   return roleSchema.parse(response.data)
 }
 
 export async function apiCreateRole(data: RoleFormSchema) {
-  return await http.post('/roles', data)
+  return await http.post('/admin/roles', data)
 }
 
 export async function apiEditRole({
@@ -50,7 +50,7 @@ export async function apiEditRole({
   id: string
   data: RoleFormSchema
 }) {
-  return await http.put(`/roles/${id}`, data)
+  return await http.put(`/admin/roles/${id}`, data)
 }
 
 export const useDataRoleOverview = (params: PaginateQueryParams) =>

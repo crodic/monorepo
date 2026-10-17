@@ -135,7 +135,7 @@ describe('HealthController', () => {
   describe('getQueueStats', () => {
     it('should return queue statistics and bullBoardUrl', async () => {
       const stats = await controller.getQueueStats();
-      expect(stats.bullBoardUrl).toContain('/api/queues');
+      expect(stats.bullBoardUrl).toContain('/queues');
       expect(stats.queues).toHaveLength(2);
       expect(stats.queues[0].name).toBe(QueueName.EMAIL);
       expect(stats.queues[1].name).toBe(QueueName.FILE);
