@@ -48,21 +48,44 @@ export class FilesystemService {
     name: StorageDisk;
     visibility: 'public' | 'private';
     driver: string;
+    isDefault: boolean;
   }> {
+    const defaultDisk = this.defaultDiskNameValue;
     const disks = this.configService.get('storage.disks', { infer: true });
     if (disks) {
       return Object.entries(disks).map(([name, def]) => ({
         name: name as StorageDisk,
         visibility: def.visibility,
         driver: def.driver,
+        isDefault: name === defaultDisk,
       }));
     }
 
     return [
-      { name: 'local', visibility: 'private', driver: 'local' },
-      { name: 'public', visibility: 'public', driver: 'local' },
-      { name: 's3', visibility: 'public', driver: 's3' },
-      { name: 's3-private', visibility: 'private', driver: 's3' },
+      {
+        name: 'local',
+        visibility: 'private',
+        driver: 'local',
+        isDefault: 'local' === defaultDisk,
+      },
+      {
+        name: 'public',
+        visibility: 'public',
+        driver: 'local',
+        isDefault: 'public' === defaultDisk,
+      },
+      {
+        name: 's3',
+        visibility: 'public',
+        driver: 's3',
+        isDefault: 's3' === defaultDisk,
+      },
+      {
+        name: 's3-private',
+        visibility: 'private',
+        driver: 's3',
+        isDefault: 's3-private' === defaultDisk,
+      },
     ];
   }
 

@@ -7,6 +7,7 @@ import {
   Req,
   Res,
   UseGuards,
+  VERSION_NEUTRAL,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
@@ -15,7 +16,7 @@ import { FileStreamService } from './file-stream.service';
 import { FileStorageAccessGuard } from './guards/file-storage-access.guard';
 
 @ApiTags('Files')
-@Controller({ path: 'storage/uploads' })
+@Controller({ path: 'storage/uploads', version: [VERSION_NEUTRAL, '1'] })
 @UseGuards(FileStorageAccessGuard)
 export class TransformController {
   constructor(private readonly fileStreamService: FileStreamService) {}

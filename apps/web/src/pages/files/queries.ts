@@ -23,7 +23,7 @@ export const storageDiskSchema = z.object({
   name: z.string(),
   driver: z.string(),
   visibility: z.enum(['public', 'private']),
-  isDefault: z.boolean(),
+  isDefault: z.boolean().optional().default(false),
 })
 
 export type StorageDiskInfo = z.infer<typeof storageDiskSchema>
