@@ -25,8 +25,8 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import TiptapEditor from '@/components/editor/tiptap-editor'
 import { ImagePickerInput } from '@/components/forms/image-picker-input'
-import TiptapEditor from '@/components/tiptap/rich-text-editor'
 import {
   cmsPageFormSchema,
   DEFAULT_PAGE_CONTENT,
