@@ -95,6 +95,22 @@ export class FileChunkUploadService {
     return targetDisk;
   }
 
+  private toDto(file: FileEntity): FileResDto {
+    const dto = plainToInstance(FileResDto, file, {
+      excludeExtraneousValues: true,
+    });
+
+    if (file.disk === 's3' && !this.isDiskPrivate(file.disk)) {
+      try {
+        dto.url = this.storage.disk('s3').url(file.path);
+      } catch {
+        // Keep file.url as fallback
+      }
+    }
+
+    return dto;
+  }
+
   private uploadSessionsRoot(): string {
     return join(process.cwd(), 'storage', 'tmp', 'file-uploads');
   }
@@ -443,9 +459,7 @@ export class FileChunkUploadService {
       const saved = await this.fileRepository.save(media);
       await this.abortUploadSession(sessionId);
 
-      return plainToInstance(FileResDto, saved, {
-        excludeExtraneousValues: true,
-      });
+      return this.toDto(saved);
     }
 
     for (let index = 0; index < session.totalChunks; index++) {
@@ -508,9 +522,7 @@ export class FileChunkUploadService {
 
     await this.abortUploadSession(sessionId);
 
-    return plainToInstance(FileResDto, media, {
-      excludeExtraneousValues: true,
-    });
+    return this.toDto(media);
   }
 
   async abortUploadSession(sessionId: string): Promise<{ message: string }> {

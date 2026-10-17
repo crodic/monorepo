@@ -39,6 +39,7 @@ import {
 import {
   FILE_UPLOAD_CHUNK_SIZE,
   FILE_UPLOAD_MAX_SIZE,
+  FILE_UPLOAD_SINGLE_MAX_SIZE,
   memoryStorageConfig,
 } from './config/file.config';
 import { UploadSingle } from './decorators/file.decorator';
@@ -170,12 +171,13 @@ export class FileController {
   @Post('upload')
   @ApiOperation({
     summary: 'Upload file',
-    description: 'Single file upload',
+    description:
+      'Single file upload (up to 15MB). For larger files, use chunk upload sessions.',
   })
   @UseInterceptors(
     FileInterceptor('file', {
       ...memoryStorageConfig,
-      limits: { fileSize: FILE_UPLOAD_MAX_SIZE },
+      limits: { fileSize: FILE_UPLOAD_SINGLE_MAX_SIZE },
     }),
   )
   @ApiConsumes('multipart/form-data')

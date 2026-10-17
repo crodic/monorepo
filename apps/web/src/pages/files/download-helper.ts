@@ -1,5 +1,5 @@
 import { toast } from 'sonner'
-import http from '@/lib/http'
+import { apiGetTemporaryUrl } from './queries'
 import type { FileSchema } from './schema'
 
 function triggerBrowserDownload(blob: Blob, filename: string) {
@@ -18,15 +18,29 @@ export async function downloadFile(file: FileSchema): Promise<void> {
     `Preparing download: ${file.original_name}`
   )
   try {
-    // If file is private, fetch through authenticated API
-    const response = await http.get(file.url, {
-      responseType: 'blob',
-    })
+    let downloadUrl = file.url
 
-    const blob = new Blob([response.data], {
-      type: file.mime || 'application/octet-stream',
-    })
+    if (file.visibility === 'private') {
+      try {
+        const temp = await apiGetTemporaryUrl({
+          publicId: file.public_id,
+          expiresIn: 300,
+        })
+        if (temp?.url) {
+          downloadUrl = temp.url
+        }
+      } catch {
+        // Fallback to file.url
+      }
+    }
 
+    // Use clean fetch without Authorization header to avoid S3 rejecting Bearer tokens
+    const response = await fetch(downloadUrl)
+    if (!response.ok) {
+      throw new Error(`Download failed with status ${response.status}`)
+    }
+
+    const blob = await response.blob()
     triggerBrowserDownload(blob, file.original_name)
     toast.success(`Downloaded: ${file.original_name}`, { id: downloadToastId })
   } catch (error) {

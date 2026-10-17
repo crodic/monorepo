@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation } from '@tanstack/react-query'
 import { FileIcon, Loader2, Upload, Video, X } from 'lucide-react'
@@ -60,6 +60,7 @@ export function UploadDialog({
 }: UploadDialogProps) {
   const { t } = useTranslation()
   const { data: availableDisks } = useDataFileDisks()
+  const abortControllerRef = useRef<AbortController | null>(null)
   const [targetFolder, setTargetFolder] = useState(folder ?? '')
   const [targetDisk, setTargetDisk] = useState<string>('public')
   const [files, setFiles] = useState<File[]>([])
@@ -67,6 +68,16 @@ export function UploadDialog({
     {}
   )
   const [isDragOver, setIsDragOver] = useState(false)
+
+  const handleCancelUpload = () => {
+    if (uploadMutation.isPending) {
+      abortControllerRef.current?.abort()
+      uploadMutation.reset()
+      setUploadProgress({})
+    } else {
+      onOpenChange(false)
+    }
+  }
 
   useEffect(() => {
     if (availableDisks && availableDisks.length > 0) {
@@ -107,7 +118,12 @@ export function UploadDialog({
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
+      const controller = new AbortController()
+      abortControllerRef.current = controller
+
       for (const file of files) {
+        if (controller.signal.aborted) break
+
         if (file.size > MANAGED_FILE_UPLOAD_MAX_SIZE) {
           throw new Error(
             t('files.upload.sizeLimitError', {
@@ -122,6 +138,7 @@ export function UploadDialog({
           file,
           folder: targetFolder || null,
           disk: targetDisk,
+          signal: controller.signal,
           onProgress: (progress) =>
             setUploadProgress((current) => ({
               ...current,
@@ -138,6 +155,13 @@ export function UploadDialog({
       await onUploaded()
     },
     onError: (error) => {
+      if (
+        (error instanceof Error && error.message === 'Upload canceled') ||
+        (error instanceof AxiosError && error.code === 'ERR_CANCELED')
+      ) {
+        return
+      }
+
       if (error instanceof AxiosError) {
         restApiErrorHandler(error)
         return
@@ -150,7 +174,16 @@ export function UploadDialog({
   })
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && uploadMutation.isPending) {
+          handleCancelUpload()
+          return
+        }
+        onOpenChange(nextOpen)
+      }}
+    >
       <DialogContent className='flex max-h-[calc(100vh-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[min(88vh,42rem)] sm:max-w-lg'>
         <DialogHeader className='shrink-0 border-b p-6 pr-12 pb-4 text-left'>
           <DialogTitle>{t('files.upload.title')}</DialogTitle>
@@ -293,11 +326,7 @@ export function UploadDialog({
           )}
         </div>
         <DialogFooter className='bg-background/50 flex shrink-0 flex-row justify-end gap-2 border-t p-4 px-6'>
-          <Button
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-            disabled={uploadMutation.isPending}
-          >
+          <Button variant='outline' onClick={handleCancelUpload}>
             {t('buttons.cancel')}
           </Button>
           <Button

@@ -38,17 +38,17 @@ export class TransformationParser {
     };
 
     for (const p of allParams) {
-      // WIDTH w_100
+      // WIDTH w_100 (clamp max 3840px)
       let m = p.match(/^w_(\d+)$/);
       if (m) {
-        data.width = parseInt(m[1], 10);
+        data.width = Math.min(parseInt(m[1], 10), 3840);
         continue;
       }
 
-      // HEIGHT h_200
+      // HEIGHT h_200 (clamp max 3840px)
       m = p.match(/^h_(\d+)$/);
       if (m) {
-        data.height = parseInt(m[1], 10);
+        data.height = Math.min(parseInt(m[1], 10), 3840);
         continue;
       }
 

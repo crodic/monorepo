@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FolderPlus,
@@ -99,13 +99,14 @@ export function PageFileOverview() {
   const queryClient = useQueryClient()
 
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = window.localStorage.getItem('file-manager:view-mode')
-      if (saved === 'grid' || saved === 'table') return saved
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('file-manager:view-mode')
+    if (saved === 'grid' || saved === 'table') {
+      setViewMode(saved)
     }
-    return 'grid'
-  })
+  }, [])
   const [localFolders, setLocalFolders] = useState<FolderSchema[]>([])
   const [uploadOpen, setUploadOpen] = useState(false)
   const [droppedFiles, setDroppedFiles] = useState<File[]>([])

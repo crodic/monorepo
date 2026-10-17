@@ -73,13 +73,15 @@ export async function apiUploadFile({
   folder,
   disk,
   onProgress,
+  signal,
 }: {
   file: File
   folder?: string | null
   disk?: string
   onProgress?: (progress: number) => void
+  signal?: AbortSignal
 }) {
-  return apiUploadFileInChunks({ file, folder, disk, onProgress })
+  return apiUploadFileInChunks({ file, folder, disk, onProgress, signal })
 }
 
 async function apiUploadFileInChunks({
@@ -87,45 +89,77 @@ async function apiUploadFileInChunks({
   folder,
   disk,
   onProgress,
+  signal,
 }: {
   file: File
   folder?: string | null
   disk?: string
   onProgress?: (progress: number) => void
+  signal?: AbortSignal
 }) {
   const totalChunks = Math.ceil(file.size / FILE_UPLOAD_CHUNK_SIZE)
-  const sessionResponse = await http.post('/files/uploads/sessions', {
-    originalName: file.name,
-    mime: file.type || 'application/octet-stream',
-    size: file.size,
-    folder,
-    disk,
-    totalChunks,
-    chunkSize: FILE_UPLOAD_CHUNK_SIZE,
-  })
+  const sessionResponse = await http.post(
+    '/files/uploads/sessions',
+    {
+      originalName: file.name,
+      mime: file.type || 'application/octet-stream',
+      size: file.size,
+      folder,
+      disk,
+      totalChunks,
+      chunkSize: FILE_UPLOAD_CHUNK_SIZE,
+    },
+    { signal }
+  )
   const session = chunkUploadSessionSchema.parse(sessionResponse.data)
 
   try {
-    for (let index = 0; index < totalChunks; index++) {
-      const start = index * FILE_UPLOAD_CHUNK_SIZE
-      const end = Math.min(start + FILE_UPLOAD_CHUNK_SIZE, file.size)
-      const chunk = file.slice(start, end)
-      const formData = new FormData()
-      formData.append('chunk', chunk, `${file.name}.part-${index}`)
-      formData.append('index', String(index))
+    const CHUNK_CONCURRENCY = 3
+    const chunkLoaded = new Array<number>(totalChunks).fill(0)
+    let nextIndex = 0
 
-      await http.post(`/files/uploads/${session.sessionId}/chunks`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (event) => {
-          const chunkProgress = event.total ? event.loaded / event.total : 0
-          const loaded = start + chunk.size * chunkProgress
-          onProgress?.(Math.min(99, Math.round((loaded / file.size) * 100)))
-        },
-      })
+    const uploadWorker = async () => {
+      while (nextIndex < totalChunks) {
+        if (signal?.aborted) {
+          throw new Error('Upload canceled')
+        }
+
+        const index = nextIndex++
+        const start = index * FILE_UPLOAD_CHUNK_SIZE
+        const end = Math.min(start + FILE_UPLOAD_CHUNK_SIZE, file.size)
+        const chunk = file.slice(start, end)
+        const formData = new FormData()
+        formData.append('chunk', chunk, `${file.name}.part-${index}`)
+        formData.append('index', String(index))
+
+        await http.post(
+          `/files/uploads/${session.sessionId}/chunks`,
+          formData,
+          {
+            signal,
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (event) => {
+              chunkLoaded[index] = event.loaded
+              const totalLoaded = chunkLoaded.reduce(
+                (acc, curr) => acc + curr,
+                0
+              )
+              onProgress?.(
+                Math.min(99, Math.round((totalLoaded / file.size) * 100))
+              )
+            },
+          }
+        )
+      }
     }
 
+    const workerCount = Math.min(CHUNK_CONCURRENCY, totalChunks)
+    await Promise.all(Array.from({ length: workerCount }, () => uploadWorker()))
+
     const completeResponse = await http.post(
-      `/files/uploads/${session.sessionId}/complete`
+      `/files/uploads/${session.sessionId}/complete`,
+      {},
+      { signal }
     )
     onProgress?.(100)
 

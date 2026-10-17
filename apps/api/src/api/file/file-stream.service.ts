@@ -192,9 +192,25 @@ export class FileStreamService {
       throw new HttpException('File not found', HttpStatus.NOT_FOUND);
     }
 
+    const normalizedExt = this.normalizeImageFormat(ext);
+    const cacheKey = `.cache/transforms/${publicId}/${transformations}.${normalizedExt}`;
+
+    try {
+      if (await disk.exists(cacheKey)) {
+        const cachedBuffer = await disk.get(cacheKey);
+        return {
+          buffer: cachedBuffer,
+          mime: this.getImageMime(normalizedExt),
+          size: cachedBuffer.length,
+        };
+      }
+    } catch {
+      // Fallback to computing transform if cache check fails
+    }
+
     const buffer = await disk.get(storageKey);
     const params = this.transformationParser.parse(transformations);
-    params.format ??= this.normalizeImageFormat(ext);
+    params.format ??= normalizedExt;
     const transformed = await this.imageTransformer.transform(
       {
         buffer,
@@ -205,6 +221,15 @@ export class FileStreamService {
       } as Express.Multer.File,
       params,
     );
+
+    try {
+      await disk.put(cacheKey, transformed.buffer, {
+        mimeType: this.getImageMime(transformed.format),
+        visibility: 'public',
+      });
+    } catch {
+      // Continue even if saving cache fails
+    }
 
     return {
       buffer: transformed.buffer,

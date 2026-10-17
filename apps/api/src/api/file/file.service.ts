@@ -26,7 +26,10 @@ import { posix as posixPath } from 'path';
 import sharp from 'sharp';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { FILE_UPLOAD_MAX_SIZE } from './config/file.config';
+import {
+  FILE_UPLOAD_MAX_SIZE,
+  FILE_UPLOAD_SINGLE_MAX_SIZE,
+} from './config/file.config';
 import { FileResDto } from './dto/file.res.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { FileEntity } from './entities/file.entity';
@@ -97,6 +100,23 @@ export class FileService {
     }
   }
 
+  private toDto(file: FileEntity): FileResDto {
+    const dto = plainToInstance(FileResDto, file, {
+      excludeExtraneousValues: true,
+    });
+
+    if (file.disk === 's3' && !this.isDiskPrivate(file.disk)) {
+      try {
+        const key = this.toStorageKey(file.path);
+        dto.url = this.storage.disk('s3').url(key);
+      } catch {
+        // Keep file.url as fallback
+      }
+    }
+
+    return dto;
+  }
+
   async findAll(query: PaginateQuery): Promise<Paginated<FileResDto>> {
     const queryBuilder = this.fileRepository.createQueryBuilder('file');
 
@@ -136,9 +156,7 @@ export class FileService {
 
     return {
       ...result,
-      data: plainToInstance(FileResDto, result.data, {
-        excludeExtraneousValues: true,
-      }),
+      data: result.data.map((file) => this.toDto(file)),
     } as Paginated<FileResDto>;
   }
 
@@ -147,9 +165,7 @@ export class FileService {
       public_id: publicId,
     });
 
-    return plainToInstance(FileResDto, file, {
-      excludeExtraneousValues: true,
-    });
+    return this.toDto(file);
   }
 
   async update(publicId: string, dto: UpdateFileDto): Promise<FileResDto> {
@@ -199,9 +215,7 @@ export class FileService {
 
     const saved = await this.fileRepository.save(file);
 
-    return plainToInstance(FileResDto, saved, {
-      excludeExtraneousValues: true,
-    });
+    return this.toDto(saved);
   }
 
   async upload(file: Express.Multer.File, folder?: string, disk?: string) {
@@ -210,7 +224,7 @@ export class FileService {
     }
 
     this.fileValidator.validateFile(file, {
-      maxFileSize: FILE_UPLOAD_MAX_SIZE,
+      maxFileSize: FILE_UPLOAD_SINGLE_MAX_SIZE,
     });
 
     const mime = file.mimetype;
@@ -242,9 +256,7 @@ export class FileService {
       buffer: file.buffer,
     });
 
-    return plainToInstance(FileResDto, media, {
-      excludeExtraneousValues: true,
-    });
+    return this.toDto(media);
   }
 
   async delete(publicId: string): Promise<{ message: string }> {
