@@ -1,0 +1,81 @@
+## 1.0.0 (2026-10-18)
+
+### ✨ Features
+
+- add client environment configuration and update gitignore and env templates ([340b25b](https://github.com/crodic/monorepo/commit/340b25ba2c8829f71a95177babba40a5f4694ced))
+- add turborepo skill documentation and configuration ([3c4b721](https://github.com/crodic/monorepo/commit/3c4b7217d5b95444504d9d11c558de718ed203b2))
+- add versioning to transform controller ([a8a42dc](https://github.com/crodic/monorepo/commit/a8a42dc7bdff241a4436d91575cffd555778347d))
+- **api:** add .custom support for filters, sorts, and includes with Spatie interfaces ([a49a91f](https://github.com/crodic/monorepo/commit/a49a91f3675c992444a22b5b76ba2ec6a6ae9e6a))
+- **api:** add class-validator validation for configuration files ([cab9229](https://github.com/crodic/monorepo/commit/cab9229dbc03476bac2202cc73366fb5dfccc081))
+- **api:** add directory listing, append, prepend, and download methods to filesystem ([53b981d](https://github.com/crodic/monorepo/commit/53b981d38e2492a1bdecd439ec98e5829e00c2c9))
+- **api:** add password util, query pipe, helpers, and abstract entity order mechanism ([39bfa94](https://github.com/crodic/monorepo/commit/39bfa943dcdde6ad520ed4a38f2b8637cc8cbc80))
+- **api:** add public static assets for favicon, logo, and bull-board ([deddc32](https://github.com/crodic/monorepo/commit/deddc329f90a52eee2935c75113aa172478461fc))
+- **api:** add Swagger documentation decorator for Spatie QueryBuilder ([d8b3433](https://github.com/crodic/monorepo/commit/d8b3433021c6a1f872ba60f0300264731c5e6e97))
+- **api:** complete porting remaining domain modules, seeders, queues, and bull-board ([620cf01](https://github.com/crodic/monorepo/commit/620cf0195989c85ddd547dc0c6a3a0225ccb297a))
+- **api:** configure swagger, security, throttler, terminus, redis and bullmq ([3920880](https://github.com/crodic/monorepo/commit/3920880b5a47f98a8f64877b1ddcd80ad0dc8cfe))
+- **api:** encapsulate domain feature modules into ApiModule ([e0fdc38](https://github.com/crodic/monorepo/commit/e0fdc3810c02d8e7916d1120186bc316d6ea08de))
+- **api:** expand Spatie QueryBuilder with config, strict mode, sparse fieldsets, and docs ([143fbd8](https://github.com/crodic/monorepo/commit/143fbd81b67d4315c1e5221b1cab0d7a5d232e83))
+- **api:** implement custom Spatie-style QueryBuilder for TypeORM ([45e4d40](https://github.com/crodic/monorepo/commit/45e4d402ce1d372c2709ce25c2011f6c88267c3c))
+- **api:** implement field decorators and pagination infrastructure ([7251005](https://github.com/crodic/monorepo/commit/725100587e574f146d3d84d88f199242d1670755))
+- **api:** implement filesystem storage module with local and s3 drivers ([2410148](https://github.com/crodic/monorepo/commit/2410148711b0bc4e7b877e53a9a5acd8c874d222))
+- **api:** implement generic asynchronous email queue infrastructure via bullmq ([62b5677](https://github.com/crodic/monorepo/commit/62b567780d41dccdeb29a5b623ff4478bef04299))
+- **api:** implement global exception filter and nestjs-i18n ([0cee0bd](https://github.com/crodic/monorepo/commit/0cee0bdb0fd8aa584d961baeea6ac9584a12c0a7))
+- **api:** implement RBAC roles permissions and CASL authorization ([1e5dc16](https://github.com/crodic/monorepo/commit/1e5dc16a4db9d674efb1d719955c32a37c59477a))
+- **api:** implement structured logging and request tracing with nestjs-pino ([4d6d407](https://github.com/crodic/monorepo/commit/4d6d407ee1c96ffc0ba3d8fbe0eb0e8b00a69be1))
+- **api:** integrate Sentry error monitoring and distributed tracing ([595aa16](https://github.com/crodic/monorepo/commit/595aa16a6ba1167a07376f26898596377e44d048))
+- **api:** optimize audit log subscriber with spatie tapActivity and system causer resolution ([892a5fa](https://github.com/crodic/monorepo/commit/892a5fa2c083ffe8b8c57a310fd8366d34751168))
+- **api:** refactor audit log to spatie activitylog schema and add activity logger service ([837abc6](https://github.com/crodic/monorepo/commit/837abc61fe0df69a47f919d7765656bb83bda2c1))
+- **api:** setup multi-tier cache manager and modular background queue infrastructure ([5a6f538](https://github.com/crodic/monorepo/commit/5a6f538a3e4d708d069e936460abc6eedaffcc85))
+- **api:** setup typeorm connection and default users table with bigint id ([16f50a5](https://github.com/crodic/monorepo/commit/16f50a5c57c55c2c5f15bff987236ab248ac5e0b))
+- **api:** standardize QueryBuilder pagination to nestjs-paginate schema with meta and links ([cecc266](https://github.com/crodic/monorepo/commit/cecc26635618bfeff7368449cfe8a698bbc699c1))
+- **client:** setup Next.js app with in-memory tokens and clean UI ([55ae717](https://github.com/crodic/monorepo/commit/55ae7174cfd2733f0174ae9c134c73cdfbd8979b))
+- **docker:** setup modular infrastructure with postgres, redis, mailpit, and minio ([c16757d](https://github.com/crodic/monorepo/commit/c16757d9e350882b37040c36c91a2475b2f50384)), closes [#5](https://github.com/crodic/monorepo/issues/5)
+- **docker:** standardize env variables and add turborepo .dockerignore ([25f4ad7](https://github.com/crodic/monorepo/commit/25f4ad712d8ddb32dc0f94bdc629e2b055a0d7aa))
+- **file:** optimize upload performance, add transform caching, and enhance download handling ([9531049](https://github.com/crodic/monorepo/commit/9531049c2c4baf3f527fe76badbcf873d9c8082f))
+- **query-builder:** add shared package with nestjs-paginate and spatie builders ([fc66fdc](https://github.com/crodic/monorepo/commit/fc66fdcddea2cd110fe494ecf7d3019791978c77))
+- **repo:** enforce pnpm, node 26, and configure husky with commitlint ([de098aa](https://github.com/crodic/monorepo/commit/de098aa90fea15577ac172dad03420783316f3e6)), closes [#3](https://github.com/crodic/monorepo/issues/3)
+- setup tooling, workflows, technical docs and purge notification dead code ([c385e24](https://github.com/crodic/monorepo/commit/c385e244fb9feab6b6251a548801fa5e3501b776))
+- **skills:** add monorepo-development master skill ([d185e2c](https://github.com/crodic/monorepo/commit/d185e2c60c11cf7913067d302be8d984b04226b9))
+- **skills:** add monorepo-query-builder skill ([85f47c9](https://github.com/crodic/monorepo/commit/85f47c9a2fbfe6b76d3ffc11fd6474724d2e8541))
+- **skills:** add TypeORM v0.3 skill for database development ([9e2c20d](https://github.com/crodic/monorepo/commit/9e2c20dfa2b6830cb0dfa65067221a88b18fd290))
+- **skills:** setup AI agent skills for monorepo tech stack ([9548df3](https://github.com/crodic/monorepo/commit/9548df3b33d86d82ea8c5b23e39d38d804c651b1)), closes [#1](https://github.com/crodic/monorepo/issues/1)
+- **web:** integrate tiptap-shadcn editor and optimize tsc incremental and eslint cache ([75c409d](https://github.com/crodic/monorepo/commit/75c409dda363a47a0334ce78d6015ef861b55a5a))
+- **web:** migrate and setup apps/web admin portal in monorepo ([e9aec23](https://github.com/crodic/monorepo/commit/e9aec237826ee5f5446ce0b9762839ca6e4c12f2))
+
+### 🐛 Bug Fixes
+
+- **api:** align health check memory heap threshold with turborepo ([4b70b94](https://github.com/crodic/monorepo/commit/4b70b944c7c8028993581d167da5813059685358))
+- **api:** convert audit log subscriber descriptions and labels to 100% english ([37df876](https://github.com/crodic/monorepo/commit/37df87604941d635d5a1b4d12a267b9e3da2d771))
+- **api:** fix tsconfig rootDir error for test files and jest config ([209dc8c](https://github.com/crodic/monorepo/commit/209dc8cbcd2d45b9e898b1164d8e57ad8be3cb4c))
+- **api:** remove premature email templates, keep pure generic mail infrastructure ([5d76a13](https://github.com/crodic/monorepo/commit/5d76a13786c8d57fec96531fb44654f1a7b55b37))
+- **client:** allow next dev to respect dynamic PORT from env using dotenv-cli ([7317e57](https://github.com/crodic/monorepo/commit/7317e571eb566c90ec4700ca73e296eafeba2052))
+- **env:** update PostgreSQL database name to match project ([7185f88](https://github.com/crodic/monorepo/commit/7185f888e3fb2d98d90d3f82c96d390b6365a5ed))
+- **web:** resolve editor layout overflow and remove presence and sentry dashboard monitoring ([6a00651](https://github.com/crodic/monorepo/commit/6a00651a667cad460d6d4c86569d2e5aaf04c3ef))
+
+### ⚡ Performance Improvements
+
+- **client:** convert landing sections to RSC and hydrate auth RAM on login ([b0cd31f](https://github.com/crodic/monorepo/commit/b0cd31f75977234683b9ec57dc0491bab2d116b9))
+
+### ♻️ Code Refactoring
+
+- **api:** remove static FIELD_LABELS and use dynamic field label formatter in audit log ([fd7236d](https://github.com/crodic/monorepo/commit/fd7236d435e8ede1f4f3e43f15368bbe55fca86f))
+- **api:** simplify build and dev scripts using nest cli with swc ([9898c33](https://github.com/crodic/monorepo/commit/9898c33ec176d0af76431d0bf6ae038bedc83ef1))
+- **client:** modularize sortable image upload and cover upload components ([4b1636e](https://github.com/crodic/monorepo/commit/4b1636effb85c25c7485d151943122f491ec82a8))
+- **client:** remove redundant user state from in-memory auth store ([8748e39](https://github.com/crodic/monorepo/commit/8748e3934df562e937abc0b8aa437fe990b349b6))
+- **client:** replace auth window event bus with reactive query enabled ([1352d4c](https://github.com/crodic/monorepo/commit/1352d4c7ecb059179bc0100d8faee63ff80f256e))
+- code structure for improved readability and maintainability ([86098f5](https://github.com/crodic/monorepo/commit/86098f5ec5475bfe579605b2f85cb75ba086fb8b))
+- **docker:** remove pgadmin service and tools profile ([891345f](https://github.com/crodic/monorepo/commit/891345fc57163641941c935e1191fdd139176f04))
+- **query-builder:** rename to explicit rest and nestjs-paginate builders ([04c6251](https://github.com/crodic/monorepo/commit/04c62512e2b9aa59b3089fb504b708dd7aada26e))
+- replace custom tiptap toolbar ([6baa8ab](https://github.com/crodic/monorepo/commit/6baa8ab31e3d0ddba124e4807cbcd3ed5dc1bf9a))
+- update api routes, health controller config, and client configuration ([b26cc6f](https://github.com/crodic/monorepo/commit/b26cc6f1f00ea0e9a9394602ccbd56c11c91b3e9))
+- **web:** clean up datatable antipatterns, dead code and add totalRows support ([003adab](https://github.com/crodic/monorepo/commit/003adabf573518268ec39dce81efd7e39c8c8b24))
+- **web:** remove deprecated reactjs-tiptap-editor and fallback editor components ([2250dd6](https://github.com/crodic/monorepo/commit/2250dd653e552baf4654d1473e903d13b6f77455))
+- **web:** remove orphan packages and decompose setup and white-label god components ([c90e448](https://github.com/crodic/monorepo/commit/c90e448a15594c4a51bef9d1e502253f4f6db2ae))
+
+### 📝 Documentation
+
+- **api:** update QueryBuilder English and Vietnamese docs with Swagger integration ([742c73e](https://github.com/crodic/monorepo/commit/742c73ea29c5d1b5c63c0f359d2e3c26d62d78d6))
+- document activity log architecture and remove external framework references ([0f0c843](https://github.com/crodic/monorepo/commit/0f0c843d8d6aa24d20cb949860089584a22885a3))
+- **skills:** forbid manual typeorm migrations to prevent database schema drift ([6c2df35](https://github.com/crodic/monorepo/commit/6c2df35ef39aa0cb159a67fd35727eed8853fcba))
+- standardize documentation structure and add coolify deployment guide ([c98d644](https://github.com/crodic/monorepo/commit/c98d644253356f463f1d90a4831ed66da0ae9765))
+- update root README, remove redundant readmes and expand docs index ([bede246](https://github.com/crodic/monorepo/commit/bede246191802ca75cf92703994c46f95bee8e56))
