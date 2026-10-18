@@ -29,8 +29,8 @@ importers:
         specifier: ^5.2.2
         version: 5.2.2(prettier@3.9.6)(supports-color@10.2.2)
       conventional-changelog-conventionalcommits:
-        specifier: ^10.2.1
-        version: 10.4.1
+        specifier: ^8.0.0
+        version: 8.0.0
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -2028,13 +2028,6 @@ packages:
         optional: true
       conventional-commits-parser:
         optional: true
-
-  "@conventional-changelog/template@1.4.0":
-    resolution:
-      {
-        integrity: sha512-aalGyl7dbB5PArRebDIX43ZvBlXrYm9uWzGJ26t+4SzJVPsOuvfILGGbw5X4yX7i50YEmJ8zvbiWnqH/AAnZqg==,
-      }
-    engines: { node: ">=22" }
 
   "@corvu/utils@0.4.2":
     resolution:
@@ -11289,12 +11282,12 @@ packages:
       }
     engines: { node: ">=18" }
 
-  conventional-changelog-conventionalcommits@10.4.1:
+  conventional-changelog-conventionalcommits@8.0.0:
     resolution:
       {
-        integrity: sha512-jS1LRFSbRoAr6JbhhRy1JYfNNUj5LM3+v49hRE03CgccsiYqgdVj/RTmrw4J1rylrqijHwdOlJWiJa61JHOgHg==,
+        integrity: sha512-eOvlTO6OcySPyyyk8pKz2dP4jjElYunj9hn9/s0OB+gapTO8zwS9UQWrZ1pmF2hFs3vw1xhonOLGcGjy/zgsuA==,
       }
-    engines: { node: ">=22" }
+    engines: { node: ">=18" }
 
   conventional-changelog-conventionalcommits@9.3.1:
     resolution:
@@ -21349,8 +21342,6 @@ snapshots:
       conventional-commits-filter: 5.0.0
       conventional-commits-parser: 6.4.0
 
-  "@conventional-changelog/template@1.4.0": {}
-
   "@corvu/utils@0.4.2(solid-js@1.9.17)":
     dependencies:
       "@floating-ui/dom": 1.8.0
@@ -28062,9 +28053,9 @@ snapshots:
     dependencies:
       compare-func: 2.0.0
 
-  conventional-changelog-conventionalcommits@10.4.1:
+  conventional-changelog-conventionalcommits@8.0.0:
     dependencies:
-      "@conventional-changelog/template": 1.4.0
+      compare-func: 2.0.0
 
   conventional-changelog-conventionalcommits@9.3.1:
     dependencies:

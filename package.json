@@ -1,6 +1,7 @@
 {
   "name": "monorepo",
   "private": true,
+  "version": "1.0.0",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -9,9 +10,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
-    "config": "bash ./scripts/setup.sh --no-docker",
     "setup": "bash ./scripts/setup.sh",
-    "minio": "bash ./scripts/setup.sh --minio",
     "db:reset": "bash ./scripts/setup.sh --reset-db",
     "db:fresh": "pnpm --filter api schema:drop && pnpm --filter api migration:run",
     "storage:clear": "bash ./scripts/clear-storage.sh",
@@ -31,7 +30,7 @@
     "@semantic-release/git": "^11.0.0",
     "@semantic-release/github": "^12.0.9",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
-    "conventional-changelog-conventionalcommits": "^10.2.1",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "3.9.6",
