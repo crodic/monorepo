@@ -316,4 +316,35 @@ describe('AuditLogSubscriber', () => {
       }),
     );
   });
+
+  it('gracefully handles database save errors without throwing or rejecting', async () => {
+    mockAuditRepo.save.mockRejectedValueOnce(new Error('DB connection lost'));
+
+    const event = {
+      metadata: { name: 'UserEntity' },
+      entity: { id: '101', fullName: 'Alice' },
+      manager: {
+        getRepository: jest.fn().mockReturnValue(mockAuditRepo),
+      },
+    };
+
+    // Should complete cleanly without throwing
+    await expect(subscriber.afterInsert(event as any)).resolves.not.toThrow();
+
+    // Allow setImmediate to run and confirm save was called and error handled
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(mockAuditRepo.save).toHaveBeenCalled();
+  });
+
+  it('gracefully handles synchronous processing errors without throwing', async () => {
+    const brokenEvent = {
+      get metadata() {
+        throw new Error('Broken metadata');
+      },
+    };
+
+    await expect(
+      subscriber.afterInsert(brokenEvent as any),
+    ).resolves.not.toThrow();
+  });
 });

@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation } from '@tanstack/react-query'
-import { FileIcon, Globe, Loader2, Lock, Upload, Video, X } from 'lucide-react'
+import {
+  Check,
+  FileIcon,
+  Globe,
+  Loader2,
+  Lock,
+  Upload,
+  Video,
+  X,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { restApiErrorHandler } from '@/lib/rest-api-handler'
@@ -18,13 +27,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { formatBytes } from '../columns'
 import { apiUploadFile, MANAGED_FILE_UPLOAD_MAX_SIZE } from '../queries'
 import { type FolderSchema } from '../schema'
@@ -161,51 +163,64 @@ export function UploadDialog({
         </DialogHeader>
         <div className='min-h-0 flex-1 space-y-4 overflow-y-auto p-6'>
           <div className='grid gap-2'>
-            <Label>{t('files.upload.visibility', 'Visibility')}</Label>
-            <Select
-              value={targetVisibility}
-              onValueChange={(value: 'public' | 'private') =>
-                setTargetVisibility(value)
-              }
-            >
-              <SelectTrigger className='w-full'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='public'>
-                  <div className='flex items-center gap-2'>
+            <Label className='text-foreground text-xs font-medium'>
+              {t('files.upload.visibility', 'Visibility')}
+            </Label>
+            <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2'>
+              <button
+                type='button'
+                onClick={() => setTargetVisibility('public')}
+                className={cn(
+                  'group flex cursor-pointer flex-col items-start justify-between rounded-lg border p-3 text-left transition-all',
+                  targetVisibility === 'public'
+                    ? 'border-primary bg-primary/5 ring-primary shadow-xs ring-1'
+                    : 'border-input bg-card hover:bg-muted/40 hover:border-muted-foreground/30'
+                )}
+              >
+                <div className='flex w-full items-center justify-between'>
+                  <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
                     <Globe className='size-4 text-blue-500' />
-                    <div className='flex flex-col text-left'>
-                      <span className='font-medium'>
-                        {t('files.visibility.public', 'Public')}
-                      </span>
-                      <span className='text-muted-foreground text-xs font-normal'>
-                        {t(
-                          'files.upload.publicHelp',
-                          'Accessible by anyone with the link / CDN'
-                        )}
-                      </span>
-                    </div>
+                    <span>{t('files.visibility.public', 'Public')}</span>
                   </div>
-                </SelectItem>
-                <SelectItem value='private'>
-                  <div className='flex items-center gap-2'>
+                  {targetVisibility === 'public' && (
+                    <Check className='text-primary size-3.5' />
+                  )}
+                </div>
+                <p className='text-muted-foreground mt-1.5 text-xs leading-relaxed font-normal'>
+                  {t(
+                    'files.upload.publicHelp',
+                    'Accessible by anyone with the link / CDN'
+                  )}
+                </p>
+              </button>
+
+              <button
+                type='button'
+                onClick={() => setTargetVisibility('private')}
+                className={cn(
+                  'group flex cursor-pointer flex-col items-start justify-between rounded-lg border p-3 text-left transition-all',
+                  targetVisibility === 'private'
+                    ? 'border-primary bg-primary/5 ring-primary shadow-xs ring-1'
+                    : 'border-input bg-card hover:bg-muted/40 hover:border-muted-foreground/30'
+                )}
+              >
+                <div className='flex w-full items-center justify-between'>
+                  <div className='text-foreground flex items-center gap-2 text-sm font-medium'>
                     <Lock className='size-4 text-amber-500' />
-                    <div className='flex flex-col text-left'>
-                      <span className='font-medium'>
-                        {t('files.visibility.private', 'Private')}
-                      </span>
-                      <span className='text-muted-foreground text-xs font-normal'>
-                        {t(
-                          'files.upload.privateHelp',
-                          'Restricted to authenticated sessions'
-                        )}
-                      </span>
-                    </div>
+                    <span>{t('files.visibility.private', 'Private')}</span>
                   </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  {targetVisibility === 'private' && (
+                    <Check className='text-primary size-3.5' />
+                  )}
+                </div>
+                <p className='text-muted-foreground mt-1.5 text-xs leading-relaxed font-normal'>
+                  {t(
+                    'files.upload.privateHelp',
+                    'Restricted to authenticated sessions'
+                  )}
+                </p>
+              </button>
+            </div>
           </div>
           <FolderCreatableField
             label={t('files.table.folder')}

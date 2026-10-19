@@ -68,23 +68,37 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
   }
 
   async afterInsert(event: InsertEvent<any>) {
-    await this.saveLog('INSERT', event);
+    await this.safeSaveLog('INSERT', event);
   }
 
   async afterUpdate(event: UpdateEvent<any>) {
-    await this.saveLog('UPDATE', event);
+    await this.safeSaveLog('UPDATE', event);
   }
 
   async afterRemove(event: RemoveEvent<any>) {
-    await this.saveLog('DELETE', event);
+    await this.safeSaveLog('DELETE', event);
   }
 
   async afterSoftRemove(event: SoftRemoveEvent<any>) {
-    await this.saveLog('SOFT_DELETE', event);
+    await this.safeSaveLog('SOFT_DELETE', event);
   }
 
   async afterRecover(event: RecoverEvent<any>) {
-    await this.saveLog('RESTORE', event);
+    await this.safeSaveLog('RESTORE', event);
+  }
+
+  private async safeSaveLog(
+    action: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'SOFT_DELETE',
+    event: any,
+  ) {
+    try {
+      await this.saveLog(action, event);
+    } catch (error) {
+      this.logger.error(
+        `[AuditLog] Unexpected error processing audit log for ${event?.metadata?.name || 'unknown'}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+    }
   }
 
   private resolveModelKey(modelBaseName: string): string {
@@ -330,6 +344,19 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
       );
     }
 
-    setImmediate(() => auditRepo.save(log));
+    setImmediate(async () => {
+      try {
+        const repo =
+          this.dataSource && this.dataSource.isInitialized
+            ? this.dataSource.getRepository(ActivityLogEntity)
+            : (event.manager?.getRepository(ActivityLogEntity) ?? auditRepo);
+        await repo.save(log);
+      } catch (saveError) {
+        this.logger.error(
+          `[AuditLog] Failed to persist activity log for ${event?.metadata?.name || 'unknown'}: ${(saveError as Error).message}`,
+          (saveError as Error).stack,
+        );
+      }
+    });
   }
 }
