@@ -37,17 +37,25 @@ export default function PageActivityLogShow() {
     ? `[${entityLabel} #${data.entityId}] "${data.metadata.entityName}"`
     : `[${entityLabel} #${data.entityId}]`
 
-  const actorRoles =
-    Array.isArray(data.metadata?.roles) && data.metadata.roles.length > 0
-      ? `(${data.metadata.roles.join(', ')})`
-      : ''
+  const actorName =
+    data.metadata?.actorName || data.metadata?.causer_name || null
+  const actorEmail = data.metadata?.actorEmail || null
 
   const actorDisplay =
-    data.metadata?.actorName || data.metadata?.actorEmail
-      ? `${data.metadata.actorName || ''} ${data.metadata.actorEmail ? `<${data.metadata.actorEmail}>` : ''} [#${data.userId ?? data.metadata?.actorId}] ${actorRoles}`.trim()
-      : data.userId
-        ? `User #${data.userId}`
-        : 'System / Guest'
+    actorName || actorEmail ? (
+      <div className='mt-2 flex flex-col'>
+        <span className='text-secondary-foreground text-sm font-medium'>
+          {actorName || actorEmail}
+        </span>
+        {actorName && actorEmail && actorName !== actorEmail && (
+          <span className='text-muted-foreground text-xs'>{actorEmail}</span>
+        )}
+      </div>
+    ) : (
+      <p className='text-secondary-foreground mt-2 text-sm font-normal italic'>
+        {data.metadata?.userType ?? 'System'}
+      </p>
+    )
 
   return (
     <>
@@ -100,10 +108,9 @@ export default function PageActivityLogShow() {
                   label={t('activityLogs.show.entity')}
                   value={entityDisplay}
                 />
-                <DescriptionItem
-                  label={t('activityLogs.show.actor')}
-                  value={actorDisplay}
-                />
+                <DescriptionItem label={t('activityLogs.show.actor')}>
+                  {actorDisplay}
+                </DescriptionItem>
                 <DescriptionItem
                   label={t('activityLogs.show.timestamp')}
                   value={format(

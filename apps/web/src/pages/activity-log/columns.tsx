@@ -186,15 +186,17 @@ export function getActivitiesTableColumns({
       ),
       cell: ({ row }) => {
         const metadata = row.original.metadata
-        if (metadata?.actorName || metadata?.actorEmail) {
+        const actorName = metadata?.actorName || metadata?.causer_name || null
+        const actorEmail = metadata?.actorEmail || null
+        if (actorName || actorEmail) {
           return (
             <div className='flex flex-col'>
               <span className='truncate text-xs font-medium'>
-                {metadata.actorName || metadata.actorEmail}
+                {actorName || actorEmail}
               </span>
-              {metadata.actorName && metadata.actorEmail && (
+              {actorName && actorEmail && actorName !== actorEmail && (
                 <span className='text-muted-foreground truncate text-[11px]'>
-                  {metadata.actorEmail}
+                  {actorEmail}
                 </span>
               )}
             </div>
@@ -202,8 +204,7 @@ export function getActivitiesTableColumns({
         }
         return (
           <span className='text-muted-foreground text-xs'>
-            {metadata?.userType ?? 'Guest'}
-            {metadata?.actorId != null ? ` (#${metadata.actorId})` : ''}
+            {metadata?.userType ?? 'System'}
           </span>
         )
       },
