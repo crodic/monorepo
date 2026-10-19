@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { FileFolderEntity } from './file-folder.entity';
 
+@Index('IDX_files_folder_created_at', ['folder', 'createdAt'])
 @Entity('files')
 export class FileEntity {
   @PrimaryGeneratedColumn('increment', {
@@ -41,6 +42,10 @@ export class FileEntity {
 
   @Column({ type: 'varchar', nullable: true })
   disk: string | null;
+
+  @Column({ type: 'varchar', default: 'public' })
+  @Index('IDX_files_visibility')
+  visibility: 'public' | 'private';
 
   @Column()
   original_name: string;

@@ -32,6 +32,11 @@ export class UpdateFileDto {
 
   @IsOptional()
   @IsString()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
+
+  @IsOptional()
+  @IsString()
   @IsIn(['public', 'local', 's3', 's3-private'])
   disk?: 'public' | 'local' | 's3' | 's3-private';
 }

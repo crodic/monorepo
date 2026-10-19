@@ -164,6 +164,18 @@ export default {
     'Private — Requires an authenticated session to access.',
   'files.disk.changeSuccess': 'Storage disk changed successfully.',
   'files.disk.changeError': 'Failed to change storage disk.',
+  'files.visibility.title': 'Visibility',
+  'files.visibility.public': 'Public',
+  'files.visibility.private': 'Private',
+  'files.visibility.publicTooltip':
+    'Public — Anyone with the link can view and download without login.',
+  'files.visibility.privateTooltip':
+    'Private — Requires an authenticated session to access.',
+  'files.visibility.changeSuccess': 'Visibility updated successfully.',
+  'files.visibility.changeError': 'Failed to update visibility.',
+  'files.upload.visibility': 'Visibility',
+  'files.upload.publicHelp': 'Accessible by anyone with the link / CDN',
+  'files.upload.privateHelp': 'Restricted to authenticated sessions',
   'files.move.title': 'Move file',
   'files.delete.title': 'Delete file',
   'files.delete.description':

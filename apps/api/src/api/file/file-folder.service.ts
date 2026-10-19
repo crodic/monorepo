@@ -75,17 +75,40 @@ export class FileFolderService {
       return null;
     }
 
-    let entity = await this.folderRepository.findOne({
-      where: { name: normalized },
-    });
+    const segments = normalized.split('/');
+    let currentPath = '';
+    let parentId: any = null;
+    let lastEntity: FileFolderEntity | null = null;
 
-    if (!entity) {
-      entity = await this.folderRepository.save(
-        this.folderRepository.create({ name: normalized }),
-      );
+    for (let depth = 0; depth < segments.length; depth++) {
+      const segment = segments[depth];
+      currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+
+      let entity = await this.folderRepository.findOne({
+        where: { name: currentPath },
+      });
+
+      if (!entity) {
+        entity = await this.folderRepository.save(
+          this.folderRepository.create({
+            name: currentPath,
+            title: segment,
+            parentId,
+            depth,
+          }),
+        );
+      } else if (!entity.title || entity.depth !== depth) {
+        entity.title = segment;
+        entity.depth = depth;
+        entity.parentId = parentId;
+        entity = await this.folderRepository.save(entity);
+      }
+
+      parentId = entity.id;
+      lastEntity = entity;
     }
 
-    return entity;
+    return lastEntity;
   }
 
   async getFolderSummary(folderName: string): Promise<FileFolderResDto> {
@@ -96,10 +119,21 @@ export class FileFolderService {
       .where('file.folder = :folder', { folder: folderName })
       .getRawOne<{ count: string; size: string }>();
 
+    const entity = await this.folderRepository.findOne({
+      where: { name: folderName },
+    });
+
+    const segments = folderName.split('/');
+    const parent = segments.length > 1 ? segments.slice(0, -1).join('/') : null;
+    const title = segments[segments.length - 1];
+
     return plainToInstance(
       FileFolderResDto,
       {
         folder: folderName,
+        name: entity?.title ?? title,
+        parent,
+        depth: entity?.depth ?? segments.length - 1,
         count: Number(row?.count ?? 0),
         size: Number(row?.size ?? 0),
       },
@@ -108,23 +142,46 @@ export class FileFolderService {
   }
 
   async listFolders(): Promise<FileFolderResDto[]> {
-    const rows = await this.folderRepository
-      .createQueryBuilder('folder')
-      .leftJoin(FileEntity, 'file', 'file.folder = folder.name')
-      .select('folder.name', 'folder')
+    const folders = await this.folderRepository.find({
+      order: { name: 'ASC' },
+    });
+
+    const fileStats = await this.fileRepository
+      .createQueryBuilder('file')
+      .select('file.folder', 'folder')
       .addSelect('COUNT(file.id)', 'count')
       .addSelect('COALESCE(SUM(file.size), 0)', 'size')
-      .groupBy('folder.name')
-      .orderBy('folder.name', 'ASC')
+      .where('file.folder IS NOT NULL')
+      .groupBy('file.folder')
       .getRawMany<{ folder: string; count: string; size: string }>();
+
+    const statsMap = new Map<string, { count: number; size: number }>();
+    for (const stat of fileStats) {
+      if (stat.folder) {
+        statsMap.set(stat.folder, {
+          count: Number(stat.count),
+          size: Number(stat.size),
+        });
+      }
+    }
 
     return plainToInstance(
       FileFolderResDto,
-      rows.map((row) => ({
-        folder: row.folder,
-        count: Number(row.count),
-        size: Number(row.size),
-      })),
+      folders.map((f) => {
+        const segments = f.name.split('/');
+        const parent =
+          segments.length > 1 ? segments.slice(0, -1).join('/') : null;
+        const stat = statsMap.get(f.name) ?? { count: 0, size: 0 };
+
+        return {
+          folder: f.name,
+          name: f.title ?? segments[segments.length - 1],
+          parent,
+          depth: f.depth,
+          count: stat.count,
+          size: stat.size,
+        };
+      }),
       { excludeExtraneousValues: true },
     );
   }
@@ -140,9 +197,7 @@ export class FileFolderService {
       throw new BadRequestException('Folder already exists');
     }
 
-    await this.folderRepository.save(
-      this.folderRepository.create({ name: normalized }),
-    );
+    await this.ensureFolder(normalized);
 
     return this.getFolderSummary(normalized);
   }
@@ -150,6 +205,10 @@ export class FileFolderService {
   async renameFolder(from: string, to: string): Promise<FileFolderResDto> {
     const sourceFolder = this.assertFolder(from);
     const targetFolder = this.assertFolder(to);
+
+    if (sourceFolder === targetFolder) {
+      return this.getFolderSummary(targetFolder);
+    }
 
     const existingSource = await this.folderRepository.findOne({
       where: { name: sourceFolder },
@@ -171,21 +230,41 @@ export class FileFolderService {
       throw new BadRequestException('Target folder already exists');
     }
 
-    if (existingSource) {
-      existingSource.name = targetFolder;
-      await this.folderRepository.save(existingSource);
-    } else {
-      await this.folderRepository.save(
-        this.folderRepository.create({ name: targetFolder }),
-      );
-    }
+    // Ensure target folder structure exists
+    await this.ensureFolder(targetFolder);
 
+    // Update files directly in this folder
     await this.fileRepository
       .createQueryBuilder()
       .update(FileEntity)
       .set({ folder: targetFolder })
       .where('folder = :folder', { folder: sourceFolder })
       .execute();
+
+    // Cascade rename to all descendant folders and their files
+    const fromPrefix = `${sourceFolder}/`;
+    const toPrefix = `${targetFolder}/`;
+
+    const descendantFolders = await this.folderRepository
+      .createQueryBuilder('f')
+      .where('f.name LIKE :prefix', { prefix: `${fromPrefix}%` })
+      .getMany();
+
+    for (const desc of descendantFolders) {
+      const newName = desc.name.replace(fromPrefix, toPrefix);
+      await this.ensureFolder(newName);
+      await this.fileRepository
+        .createQueryBuilder()
+        .update(FileEntity)
+        .set({ folder: newName })
+        .where('folder = :folder', { folder: desc.name })
+        .execute();
+      await this.folderRepository.delete({ id: desc.id });
+    }
+
+    if (existingSource) {
+      await this.folderRepository.delete({ id: existingSource.id });
+    }
 
     return this.getFolderSummary(targetFolder);
   }
@@ -195,34 +274,46 @@ export class FileFolderService {
     deleteFiles = false,
   ): Promise<{ message: string }> {
     const targetFolder = this.assertFolder(folder);
+    const folderPattern = `${targetFolder}/%`;
+
     const existingFolder = await this.folderRepository.findOne({
       where: { name: targetFolder },
     });
 
-    const files = await this.fileRepository.find({
+    const directFiles = await this.fileRepository.find({
       where: { folder: targetFolder },
     });
 
-    if (!existingFolder && files.length === 0) {
+    const descendantFiles = await this.fileRepository
+      .createQueryBuilder('file')
+      .where('file.folder LIKE :pattern', { pattern: folderPattern })
+      .getMany();
+
+    const allFiles = [...directFiles, ...descendantFiles];
+
+    if (!existingFolder && allFiles.length === 0) {
       throw new NotFoundException('Folder not found');
     }
 
-    if (files.length > 0 && !deleteFiles) {
+    if (allFiles.length > 0 && !deleteFiles) {
       throw new BadRequestException(
         'Folder is not empty. Enable delete files to remove this folder and its files.',
       );
     }
 
-    if (deleteFiles && files.length > 0) {
+    if (deleteFiles && allFiles.length > 0) {
       await Promise.allSettled(
-        files.map((file) =>
+        allFiles.map((file) =>
           this.diskForFile(file).delete(this.toStorageKey(file.path)),
         ),
       );
-      await this.fileRepository.delete({ folder: targetFolder });
+      for (const file of allFiles) {
+        await this.fileRepository.delete({ id: file.id });
+      }
     }
 
     if (existingFolder) {
+      // Deleting parent cascades down to children
       await this.folderRepository.delete({ id: existingFolder.id });
     }
 

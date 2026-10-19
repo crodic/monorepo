@@ -34,22 +34,43 @@ describe('fileSchema', () => {
 })
 
 describe('folderSchema', () => {
-  it('parses folder summaries', () => {
+  it('parses folder summaries with nested attributes', () => {
     expect(
       folderSchema.parse({
-        folder: 'avatars',
+        folder: 'documents/invoices',
+        name: 'invoices',
+        parent: 'documents',
+        depth: 1,
         count: 2,
         size: 4096,
       })
-    ).toEqual({ folder: 'avatars', count: 2, size: 4096 })
+    ).toEqual({
+      folder: 'documents/invoices',
+      name: 'invoices',
+      parent: 'documents',
+      depth: 1,
+      count: 2,
+      size: 4096,
+    })
   })
 
-  it('validates flat folder names', () => {
+  it('validates nested and flat folder names', () => {
     expect(createFolderSchema.parse({ folder: '  Ảnh test_2026  ' })).toEqual({
       folder: 'Ảnh test_2026',
     })
 
-    expect(() => createFolderSchema.parse({ folder: 'Video 1/raw' })).toThrow()
+    expect(
+      createFolderSchema.parse({ folder: 'documents/invoices/2026' })
+    ).toEqual({
+      folder: 'documents/invoices/2026',
+    })
+
     expect(() => createFolderSchema.parse({ folder: '../private' })).toThrow()
+    expect(() =>
+      createFolderSchema.parse({ folder: '/starts-with-slash' })
+    ).toThrow()
+    expect(() =>
+      createFolderSchema.parse({ folder: 'ends-with-slash/' })
+    ).toThrow()
   })
 })

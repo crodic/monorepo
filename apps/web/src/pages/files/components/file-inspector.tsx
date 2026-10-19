@@ -39,7 +39,8 @@ import {
 import { formatBytes } from '../columns'
 import {
   getFileDiskLabel,
-  getFileDiskTooltip,
+  getFileVisibilityLabel,
+  getFileVisibilityTooltip,
   isFilePrivate,
 } from '../disk-helper'
 import { downloadFile } from '../download-helper'
@@ -90,12 +91,12 @@ export function FileInspector({
     setCurrentFile(file)
   }, [file])
 
-  const updateDiskMutation = useMutation({
-    mutationFn: async (disk: string) => {
+  const updateVisibilityMutation = useMutation({
+    mutationFn: async (visibility: 'public' | 'private') => {
       if (!currentFile) return
       return apiUpdateFile({
         publicId: currentFile.public_id,
-        data: { disk },
+        data: { visibility },
       })
     },
     onSuccess: (updated) => {
@@ -104,10 +105,14 @@ export function FileInspector({
         onFileUpdated?.(updated)
       }
       void queryClient.invalidateQueries({ queryKey: fileQueryKeys.all })
-      toast.success(t('files.disk.changeSuccess'))
+      toast.success(
+        t('files.visibility.changeSuccess', 'Visibility updated successfully.')
+      )
     },
     onError: () => {
-      toast.error(t('files.disk.changeError'))
+      toast.error(
+        t('files.visibility.changeError', 'Failed to update visibility.')
+      )
     },
   })
 
@@ -345,59 +350,54 @@ export function FileInspector({
                     </span>
                   </div>
 
-                  {/* Storage Disk Selector & Description */}
+                  {/* Visibility Selector & Description */}
                   <Separator />
                   <div className='flex items-center justify-between py-1'>
                     <div className='flex flex-col gap-0.5'>
                       <span className='text-muted-foreground font-medium'>
-                        {t('files.disk.title')}
+                        {t('files.visibility.title', 'Visibility')}
                       </span>
                       <span className='text-muted-foreground/80 max-w-50 text-[11px] leading-tight'>
-                        {getFileDiskTooltip(
-                          activeFile.disk,
-                          isFilePrivate(activeFile)
+                        {getFileVisibilityTooltip(
+                          activeFile.visibility ??
+                            (isFilePrivate(activeFile) ? 'private' : 'public')
                         )}
                       </span>
                     </div>
 
                     {canUpdate ? (
                       <div className='flex items-center gap-1.5'>
-                        {updateDiskMutation.isPending && (
+                        {updateVisibilityMutation.isPending && (
                           <Loader2 className='text-muted-foreground size-3.5 animate-spin' />
                         )}
                         <Select
-                          value={activeFile.disk ?? 'public'}
-                          onValueChange={(val: string) =>
-                            updateDiskMutation.mutate(val)
+                          value={
+                            activeFile.visibility ??
+                            (isFilePrivate(activeFile) ? 'private' : 'public')
                           }
-                          disabled={updateDiskMutation.isPending}
+                          onValueChange={(val: 'public' | 'private') =>
+                            updateVisibilityMutation.mutate(val)
+                          }
+                          disabled={updateVisibilityMutation.isPending}
                         >
-                          <SelectTrigger className='h-8 w-34 text-xs'>
+                          <SelectTrigger className='h-8 w-32 text-xs'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='public' className='text-xs'>
                               <div className='flex items-center gap-1.5'>
                                 <Globe className='size-3.5 text-blue-500' />
-                                <span>{getFileDiskLabel('public')}</span>
+                                <span>
+                                  {t('files.visibility.public', 'Public')}
+                                </span>
                               </div>
                             </SelectItem>
-                            <SelectItem value='local' className='text-xs'>
+                            <SelectItem value='private' className='text-xs'>
                               <div className='flex items-center gap-1.5'>
                                 <Lock className='size-3.5 text-amber-500' />
-                                <span>{getFileDiskLabel('local')}</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value='s3' className='text-xs'>
-                              <div className='flex items-center gap-1.5'>
-                                <Globe className='size-3.5 text-blue-500' />
-                                <span>{getFileDiskLabel('s3')}</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value='s3-private' className='text-xs'>
-                              <div className='flex items-center gap-1.5'>
-                                <Lock className='size-3.5 text-amber-500' />
-                                <span>{getFileDiskLabel('s3-private')}</span>
+                                <span>
+                                  {t('files.visibility.private', 'Private')}
+                                </span>
                               </div>
                             </SelectItem>
                           </SelectContent>
@@ -405,9 +405,9 @@ export function FileInspector({
                       </div>
                     ) : (
                       <span className='font-medium capitalize'>
-                        {getFileDiskLabel(
-                          activeFile.disk,
-                          isFilePrivate(activeFile)
+                        {getFileVisibilityLabel(
+                          activeFile.visibility ??
+                            (isFilePrivate(activeFile) ? 'private' : 'public')
                         )}
                       </span>
                     )}

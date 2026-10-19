@@ -17,6 +17,21 @@ export class FileFolderResDto {
   folder: string;
 
   @Expose()
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  parent?: string | null;
+
+  @Expose()
+  @IsOptional()
+  @IsNumber()
+  depth?: number;
+
+  @Expose()
   @IsNumber()
   count: number;
 

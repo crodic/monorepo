@@ -1,18 +1,23 @@
 export const FILE_FOLDER_NAME_PATTERN =
-  /^[\p{L}\p{N}][\p{L}\p{N} ._-]{0,254}$/u;
+  /^[\p{L}\p{N}][\p{L}\p{N} ._-]{0,100}(?:\/[\p{L}\p{N}][\p{L}\p{N} ._-]{0,100})*$/u;
 
 export const FILE_FOLDER_NAME_MESSAGE =
-  'Folder name must be a single folder, start with a letter or number, and only contain letters, numbers, spaces, dots, underscores, or hyphens.';
+  'Folder path must consist of valid folder segments separated by slashes. Each segment must start with a letter or number and contain letters, numbers, spaces, dots, underscores, or hyphens.';
 
 export function normalizeFolderName(folder?: string | null): string | null {
   if (folder == null) {
     return null;
   }
 
-  const normalized = folder.trim();
+  const normalized = folder
+    .trim()
+    .replace(/\\/g, '/')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/\/+/g, '/');
+
   return normalized.length > 0 ? normalized : null;
 }
 
 export function isValidFolderName(folder: string): boolean {
-  return FILE_FOLDER_NAME_PATTERN.test(folder);
+  return folder.length <= 255 && FILE_FOLDER_NAME_PATTERN.test(folder);
 }

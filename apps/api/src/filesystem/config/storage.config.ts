@@ -16,6 +16,14 @@ class EnvironmentVariablesValidator {
   @IsOptional()
   FILESYSTEM_DISK?: StorageDisk;
 
+  @IsEnum(StorageDiskEnum)
+  @IsOptional()
+  STORAGE_PUBLIC_DISK?: StorageDisk;
+
+  @IsEnum(StorageDiskEnum)
+  @IsOptional()
+  STORAGE_PRIVATE_DISK?: StorageDisk;
+
   @IsString()
   @IsOptional()
   FILESYSTEM_LOCAL_ROOT?: string;
@@ -58,6 +66,12 @@ export default registerAs<StorageConfig>('storage', () => {
 
   const disk =
     (process.env.FILESYSTEM_DISK as StorageDisk | undefined) ?? 'public';
+  const publicDisk =
+    (process.env.STORAGE_PUBLIC_DISK as StorageDisk | undefined) ??
+    (disk === 's3' || disk === 's3-private' ? 's3' : 'public');
+  const privateDisk =
+    (process.env.STORAGE_PRIVATE_DISK as StorageDisk | undefined) ??
+    (disk === 's3' || disk === 's3-private' ? 's3-private' : 'local');
   const localRoot = process.env.FILESYSTEM_LOCAL_ROOT ?? 'storage';
   const appUrl = process.env.APP_URL ?? 'http://localhost:8000';
   const bucket = process.env.AWS_BUCKET ?? 'nest-uploads';
@@ -83,6 +97,8 @@ export default registerAs<StorageConfig>('storage', () => {
 
   return {
     disk,
+    publicDisk,
+    privateDisk,
     localRoot,
     s3: s3Config,
     disks: {

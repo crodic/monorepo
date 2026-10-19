@@ -169,26 +169,34 @@ export function FolderPanel({
 
         {/* Folder list */}
         <div className='flex max-h-56 flex-col gap-0.5 overflow-auto pr-0.5'>
-          {filteredFolders.map((folder) => (
-            <Button
-              key={folder.folder}
-              variant={activeFolder === folder.folder ? 'secondary' : 'ghost'}
-              size='sm'
-              className={cn(
-                'group h-8 justify-start gap-2 px-2 text-xs font-medium',
-                activeFolder === folder.folder && 'text-primary font-semibold'
-              )}
-              onClick={() => onSelect(folder.folder)}
-            >
-              <Folder className='size-3.5 fill-amber-500/20 text-amber-500/80' />
-              <span className='min-w-0 flex-1 truncate text-left'>
-                {folder.folder}
-              </span>
-              <span className='text-muted-foreground text-[11px] font-normal'>
-                {folder.count}
-              </span>
-            </Button>
-          ))}
+          {filteredFolders.map((folder) => {
+            const depth = folder.depth ?? folder.folder.split('/').length - 1
+            const displayName =
+              folder.name ?? folder.folder.split('/').pop() ?? folder.folder
+
+            return (
+              <Button
+                key={folder.folder}
+                variant={activeFolder === folder.folder ? 'secondary' : 'ghost'}
+                size='sm'
+                style={{ paddingLeft: `${8 + depth * 12}px` }}
+                className={cn(
+                  'group h-8 justify-start gap-2 pr-2 text-xs font-medium',
+                  activeFolder === folder.folder && 'text-primary font-semibold'
+                )}
+                title={folder.folder}
+                onClick={() => onSelect(folder.folder)}
+              >
+                <Folder className='size-3.5 shrink-0 fill-amber-500/20 text-amber-500/80' />
+                <span className='min-w-0 flex-1 truncate text-left'>
+                  {displayName}
+                </span>
+                <span className='text-muted-foreground text-[11px] font-normal'>
+                  {folder.count}
+                </span>
+              </Button>
+            )
+          })}
         </div>
       </div>
 

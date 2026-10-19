@@ -10,6 +10,7 @@ export class CreateFilesTable1771203054787 implements MigrationInterface {
                 "public_id" character varying NOT NULL,
                 "folder" character varying,
                 "disk" character varying,
+                "visibility" character varying NOT NULL DEFAULT 'public',
                 "original_name" character varying NOT NULL,
                 "path" character varying NOT NULL,
                 "hash" character varying NOT NULL,
@@ -28,9 +29,21 @@ export class CreateFilesTable1771203054787 implements MigrationInterface {
     await queryRunner.query(`
             CREATE UNIQUE INDEX "UQ_file_public_id" ON "files" ("public_id")
         `);
+    await queryRunner.query(`
+            CREATE INDEX "IDX_files_visibility" ON "files" ("visibility")
+        `);
+    await queryRunner.query(`
+            CREATE INDEX "IDX_files_folder_created_at" ON "files" ("folder", "created_at")
+        `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+            DROP INDEX "public"."IDX_files_folder_created_at"
+        `);
+    await queryRunner.query(`
+            DROP INDEX "public"."IDX_files_visibility"
+        `);
     await queryRunner.query(`
             DROP INDEX "public"."UQ_file_public_id"
         `);

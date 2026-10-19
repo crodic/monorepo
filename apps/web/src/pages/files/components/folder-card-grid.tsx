@@ -123,8 +123,13 @@ export function FolderCardGrid({
                   </div>
 
                   <div className='mt-3 min-w-0'>
-                    <p className='text-foreground group-hover:text-primary truncate text-sm font-medium transition-colors'>
-                      {folder.folder}
+                    <p
+                      className='text-foreground group-hover:text-primary truncate text-sm font-medium transition-colors'
+                      title={folder.folder}
+                    >
+                      {folder.name ??
+                        folder.folder.split('/').pop() ??
+                        folder.folder}
                     </p>
                     <p className='text-muted-foreground mt-0.5 text-xs'>
                       {folder.count} files &bull; {formatBytes(folder.size)}

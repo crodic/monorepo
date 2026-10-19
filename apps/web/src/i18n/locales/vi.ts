@@ -162,6 +162,18 @@ export default {
     'Riêng tư — Chỉ thành viên đăng nhập mới có thể truy cập.',
   'files.disk.changeSuccess': 'Đã chuyển đổi quyền lưu trữ thành công.',
   'files.disk.changeError': 'Không thể chuyển đổi quyền lưu trữ.',
+  'files.visibility.title': 'Quyền truy cập',
+  'files.visibility.public': 'Công khai',
+  'files.visibility.private': 'Riêng tư',
+  'files.visibility.publicTooltip':
+    'Công khai — Bất kỳ ai có liên kết đều có thể xem và tải về mà không cần đăng nhập.',
+  'files.visibility.privateTooltip':
+    'Riêng tư — Cần phiên đăng nhập để truy cập.',
+  'files.visibility.changeSuccess': 'Đã cập nhật quyền truy cập thành công.',
+  'files.visibility.changeError': 'Không thể cập nhật quyền truy cập.',
+  'files.upload.visibility': 'Quyền truy cập',
+  'files.upload.publicHelp': 'Công khai qua liên kết / CDN',
+  'files.upload.privateHelp': 'Giới hạn cho phiên đăng nhập hợp lệ',
   'files.move.title': 'Di chuyển tệp',
   'files.delete.title': 'Xóa tệp',
   'files.delete.description':

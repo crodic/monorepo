@@ -21,6 +21,8 @@ export interface S3StorageOptions {
 
 export interface StorageConfig {
   disk: StorageDisk;
+  publicDisk: StorageDisk;
+  privateDisk: StorageDisk;
   localRoot: string;
   s3: S3StorageOptions;
   disks: Record<StorageDisk, DiskDefinition>;

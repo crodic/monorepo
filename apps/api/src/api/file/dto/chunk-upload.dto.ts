@@ -34,6 +34,10 @@ export class CreateChunkUploadSessionDto {
   size: number;
 
   @IsOptional()
+  @IsIn(['public', 'private'])
+  visibility?: 'public' | 'private';
+
+  @IsOptional()
   @IsIn(['local', 'public', 's3', 's3-private'])
   disk?: string;
 

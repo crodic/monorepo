@@ -2,9 +2,12 @@ import { isMultipartCapable } from '../../filesystem/drivers/storage-driver.inte
 import { FilesystemService } from '../../filesystem/filesystem.service';
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
 import { existsSync } from 'fs';
 import { readFile, readdir, rm, stat } from 'fs/promises';
 import { join } from 'path';
+import { LessThan, Repository } from 'typeorm';
+import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 
 @Injectable()
 export class FileCleanupService {
@@ -12,16 +15,69 @@ export class FileCleanupService {
 
   constructor(
     @Optional()
+    @InjectRepository(FileUploadSessionEntity)
+    private readonly sessionRepository?: Repository<FileUploadSessionEntity>,
+    @Optional()
     private readonly storage?: FilesystemService,
   ) {}
 
   /**
    * Run a cron job every day at 2 AM to clean up orphaned temporary files
-   * that were older than 24 hours.
+   * and expired upload sessions.
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleTempFilesCleanup() {
     this.logger.log('Starting cleanup of temporary upload files...');
+
+    // Clean up expired DB upload sessions and abort pending S3 multipart uploads
+    if (this.sessionRepository) {
+      try {
+        const expiredSessions = await this.sessionRepository.find({
+          where: {
+            status: 'pending',
+            expiresAt: LessThan(new Date()),
+          },
+        });
+
+        let abortedCount = 0;
+        for (const session of expiredSessions) {
+          if (
+            session.s3UploadId &&
+            session.s3Key &&
+            session.disk &&
+            this.storage
+          ) {
+            try {
+              const driver = this.storage.disk(session.disk as any);
+              if (isMultipartCapable(driver)) {
+                await driver.abortMultipartUpload(
+                  session.s3Key,
+                  session.s3UploadId,
+                );
+              }
+            } catch (err: any) {
+              this.logger.warn(
+                `Failed to abort S3 multipart upload for session ${session.id}: ${err.message}`,
+              );
+            }
+          }
+
+          session.status = 'expired';
+          await this.sessionRepository.save(session);
+          abortedCount++;
+        }
+
+        if (abortedCount > 0) {
+          this.logger.log(
+            `Marked ${abortedCount} expired upload sessions in database`,
+          );
+        }
+      } catch (err: any) {
+        this.logger.error(
+          `Failed to clean up expired upload sessions: ${err.message}`,
+        );
+      }
+    }
 
     // Defined a set of temporary directories to clean up
     // 1. The default system /tmp/uploads (used in docs example)

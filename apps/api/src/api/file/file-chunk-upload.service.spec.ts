@@ -6,6 +6,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { dirname, join } from 'path';
 import { pipeline } from 'stream/promises';
+import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 import { FileEntity } from './entities/file.entity';
 import { FileChunkUploadService } from './file-chunk-upload.service';
 import { FileFolderService } from './file-folder.service';
@@ -15,6 +16,11 @@ describe('FileChunkUploadService', () => {
   let repository: {
     create: jest.Mock;
     save: jest.Mock;
+  };
+  let sessionRepository: {
+    create: jest.Mock;
+    save: jest.Mock;
+    findOne: jest.Mock;
   };
   let diskRoot: string;
   let disk: {
@@ -32,6 +38,24 @@ describe('FileChunkUploadService', () => {
     repository = {
       create: jest.fn(),
       save: jest.fn(),
+    };
+    const sessions = new Map<string, any>();
+    sessionRepository = {
+      create: jest.fn((dto) => ({ ...dto })),
+      save: jest.fn(async (entity) => {
+        sessions.set(entity.id, { ...entity });
+        return { ...entity };
+      }),
+      findOne: jest.fn(async ({ where }: any) => {
+        return sessions.get(where?.id) ?? null;
+      }),
+      update: jest.fn(async ({ id }: any, partial: any) => {
+        const item = sessions.get(id);
+        if (item) {
+          sessions.set(id, { ...item, ...partial });
+        }
+        return { affected: 1 };
+      }),
     };
     disk = {
       put: jest.fn(
@@ -67,6 +91,10 @@ describe('FileChunkUploadService', () => {
         {
           provide: getRepositoryToken(FileEntity),
           useValue: repository,
+        },
+        {
+          provide: getRepositoryToken(FileUploadSessionEntity),
+          useValue: sessionRepository,
         },
         {
           provide: FilesystemService,

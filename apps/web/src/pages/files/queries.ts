@@ -72,28 +72,39 @@ export async function apiUploadFile({
   file,
   folder,
   disk,
+  visibility,
   onProgress,
   signal,
 }: {
   file: File
   folder?: string | null
   disk?: string
+  visibility?: 'public' | 'private'
   onProgress?: (progress: number) => void
   signal?: AbortSignal
 }) {
-  return apiUploadFileInChunks({ file, folder, disk, onProgress, signal })
+  return apiUploadFileInChunks({
+    file,
+    folder,
+    disk,
+    visibility,
+    onProgress,
+    signal,
+  })
 }
 
 async function apiUploadFileInChunks({
   file,
   folder,
   disk,
+  visibility,
   onProgress,
   signal,
 }: {
   file: File
   folder?: string | null
   disk?: string
+  visibility?: 'public' | 'private'
   onProgress?: (progress: number) => void
   signal?: AbortSignal
 }) {
@@ -106,6 +117,7 @@ async function apiUploadFileInChunks({
       size: file.size,
       folder,
       disk,
+      visibility,
       totalChunks,
       chunkSize: FILE_UPLOAD_CHUNK_SIZE,
     },

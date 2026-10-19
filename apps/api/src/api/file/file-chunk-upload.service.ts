@@ -30,6 +30,7 @@ import {
 import { CreateChunkUploadSessionDto } from './dto/chunk-upload.dto';
 import { FileResDto } from './dto/file.res.dto';
 import { FileEntity } from './entities/file.entity';
+import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 import { FileFolderService } from './file-folder.service';
 
 export type ChunkUploadSession = {
@@ -38,6 +39,7 @@ export type ChunkUploadSession = {
   mime: string;
   size: number;
   disk: string;
+  visibility: 'public' | 'private';
   folder: string | null;
   totalChunks: number;
   chunkSize: number;
@@ -57,6 +59,8 @@ export class FileChunkUploadService {
   constructor(
     @InjectRepository(FileEntity)
     private readonly fileRepository: Repository<FileEntity>,
+    @InjectRepository(FileUploadSessionEntity)
+    private readonly sessionRepository: Repository<FileUploadSessionEntity>,
     private readonly storage: FilesystemService,
     private readonly fileFolderService: FileFolderService,
     @Optional()
@@ -73,6 +77,31 @@ export class FileChunkUploadService {
     }
     const target = (disk as StorageDisk) || this.currentDiskName;
     return target === 'local' || target === 's3-private';
+  }
+
+  private resolveTargetDisk(
+    visibility?: 'public' | 'private' | null,
+    preferredDisk?: string | null,
+  ): StorageDisk {
+    if (preferredDisk) {
+      return this.normalizeUploadDisk(preferredDisk);
+    }
+    if (this.storage?.resolveDisk) {
+      return this.storage.resolveDisk(visibility);
+    }
+    return visibility === 'private'
+      ? 'local'
+      : (this.storage?.defaultDiskName ?? 'public');
+  }
+
+  private resolveFileVisibility(
+    disk?: string | null,
+    explicitVisibility?: 'public' | 'private' | null,
+  ): 'public' | 'private' {
+    if (explicitVisibility === 'public' || explicitVisibility === 'private') {
+      return explicitVisibility;
+    }
+    return this.isDiskPrivate(disk) ? 'private' : 'public';
   }
 
   private writeDisk(disk?: string | null): StorageDriver {
@@ -99,6 +128,10 @@ export class FileChunkUploadService {
     const dto = plainToInstance(FileResDto, file, {
       excludeExtraneousValues: true,
     });
+
+    if (!dto.visibility) {
+      dto.visibility = this.resolveFileVisibility(file.disk, file.visibility);
+    }
 
     if (file.disk === 's3' && !this.isDiskPrivate(file.disk)) {
       try {
@@ -141,6 +174,55 @@ export class FileChunkUploadService {
       }
     }
 
+    const sessionEntity = await this.sessionRepository.findOne({
+      where: { id: sessionId },
+    });
+
+    if (sessionEntity) {
+      if (
+        sessionEntity.status === 'aborted' ||
+        sessionEntity.status === 'expired'
+      ) {
+        throw new NotFoundException(
+          'Upload session has expired or been aborted',
+        );
+      }
+
+      const session: ChunkUploadSession = {
+        sessionId: sessionEntity.id,
+        originalName: sessionEntity.originalName,
+        mime: sessionEntity.mime,
+        size: Number(sessionEntity.size),
+        disk: sessionEntity.disk,
+        visibility: sessionEntity.visibility,
+        folder: sessionEntity.folder ?? null,
+        totalChunks: sessionEntity.totalChunks,
+        chunkSize: sessionEntity.chunkSize,
+        uploadedChunks: sessionEntity.uploadedChunks ?? [],
+        createdAt:
+          sessionEntity.createdAt?.toISOString() ?? new Date().toISOString(),
+        s3UploadId: sessionEntity.s3UploadId ?? undefined,
+        s3Key: sessionEntity.s3Key ?? undefined,
+        s3Parts: sessionEntity.s3Parts ?? undefined,
+        imageWidth: sessionEntity.imageWidth ?? null,
+        imageHeight: sessionEntity.imageHeight ?? null,
+      };
+
+      if (this.redis) {
+        try {
+          await this.redis.set(
+            `chunk_session:${sessionId}`,
+            JSON.stringify(session),
+            86400,
+          );
+        } catch {
+          // ignore cache write error
+        }
+      }
+
+      return session;
+    }
+
     try {
       const manifest = await readFile(
         this.sessionManifestPath(sessionId),
@@ -165,6 +247,31 @@ export class FileChunkUploadService {
           `Redis set failed for session ${session.sessionId}: ${err}`,
         );
       }
+    }
+
+    try {
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.sessionRepository.save({
+        id: session.sessionId,
+        originalName: session.originalName,
+        mime: session.mime,
+        size: session.size,
+        disk: session.disk,
+        visibility: session.visibility,
+        folder: session.folder,
+        totalChunks: session.totalChunks,
+        chunkSize: session.chunkSize,
+        uploadedChunks: session.uploadedChunks,
+        s3UploadId: session.s3UploadId ?? null,
+        s3Key: session.s3Key ?? null,
+        s3Parts: session.s3Parts ?? null,
+        imageWidth: session.imageWidth ?? null,
+        imageHeight: session.imageHeight ?? null,
+        status: 'pending',
+        expiresAt,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to persist upload session to database: ${err}`);
     }
 
     try {
@@ -223,6 +330,7 @@ export class FileChunkUploadService {
     publicId,
     folder,
     disk,
+    visibility,
     originalName,
     path,
     mime,
@@ -233,6 +341,7 @@ export class FileChunkUploadService {
     publicId: string;
     folder: string | null;
     disk: string;
+    visibility?: 'public' | 'private';
     originalName: string;
     path: string;
     mime: string;
@@ -257,10 +366,13 @@ export class FileChunkUploadService {
       await this.fileFolderService.ensureFolder(folder);
     }
 
+    const resolvedVisibility = visibility ?? this.resolveFileVisibility(disk);
+
     const media = this.fileRepository.create({
       public_id: publicId,
       folder,
       disk,
+      visibility: resolvedVisibility,
       original_name: originalName,
       path,
       hash: this.generateHash(),
@@ -293,13 +405,19 @@ export class FileChunkUploadService {
       throw new BadRequestException('Invalid chunk count');
     }
 
-    const targetDisk = this.normalizeUploadDisk(dto.disk);
+    const targetDisk = this.resolveTargetDisk(dto.visibility, dto.disk);
+    const resolvedVisibility = this.resolveFileVisibility(
+      targetDisk,
+      dto.visibility,
+    );
+
     const session: ChunkUploadSession = {
       sessionId: uuidv4().replace(/-/g, ''),
       originalName: dto.originalName,
       mime: dto.mime,
       size: dto.size,
       disk: targetDisk,
+      visibility: resolvedVisibility,
       folder: this.fileFolderService.normalizeFolder(dto.folder),
       totalChunks: dto.totalChunks,
       chunkSize: dto.chunkSize,
@@ -321,7 +439,7 @@ export class FileChunkUploadService {
         storedPath,
         {
           mimeType: session.mime,
-          visibility: this.isDiskPrivate(targetDisk) ? 'private' : 'public',
+          visibility: resolvedVisibility,
         },
       );
 
@@ -444,6 +562,7 @@ export class FileChunkUploadService {
         public_id: publicId,
         folder: session.folder,
         disk: session.disk,
+        visibility: session.visibility,
         original_name: session.originalName,
         path: session.s3Key,
         hash: this.generateHash(),
@@ -457,6 +576,10 @@ export class FileChunkUploadService {
       });
 
       const saved = await this.fileRepository.save(media);
+      await this.sessionRepository.update(
+        { id: sessionId },
+        { status: 'completed' },
+      );
       await this.abortUploadSession(sessionId);
 
       return this.toDto(saved);
@@ -503,7 +626,7 @@ export class FileChunkUploadService {
       createReadStream(mergedPath),
       {
         mimeType: session.mime,
-        visibility: this.isDiskPrivate(session.disk) ? 'private' : 'public',
+        visibility: session.visibility,
       },
       this.writeDisk(session.disk),
     );
@@ -514,12 +637,17 @@ export class FileChunkUploadService {
       originalName: session.originalName,
       path: storedPath,
       disk: session.disk,
+      visibility: session.visibility,
       mime: session.mime,
       size: fileStat.size,
       resourceType,
       metadataPath: mergedPath,
     });
 
+    await this.sessionRepository.update(
+      { id: sessionId },
+      { status: 'completed' },
+    );
     await this.abortUploadSession(sessionId);
 
     return this.toDto(media);
@@ -539,6 +667,15 @@ export class FileChunkUploadService {
       }
     } catch {
       // Ignore if session already missing
+    }
+
+    try {
+      await this.sessionRepository.update(
+        { id: sessionId },
+        { status: 'aborted' },
+      );
+    } catch {
+      // Ignore DB update failure
     }
 
     if (this.redis) {

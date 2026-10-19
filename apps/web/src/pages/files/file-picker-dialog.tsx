@@ -602,15 +602,22 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                   <SelectItem value='__root__' className='text-xs'>
                     📁 {t('files.folders.root', 'Root')}
                   </SelectItem>
-                  {folders.map((f) => (
-                    <SelectItem
-                      key={f.folder}
-                      value={f.folder}
-                      className='text-xs'
-                    >
-                      📁 {f.folder}
-                    </SelectItem>
-                  ))}
+                  {folders.map((f) => {
+                    const depth = f.depth ?? f.folder.split('/').length - 1
+                    const indent = '—'.repeat(depth)
+                    const displayName =
+                      f.name ?? f.folder.split('/').pop() ?? f.folder
+                    return (
+                      <SelectItem
+                        key={f.folder}
+                        value={f.folder}
+                        className='text-xs'
+                      >
+                        📁 {indent ? `${indent} ` : ''}
+                        {displayName}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -1045,26 +1052,34 @@ function FilePickerFolderPane({
 
       <ScrollArea className='min-h-0 flex-1 pr-1'>
         <div className='flex flex-col gap-1'>
-          {folders.map((folder) => (
-            <Button
-              key={folder.folder}
-              type='button'
-              variant={activeFolder === folder.folder ? 'secondary' : 'ghost'}
-              className={cn(
-                'h-8 justify-start gap-2 rounded-lg px-2.5 text-xs font-medium',
-                activeFolder === folder.folder && 'bg-secondary font-semibold'
-              )}
-              onClick={() => onSelect(folder.folder)}
-            >
-              <Folder className='text-primary/80 size-3.5 shrink-0' />
-              <span className='min-w-0 flex-1 truncate text-left'>
-                {folder.folder}
-              </span>
-              <span className='text-muted-foreground font-mono text-[10px]'>
-                {folder.count}
-              </span>
-            </Button>
-          ))}
+          {folders.map((folder) => {
+            const depth = folder.depth ?? folder.folder.split('/').length - 1
+            const displayName =
+              folder.name ?? folder.folder.split('/').pop() ?? folder.folder
+
+            return (
+              <Button
+                key={folder.folder}
+                type='button'
+                variant={activeFolder === folder.folder ? 'secondary' : 'ghost'}
+                style={{ paddingLeft: `${10 + depth * 10}px` }}
+                className={cn(
+                  'h-8 justify-start gap-2 rounded-lg pr-2.5 text-xs font-medium',
+                  activeFolder === folder.folder && 'bg-secondary font-semibold'
+                )}
+                title={folder.folder}
+                onClick={() => onSelect(folder.folder)}
+              >
+                <Folder className='text-primary/80 size-3.5 shrink-0' />
+                <span className='min-w-0 flex-1 truncate text-left'>
+                  {displayName}
+                </span>
+                <span className='text-muted-foreground font-mono text-[10px]'>
+                  {folder.count}
+                </span>
+              </Button>
+            )
+          })}
         </div>
       </ScrollArea>
     </aside>

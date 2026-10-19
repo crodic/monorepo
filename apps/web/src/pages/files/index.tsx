@@ -508,21 +508,30 @@ export function PageFileOverview() {
 
           {/* Right Workspace Content */}
           <div className='flex min-w-0 flex-1 flex-col gap-5'>
-            {/* Quick Access Folders when at root */}
-            {activeFolder === null && folders.length > 0 && (
-              <FolderCardGrid
-                folders={folders}
-                activeFolder={activeFolder}
-                onSelectFolder={handleFolderSelect}
-                onRenameFolder={(folder) => {
-                  setFolderToRename(folder)
-                  setRenameFolderOpen(true)
-                }}
-                onDeleteFolder={(folder) => setDeletingFolder(folder)}
-                canUpdate={ability.can('update', 'FILE')}
-                canDelete={ability.can('delete', 'FILE')}
-              />
-            )}
+            {/* Quick Access Folders for current directory */}
+            {(() => {
+              const currentSubfolders = folders.filter((f) =>
+                activeFolder === null
+                  ? !f.parent || f.depth === 0
+                  : f.parent === activeFolder
+              )
+              if (currentSubfolders.length === 0) return null
+
+              return (
+                <FolderCardGrid
+                  folders={currentSubfolders}
+                  activeFolder={activeFolder}
+                  onSelectFolder={handleFolderSelect}
+                  onRenameFolder={(folder) => {
+                    setFolderToRename(folder)
+                    setRenameFolderOpen(true)
+                  }}
+                  onDeleteFolder={(folder) => setDeletingFolder(folder)}
+                  canUpdate={ability.can('update', 'FILE')}
+                  canDelete={ability.can('delete', 'FILE')}
+                />
+              )
+            })()}
 
             {/* Grid View Mode */}
             {viewMode === 'grid' ? (

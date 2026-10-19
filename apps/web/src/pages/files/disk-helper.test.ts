@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   getFileDiskLabel,
   getFileDiskTooltip,
+  getFileVisibility,
+  getFileVisibilityLabel,
+  getFileVisibilityTooltip,
   isFilePrivate,
 } from './disk-helper'
 import type { FileSchema } from './schema'
@@ -30,6 +33,31 @@ describe('disk-helper', () => {
     it('returns false for undefined or null', () => {
       expect(isFilePrivate(null)).toBe(false)
       expect(isFilePrivate(undefined)).toBe(false)
+    })
+  })
+
+  describe('getFileVisibility', () => {
+    it('resolves public and private correctly', () => {
+      expect(getFileVisibility({ visibility: 'private' } as FileSchema)).toBe(
+        'private'
+      )
+      expect(getFileVisibility({ visibility: 'public' } as FileSchema)).toBe(
+        'public'
+      )
+      expect(getFileVisibility({ disk: 'local' } as FileSchema)).toBe('private')
+      expect(getFileVisibility({ disk: 's3-private' } as FileSchema)).toBe(
+        'private'
+      )
+      expect(getFileVisibility({ disk: 's3' } as FileSchema)).toBe('public')
+    })
+  })
+
+  describe('getFileVisibilityLabel & Tooltip', () => {
+    it('returns label and tooltip for visibility options', () => {
+      expect(getFileVisibilityLabel('public')).toBeDefined()
+      expect(getFileVisibilityLabel('private')).toBeDefined()
+      expect(getFileVisibilityTooltip('public')).toBeDefined()
+      expect(getFileVisibilityTooltip('private')).toBeDefined()
     })
   })
 

@@ -9,6 +9,7 @@
     "REDIS_*",
     "MAIL_*",
     "FILESYSTEM_*",
+    "STORAGE_*",
     "AWS_*",
     "AUTH_*",
     "USER_AUTH_*",

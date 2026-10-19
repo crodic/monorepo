@@ -20,11 +20,7 @@ export class FileResDto {
 
   @Expose()
   @IsString()
-  get visibility(): 'public' | 'private' {
-    return this.disk === 'local' || this.disk === 's3-private'
-      ? 'private'
-      : 'public';
-  }
+  visibility: 'public' | 'private';
 
   @Expose()
   @IsString()

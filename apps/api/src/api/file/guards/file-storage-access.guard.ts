@@ -36,12 +36,14 @@ export class FileStorageAccessGuard extends AuthGuard([
 
     const file = await this.fileRepository.findOne({
       where: { public_id: publicId },
-      select: { id: true, disk: true },
+      select: { id: true, disk: true, visibility: true },
     });
 
-    const isPrivate = this.storage
-      ? this.storage.isPrivate(file?.disk)
-      : (file?.disk ?? 'public') === 'local' || file?.disk === 's3-private';
+    const isPrivate =
+      file?.visibility === 'private' ||
+      (this.storage
+        ? this.storage.isPrivate(file?.disk)
+        : (file?.disk ?? 'public') === 'local' || file?.disk === 's3-private');
 
     if (!isPrivate) {
       return true;

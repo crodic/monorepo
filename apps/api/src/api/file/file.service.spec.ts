@@ -145,7 +145,7 @@ describe('FileService', () => {
     );
   });
 
-  it('rejects nested folder names when updating metadata', async () => {
+  it('rejects invalid folder names when updating metadata', async () => {
     repository.findOneByOrFail.mockResolvedValue({
       id: '1',
       public_id: 'abc',
@@ -166,7 +166,7 @@ describe('FileService', () => {
     });
 
     await expect(
-      service.update('abc', { folder: 'Video 1/raw' }),
+      service.update('abc', { folder: '../invalid' }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 

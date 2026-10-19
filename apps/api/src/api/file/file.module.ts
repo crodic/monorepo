@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FileFolderEntity } from './entities/file-folder.entity';
+import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 import { FileEntity } from './entities/file.entity';
 import { FileChunkUploadService } from './file-chunk-upload.service';
 import { FileCleanupService } from './file-cleanup.service';
@@ -21,7 +22,11 @@ import { FileValidator } from './validators/file.validator';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FileEntity, FileFolderEntity]),
+    TypeOrmModule.forFeature([
+      FileEntity,
+      FileFolderEntity,
+      FileUploadSessionEntity,
+    ]),
     BullModule.registerQueue({
       name: QueueName.FILE,
     }),

@@ -92,6 +92,7 @@ export class FileController {
         'original_name',
         'folder',
         'disk',
+        'visibility',
         'mime',
         'size',
         'resource_type',
@@ -104,6 +105,7 @@ export class FileController {
         'original_name',
         'folder',
         'disk',
+        'visibility',
         'mime',
       ],
       defaultSortBy: [['createdAt', 'DESC']],
@@ -112,6 +114,7 @@ export class FileController {
         original_name: [FilterOperator.ILIKE],
         folder: [FilterOperator.EQ, FilterOperator.ILIKE],
         disk: [FilterOperator.EQ, FilterOperator.IN],
+        visibility: [FilterOperator.EQ, FilterOperator.IN],
         mime: [FilterOperator.ILIKE],
         resource_type: [FilterOperator.EQ, FilterOperator.IN],
         status: [FilterOperator.EQ, FilterOperator.IN],
@@ -193,6 +196,11 @@ export class FileController {
           type: 'string',
           example: 'avatars',
         },
+        visibility: {
+          type: 'string',
+          enum: ['public', 'private'],
+          example: 'public',
+        },
         disk: {
           type: 'string',
           enum: ['local', 'public', 's3', 's3-private'],
@@ -208,8 +216,9 @@ export class FileController {
     @UploadedFile() file: Express.Multer.File,
     @Body('folder') folder?: string,
     @Body('disk') disk?: string,
+    @Body('visibility') visibility?: 'public' | 'private',
   ) {
-    return this.fileService.upload(file, folder, disk);
+    return this.fileService.upload(file, folder, disk, visibility);
   }
 
   @Post('uploads/sessions')

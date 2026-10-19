@@ -26,6 +26,44 @@ export class FilesystemService {
     return this.defaultDiskNameValue;
   }
 
+  get publicDiskName(): StorageDisk {
+    return (
+      this.configService.get('storage.publicDisk', { infer: true }) ?? 'public'
+    );
+  }
+
+  get privateDiskName(): StorageDisk {
+    return (
+      this.configService.get('storage.privateDisk', { infer: true }) ?? 'local'
+    );
+  }
+
+  resolveDisk(
+    visibility?: 'public' | 'private' | null,
+    preferredDisk?: string | null,
+  ): StorageDisk {
+    if (preferredDisk && this.hasDisk(preferredDisk)) {
+      return preferredDisk as StorageDisk;
+    }
+    if (visibility === 'private') {
+      return this.privateDiskName;
+    }
+    if (visibility === 'public') {
+      return this.publicDiskName;
+    }
+    return this.defaultDiskName;
+  }
+
+  resolveVisibility(
+    diskName?: string | null,
+    explicitVisibility?: 'public' | 'private' | null,
+  ): 'public' | 'private' {
+    if (explicitVisibility === 'public' || explicitVisibility === 'private') {
+      return explicitVisibility;
+    }
+    return this.isPrivate(diskName) ? 'private' : 'public';
+  }
+
   hasDisk(name?: string | null): boolean {
     if (!name) return false;
     const disks = this.configService.get('storage.disks', { infer: true });

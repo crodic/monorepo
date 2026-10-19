@@ -60,3 +60,43 @@ export function getFileDiskTooltip(
 
   return i18n.t('files.disk.publicTooltip')
 }
+
+/**
+ * Returns the resolved visibility ('public' | 'private') of a file.
+ */
+export function getFileVisibility(
+  file?: Pick<FileSchema, 'disk' | 'visibility'> | null
+): 'public' | 'private' {
+  return isFilePrivate(file) ? 'private' : 'public'
+}
+
+/**
+ * Returns a user-friendly localized label for visibility.
+ */
+export function getFileVisibilityLabel(
+  visibility?: 'public' | 'private' | null
+): string {
+  if (visibility === 'private') {
+    return i18n.t('files.visibility.private', 'Private')
+  }
+  return i18n.t('files.visibility.public', 'Public')
+}
+
+/**
+ * Returns the appropriate tooltip explaining visibility scope.
+ */
+export function getFileVisibilityTooltip(
+  visibility?: 'public' | 'private' | null
+): string {
+  if (visibility === 'private') {
+    return i18n.t(
+      'files.visibility.privateTooltip',
+      'Private — Requires an authenticated session to access.'
+    )
+  }
+
+  return i18n.t(
+    'files.visibility.publicTooltip',
+    'Public — Anyone with the link can view and download without login.'
+  )
+}

@@ -45,6 +45,7 @@ describe('FileFolderService', () => {
       execute: jest.fn().mockResolvedValue({ affected: 1 }),
       getRawMany: jest.fn().mockResolvedValue([]),
       getRawOne: jest.fn().mockResolvedValue({ count: '0', size: '0' }),
+      getMany: jest.fn().mockResolvedValue([]),
       ...overrides,
     };
 
@@ -53,21 +54,21 @@ describe('FileFolderService', () => {
 
   beforeEach(async () => {
     repository = {
-      count: jest.fn(),
-      find: jest.fn(),
-      delete: jest.fn(),
-      createQueryBuilder: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
+      find: jest.fn().mockResolvedValue([]),
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+      createQueryBuilder: jest.fn(() => createQueryBuilderMock()),
     };
     folderRepository = {
-      findOne: jest.fn(),
-      find: jest.fn(),
-      save: jest.fn((val) => Promise.resolve(val)),
+      findOne: jest.fn().mockResolvedValue(null),
+      find: jest.fn().mockResolvedValue([]),
+      save: jest.fn((val) => Promise.resolve({ id: 1, ...val })),
       create: jest.fn((val) => val),
-      delete: jest.fn(),
-      createQueryBuilder: jest.fn(),
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+      createQueryBuilder: jest.fn(() => createQueryBuilderMock()),
     };
     disk = {
-      delete: jest.fn(),
+      delete: jest.fn().mockResolvedValue(undefined),
     };
     storageService = {
       disk: jest.fn(() => disk),
@@ -99,7 +100,11 @@ describe('FileFolderService', () => {
   });
 
   it('returns folder summaries with numeric count and size', async () => {
-    folderRepository.createQueryBuilder.mockReturnValue(
+    folderRepository.find.mockResolvedValue([
+      { id: 1, name: 'avatars', title: 'avatars', depth: 0, parentId: null },
+      { id: 2, name: 'docs', title: 'docs', depth: 0, parentId: null },
+    ]);
+    repository.createQueryBuilder.mockReturnValue(
       createQueryBuilderMock({
         getRawMany: jest.fn().mockResolvedValue([
           { folder: 'avatars', count: '2', size: '4096' },
@@ -109,27 +114,31 @@ describe('FileFolderService', () => {
     );
 
     await expect(service.listFolders()).resolves.toEqual([
-      { folder: 'avatars', count: 2, size: 4096 },
-      { folder: 'docs', count: 1, size: 512 },
+      expect.objectContaining({ folder: 'avatars', count: 2, size: 4096 }),
+      expect.objectContaining({ folder: 'docs', count: 1, size: 512 }),
     ]);
   });
 
   it('renames a folder with a bulk update', async () => {
     const qb = createQueryBuilderMock({
       getRawOne: jest.fn().mockResolvedValue({ count: '3', size: '1200' }),
+      getMany: jest.fn().mockResolvedValue([]),
     });
     folderRepository.findOne
-      .mockResolvedValueOnce({ id: 1, name: 'old' })
-      .mockResolvedValueOnce(null);
+      .mockResolvedValueOnce({ id: 1, name: 'old', title: 'old', depth: 0 })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: 2, name: 'new', title: 'new', depth: 0 });
     repository.count.mockResolvedValue(3);
     repository.createQueryBuilder.mockReturnValue(qb);
+    folderRepository.createQueryBuilder.mockReturnValue(qb);
 
-    await expect(service.renameFolder('old', 'new')).resolves.toEqual({
-      folder: 'new',
-      count: 3,
-      size: 1200,
-    });
-    expect(folderRepository.save).toHaveBeenCalledWith({ id: 1, name: 'new' });
+    await expect(service.renameFolder('old', 'new')).resolves.toEqual(
+      expect.objectContaining({
+        folder: 'new',
+        count: 3,
+        size: 1200,
+      }),
+    );
     expect(qb.update).toHaveBeenCalledWith(FileEntity);
     expect(qb.set).toHaveBeenCalledWith({ folder: 'new' });
     expect(qb.where).toHaveBeenCalledWith('folder = :folder', {
@@ -160,12 +169,17 @@ describe('FileFolderService', () => {
       }),
     );
 
-    await expect(service.createFolder('marketing')).resolves.toEqual({
-      folder: 'marketing',
-      count: 0,
-      size: 0,
-    });
-    expect(folderRepository.save).toHaveBeenCalledWith({ name: 'marketing' });
+    await expect(service.createFolder('marketing')).resolves.toEqual(
+      expect.objectContaining({
+        folder: 'marketing',
+        name: 'marketing',
+        count: 0,
+        size: 0,
+      }),
+    );
+    expect(folderRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'marketing', title: 'marketing' }),
+    );
   });
 
   it('throws BadRequestException when creating a duplicate folder', async () => {
@@ -188,14 +202,15 @@ describe('FileFolderService', () => {
   it('deletes files inside a folder when requested', async () => {
     folderRepository.findOne.mockResolvedValue({ id: 1, name: 'avatars' });
     repository.find.mockResolvedValue([
-      { path: 'storage/public/a.png' },
-      { path: 'storage/public/b.png' },
+      { id: '1', path: 'storage/public/a.png' },
+      { id: '2', path: 'storage/public/b.png' },
     ]);
 
     await expect(service.deleteFolder('avatars', true)).resolves.toEqual({
       message: 'Successfully deleted',
     });
-    expect(repository.delete).toHaveBeenCalledWith({ folder: 'avatars' });
+    expect(repository.delete).toHaveBeenCalledWith({ id: '1' });
+    expect(repository.delete).toHaveBeenCalledWith({ id: '2' });
     expect(folderRepository.delete).toHaveBeenCalledWith({ id: 1 });
   });
 });

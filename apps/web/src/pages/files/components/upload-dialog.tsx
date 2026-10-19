@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation } from '@tanstack/react-query'
-import { FileIcon, Loader2, Upload, Video, X } from 'lucide-react'
+import { FileIcon, Globe, Loader2, Lock, Upload, Video, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { restApiErrorHandler } from '@/lib/rest-api-handler'
@@ -26,12 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formatBytes } from '../columns'
-import { getFileDiskLabel } from '../disk-helper'
-import {
-  apiUploadFile,
-  MANAGED_FILE_UPLOAD_MAX_SIZE,
-  useDataFileDisks,
-} from '../queries'
+import { apiUploadFile, MANAGED_FILE_UPLOAD_MAX_SIZE } from '../queries'
 import { type FolderSchema } from '../schema'
 import { FolderCreatableField } from './folder-creatable-field'
 
@@ -59,10 +54,11 @@ export function UploadDialog({
   onCreateLocalFolder,
 }: UploadDialogProps) {
   const { t } = useTranslation()
-  const { data: availableDisks } = useDataFileDisks()
   const abortControllerRef = useRef<AbortController | null>(null)
   const [targetFolder, setTargetFolder] = useState(folder ?? '')
-  const [targetDisk, setTargetDisk] = useState<string>('public')
+  const [targetVisibility, setTargetVisibility] = useState<
+    'public' | 'private'
+  >('public')
   const [files, setFiles] = useState<File[]>([])
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>(
     {}
@@ -76,34 +72,6 @@ export function UploadDialog({
       setUploadProgress({})
     } else {
       onOpenChange(false)
-    }
-  }
-
-  useEffect(() => {
-    if (availableDisks && availableDisks.length > 0) {
-      const defaultDisk = availableDisks.find((d) => d.isDefault)
-      if (defaultDisk) {
-        setTargetDisk(defaultDisk.name)
-      }
-    }
-  }, [availableDisks])
-
-  const diskOptions =
-    availableDisks && availableDisks.length > 0
-      ? availableDisks.map((d) => d.name)
-      : ['public', 'local', 's3', 's3-private']
-
-  const getDiskHelpText = (disk: string): string => {
-    switch (disk) {
-      case 'local':
-        return t('files.upload.diskLocalHelp')
-      case 's3':
-        return t('files.upload.diskS3Help')
-      case 's3-private':
-        return t('files.upload.diskS3PrivateHelp')
-      case 'public':
-      default:
-        return t('files.upload.diskPublicHelp')
     }
   }
 
@@ -137,7 +105,7 @@ export function UploadDialog({
         await apiUploadFile({
           file,
           folder: targetFolder || null,
-          disk: targetDisk,
+          visibility: targetVisibility,
           signal: controller.signal,
           onProgress: (progress) =>
             setUploadProgress((current) => ({
@@ -193,25 +161,51 @@ export function UploadDialog({
         </DialogHeader>
         <div className='min-h-0 flex-1 space-y-4 overflow-y-auto p-6'>
           <div className='grid gap-2'>
-            <Label>{t('files.upload.disk')}</Label>
+            <Label>{t('files.upload.visibility', 'Visibility')}</Label>
             <Select
-              value={targetDisk}
-              onValueChange={(value) => setTargetDisk(value)}
+              value={targetVisibility}
+              onValueChange={(value: 'public' | 'private') =>
+                setTargetVisibility(value)
+              }
             >
               <SelectTrigger className='w-full'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {diskOptions.map((disk) => (
-                  <SelectItem key={disk} value={disk}>
-                    {getFileDiskLabel(disk)}
-                  </SelectItem>
-                ))}
+                <SelectItem value='public'>
+                  <div className='flex items-center gap-2'>
+                    <Globe className='size-4 text-blue-500' />
+                    <div className='flex flex-col text-left'>
+                      <span className='font-medium'>
+                        {t('files.visibility.public', 'Public')}
+                      </span>
+                      <span className='text-muted-foreground text-xs font-normal'>
+                        {t(
+                          'files.upload.publicHelp',
+                          'Accessible by anyone with the link / CDN'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value='private'>
+                  <div className='flex items-center gap-2'>
+                    <Lock className='size-4 text-amber-500' />
+                    <div className='flex flex-col text-left'>
+                      <span className='font-medium'>
+                        {t('files.visibility.private', 'Private')}
+                      </span>
+                      <span className='text-muted-foreground text-xs font-normal'>
+                        {t(
+                          'files.upload.privateHelp',
+                          'Restricted to authenticated sessions'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
-            <p className='text-muted-foreground text-xs'>
-              {getDiskHelpText(targetDisk)}
-            </p>
           </div>
           <FolderCreatableField
             label={t('files.table.folder')}

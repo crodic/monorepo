@@ -65,6 +65,31 @@ export class FileService {
     return target === 'local' || target === 's3-private';
   }
 
+  private resolveTargetDisk(
+    visibility?: 'public' | 'private' | null,
+    preferredDisk?: string | null,
+  ): StorageDisk {
+    if (preferredDisk) {
+      return this.normalizeUploadDisk(preferredDisk);
+    }
+    if (this.storage?.resolveDisk) {
+      return this.storage.resolveDisk(visibility);
+    }
+    return visibility === 'private'
+      ? 'local'
+      : (this.storage?.defaultDiskName ?? 'public');
+  }
+
+  private resolveFileVisibility(
+    disk?: string | null,
+    explicitVisibility?: 'public' | 'private' | null,
+  ): 'public' | 'private' {
+    if (explicitVisibility === 'public' || explicitVisibility === 'private') {
+      return explicitVisibility;
+    }
+    return this.isDiskPrivate(disk) ? 'private' : 'public';
+  }
+
   private writeDisk(disk?: string | null): StorageDriver {
     return this.storage.disk((disk as StorageDisk) || this.currentDiskName);
   }
@@ -105,6 +130,10 @@ export class FileService {
       excludeExtraneousValues: true,
     });
 
+    if (!dto.visibility) {
+      dto.visibility = this.resolveFileVisibility(file.disk, file.visibility);
+    }
+
     if (file.disk === 's3' && !this.isDiskPrivate(file.disk)) {
       try {
         const key = this.toStorageKey(file.path);
@@ -127,6 +156,7 @@ export class FileService {
         'original_name',
         'folder',
         'disk',
+        'visibility',
         'mime',
         'size',
         'resource_type',
@@ -139,6 +169,7 @@ export class FileService {
         'original_name',
         'folder',
         'disk',
+        'visibility',
         'mime',
       ],
       defaultSortBy: [['createdAt', 'DESC']],
@@ -147,6 +178,7 @@ export class FileService {
         original_name: [FilterOperator.ILIKE],
         folder: [FilterOperator.EQ, FilterOperator.ILIKE],
         disk: [FilterOperator.EQ, FilterOperator.IN],
+        visibility: [FilterOperator.EQ, FilterOperator.IN],
         mime: [FilterOperator.ILIKE],
         resource_type: [FilterOperator.EQ, FilterOperator.IN],
         status: [FilterOperator.EQ, FilterOperator.IN],
@@ -189,8 +221,20 @@ export class FileService {
       file.status = dto.status;
     }
 
-    if (dto.disk !== undefined) {
-      const targetDisk = this.normalizeUploadDisk(dto.disk);
+    const targetVisibility = dto.visibility;
+    let targetDisk: StorageDisk | undefined = dto.disk
+      ? this.normalizeUploadDisk(dto.disk)
+      : undefined;
+
+    if (
+      !targetDisk &&
+      targetVisibility &&
+      targetVisibility !== file.visibility
+    ) {
+      targetDisk = this.resolveTargetDisk(targetVisibility);
+    }
+
+    if (targetDisk !== undefined) {
       const currentDisk = this.normalizeUploadDisk(
         file.disk ?? this.currentDiskName,
       );
@@ -213,12 +257,23 @@ export class FileService {
       }
     }
 
+    if (targetVisibility) {
+      file.visibility = targetVisibility;
+    } else if (targetDisk) {
+      file.visibility = this.resolveFileVisibility(targetDisk);
+    }
+
     const saved = await this.fileRepository.save(file);
 
     return this.toDto(saved);
   }
 
-  async upload(file: Express.Multer.File, folder?: string, disk?: string) {
+  async upload(
+    file: Express.Multer.File,
+    folder?: string,
+    disk?: string,
+    visibility?: 'public' | 'private',
+  ) {
     if (!file) {
       throw new HttpException('File not provided', HttpStatus.BAD_REQUEST);
     }
@@ -238,10 +293,15 @@ export class FileService {
       : resourceType;
     const storedPath = this.makeStorageKey(folderPath, `${publicId}.${ext}`);
 
-    const uploadDiskName = this.normalizeUploadDisk(disk);
+    const uploadDiskName = this.resolveTargetDisk(visibility, disk);
+    const resolvedVisibility = this.resolveFileVisibility(
+      uploadDiskName,
+      visibility,
+    );
+
     await this.writeDisk(uploadDiskName).put(storedPath, file.buffer, {
       mimeType: mime,
-      visibility: this.isDiskPrivate(uploadDiskName) ? 'private' : 'public',
+      visibility: resolvedVisibility,
     });
 
     const media = await this.createFileRecord({
@@ -250,6 +310,7 @@ export class FileService {
       originalName: file.originalname,
       path: storedPath,
       disk: uploadDiskName,
+      visibility: resolvedVisibility,
       mime,
       size: file.size,
       resourceType,
@@ -265,6 +326,13 @@ export class FileService {
     });
 
     await this.deleteStoredFileIfExists(file);
+
+    try {
+      const disk = this.diskForFile(file);
+      await disk.deleteDirectory(`.cache/transforms/${publicId}`);
+    } catch {
+      // Ignore cache cleanup errors
+    }
 
     await this.fileRepository.delete({ public_id: publicId });
 
@@ -423,6 +491,7 @@ export class FileService {
     publicId,
     folder,
     disk,
+    visibility,
     originalName,
     path,
     mime,
@@ -434,6 +503,7 @@ export class FileService {
     publicId: string;
     folder: string | null;
     disk: string;
+    visibility?: 'public' | 'private';
     originalName: string;
     path: string;
     mime: string;
@@ -461,10 +531,13 @@ export class FileService {
       await this.fileFolderService.ensureFolder(folder);
     }
 
+    const resolvedVisibility = visibility ?? this.resolveFileVisibility(disk);
+
     const media = this.fileRepository.create({
       public_id: publicId,
       folder,
       disk,
+      visibility: resolvedVisibility,
       original_name: originalName,
       path,
       hash: this.generateHash(),
