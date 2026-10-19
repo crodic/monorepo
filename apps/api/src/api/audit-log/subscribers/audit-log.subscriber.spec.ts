@@ -1,6 +1,7 @@
 import { ClsServiceManager } from 'nestjs-cls';
 import { DataSource } from 'typeorm';
 import { ActivityLogEntity } from '../entities/activity-log.entity';
+import { FileUploadSessionEntity } from '../../file/entities/file-upload-session.entity';
 import { AuditLogSubscriber } from './audit-log.subscriber';
 
 describe('AuditLogSubscriber', () => {
@@ -231,17 +232,52 @@ describe('AuditLogSubscriber', () => {
     );
   });
 
-  it('does not log ignored entities like ActivityLogEntity or AdminSessionEntity', async () => {
+  it('does not log ignored entities like ActivityLogEntity, AdminSessionEntity, or FileUploadSessionEntity', async () => {
+    const ignoredNames = [ActivityLogEntity.name, FileUploadSessionEntity.name];
+
+    for (const name of ignoredNames) {
+      const event = {
+        metadata: { name },
+        entity: { id: 'some-id' },
+        manager: {
+          getRepository: jest.fn().mockReturnValue(mockAuditRepo),
+        },
+      };
+
+      await subscriber.afterInsert(event as any);
+    }
+
+    expect(mockAuditRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('safely handles non-numeric entity IDs by setting subjectId to null', async () => {
+    const cls = {
+      get: jest.fn(() => null),
+    };
+    jest.spyOn(ClsServiceManager, 'getClsService').mockReturnValue(cls as any);
+
     const event = {
-      metadata: { name: ActivityLogEntity.name },
-      entity: { id: '1' },
+      metadata: { name: 'NonNumericEntity' },
+      entity: {
+        id: '0aad2ec19bc84bfea89e8bd99560f734',
+        name: 'Some Non-Numeric Resource',
+      },
       manager: {
         getRepository: jest.fn().mockReturnValue(mockAuditRepo),
       },
     };
 
     await subscriber.afterInsert(event as any);
-    expect(mockAuditRepo.create).not.toHaveBeenCalled();
+
+    expect(mockAuditRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subjectType: 'NonNumericEntity',
+        subjectId: null,
+        properties: expect.objectContaining({
+          entityId: '0aad2ec19bc84bfea89e8bd99560f734',
+        }),
+      }),
+    );
   });
 
   it('logs system or guest actions when there is no authenticated user', async () => {

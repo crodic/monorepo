@@ -1,6 +1,7 @@
 import { AdminSessionEntity } from '../../auth/entities/admin-session.entity';
 import { UserSessionEntity } from '../../auth/entities/user-session.entity';
 import { EmailLogEntity } from '../../email/entities/email-log.entity';
+import { FileUploadSessionEntity } from '../../file/entities/file-upload-session.entity';
 import { Logger } from '@nestjs/common';
 import { ClsServiceManager } from 'nestjs-cls';
 import {
@@ -47,6 +48,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     AdminSessionEntity.name,
     UserSessionEntity.name,
     EmailLogEntity.name,
+    FileUploadSessionEntity.name,
   ];
 
   private readonly defaultExcept = [
@@ -279,10 +281,19 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     const modelBaseName = event.metadata.name.replace(/Entity$/, '');
     const eventName = this.mapActionToEventName(action);
 
+    // Safeguard for PostgreSQL bigint subject_id column
+    const isNumericId =
+      entityId !== null &&
+      entityId !== undefined &&
+      typeof entityId !== 'symbol' &&
+      /^\d+$/.test(String(entityId).trim());
+
+    const subjectId = isNumericId ? (entityId as any) : null;
+
     const log = auditRepo.create({
       logName: 'default',
       subjectType: event.metadata.name,
-      subjectId: entityId ? (entityId as any) : null,
+      subjectId,
       causerType,
       causerId,
       event: eventName,
@@ -292,6 +303,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
         old: Object.keys(oldValue).length > 0 ? oldValue : undefined,
         changedFields: changedFields.length > 0 ? changedFields : undefined,
         changes: changes.length > 0 ? changes : undefined,
+        entityId: entityId != null ? String(entityId) : undefined,
         actorId: causerId,
         actorEmail: currentUser?.email ?? null,
         causer_name: actorName,
