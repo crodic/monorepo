@@ -15,6 +15,7 @@ import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DescriptionItem, Descriptions } from '@/components/common/descriptions'
 import DataLoader from '@/components/layout/data-loader'
 import { Main } from '@/components/layout/main'
+import { PageHeader } from '@/components/layout/page-shell'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { deleteAdmin, useDataGetAdminDetail } from '../queries'
 
@@ -70,43 +71,39 @@ export function PageAdminShow() {
       )}
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>
-              {t('adminUsers.show.title')}
-            </h2>
-            <p className='text-muted-foreground'>
-              {t('adminUsers.show.description')}
-            </p>
-          </div>
-          <div className='flex w-full flex-wrap justify-end gap-2 sm:block sm:w-auto sm:justify-normal sm:space-x-2'>
-            <Button
-              variant='outline'
-              type='button'
-              onClick={() => {
-                void navigate(-1)
-              }}
-            >
-              <ArrowLeftIcon className='size-4' aria-hidden='true' />
-              {t('buttons.cancel')}
-            </Button>
-            <Button
-              onClick={() => navigate(`/admins/${data?.id}/edit`)}
-              disabled={id === userId}
-            >
-              <EditIcon className='size-4' aria-hidden='true' />
-              {t('buttons.edit')}
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={() => setIsShowDeleteDialog(true)}
-              disabled={id === userId}
-            >
-              <TrashIcon className='size-4' aria-hidden='true' />
-              {t('buttons.delete')}
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title={data?.fullName || t('adminUsers.show.title')}
+          description={t('adminUsers.show.description')}
+          actions={
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button
+                variant='outline'
+                type='button'
+                onClick={() => {
+                  void navigate(-1)
+                }}
+              >
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
+                {t('buttons.cancel')}
+              </Button>
+              <Button
+                onClick={() => navigate(`/admins/${data?.id}/edit`)}
+                disabled={id === userId}
+              >
+                <EditIcon className='size-4' aria-hidden='true' />
+                {t('buttons.edit')}
+              </Button>
+              <Button
+                variant='destructive'
+                onClick={() => setIsShowDeleteDialog(true)}
+                disabled={id === userId}
+              >
+                <TrashIcon className='size-4' aria-hidden='true' />
+                {t('buttons.delete')}
+              </Button>
+            </div>
+          }
+        />
 
         <div className='grid grid-cols-1 gap-8 md:grid-cols-[250px_1fr]'>
           <Card className='h-max'>
@@ -121,8 +118,8 @@ export function PageAdminShow() {
                   />
                 </Avatar>
                 <h3 className='text-lg font-bold'>{data?.fullName || ''}</h3>
-                <p className='text-sm font-normal italic'>
-                  {data?.bio || 'Empty'}
+                <p className='text-muted-foreground text-center text-sm'>
+                  {data?.bio || '—'}
                 </p>
               </div>
             </CardContent>

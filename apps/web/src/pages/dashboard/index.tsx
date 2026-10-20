@@ -107,10 +107,10 @@ export function Dashboard() {
       {/* ===== Main ===== */}
       <Main className='flex flex-1 flex-col gap-6'>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight md:text-3xl'>
+          <h1 className='text-2xl font-bold tracking-tight text-balance md:text-3xl'>
             {t('dashboard.title')}
           </h1>
-          <p className='text-muted-foreground'>
+          <p className='text-muted-foreground text-pretty'>
             {t('dashboard.systemHealth.description')}
           </p>
         </div>
@@ -400,7 +400,7 @@ function QueueMonitoringSection({
                       <p className='text-muted-foreground font-medium'>
                         {t('dashboard.queues.waiting')}
                       </p>
-                      <p className='mt-1 text-sm font-semibold'>
+                      <p className='mt-1 text-sm font-semibold tabular-nums'>
                         {formatNumber(counts.waiting)}
                       </p>
                     </div>
@@ -409,7 +409,7 @@ function QueueMonitoringSection({
                         {t('dashboard.queues.active')}
                       </p>
                       <p
-                        className={`mt-1 text-sm font-semibold ${
+                        className={`mt-1 text-sm font-semibold tabular-nums ${
                           counts.active > 0 ? 'text-primary font-bold' : ''
                         }`}
                       >
@@ -420,7 +420,7 @@ function QueueMonitoringSection({
                       <p className='text-muted-foreground font-medium'>
                         {t('dashboard.queues.completed')}
                       </p>
-                      <p className='mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400'>
+                      <p className='mt-1 text-sm font-semibold text-emerald-600 tabular-nums dark:text-emerald-400'>
                         {formatNumber(counts.completed)}
                       </p>
                     </div>
@@ -429,7 +429,7 @@ function QueueMonitoringSection({
                         {t('dashboard.queues.failed')}
                       </p>
                       <p
-                        className={`mt-1 text-sm font-semibold ${
+                        className={`mt-1 text-sm font-semibold tabular-nums ${
                           queueHasError ? 'text-destructive font-bold' : ''
                         }`}
                       >
@@ -513,7 +513,7 @@ function getHealthIndicators(health?: HealthCheckResponse) {
 function getHealthToneClass(
   tone: 'healthy' | 'warning' | 'critical' | 'neutral'
 ) {
-  const base = 'mt-1 text-lg font-semibold'
+  const base = 'mt-1 text-lg font-semibold tabular-nums'
 
   if (tone === 'healthy') return `${base} text-emerald-600`
   if (tone === 'warning') return `${base} text-amber-600`

@@ -40,11 +40,13 @@ export function Settings() {
       {/* ===== Top Heading ===== */}
 
       <Main>
-        <div className='space-y-0.5'>
-          <h1 className='text-2xl font-bold tracking-tight md:text-xl'>
+        <div className='space-y-1'>
+          <h1 className='text-2xl font-bold tracking-tight text-balance md:text-3xl'>
             {t('settings.title')}
           </h1>
-          <p className='text-muted-foreground'>{t('settings.description')}</p>
+          <p className='text-muted-foreground text-sm text-pretty'>
+            {t('settings.description')}
+          </p>
         </div>
         <Separator className='my-4 lg:my-6' />
         <div className='flex flex-1 flex-col space-y-2 overflow-hidden md:space-y-2 lg:flex-row lg:space-y-0 lg:space-x-12'>

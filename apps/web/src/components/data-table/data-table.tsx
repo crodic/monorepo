@@ -7,11 +7,19 @@ import {
   type Table as TanstackTable,
 } from '@tanstack/react-table'
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual'
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronRight, Loader2, RotateCcw, SearchX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getCommonPinningStyles } from '@/lib/data-table'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 import {
   Table,
   TableBody,
@@ -39,6 +47,61 @@ interface DataTableProps<TData> extends React.ComponentProps<'div'> {
   virtualEndReachedThreshold?: number
   hidePagination?: boolean
   totalRows?: number
+  emptyState?: React.ReactNode
+  onResetFilters?: () => void
+}
+
+interface DataTableEmptyStateProps<TData> {
+  table: TanstackTable<TData>
+  emptyState?: React.ReactNode
+  onResetFilters?: () => void
+}
+
+function DataTableEmptyState<TData>({
+  table,
+  emptyState,
+  onResetFilters,
+}: DataTableEmptyStateProps<TData>) {
+  const { t } = useTranslation()
+  const hasActiveFilters =
+    (table.getState().columnFilters?.length ?? 0) > 0 ||
+    Boolean(table.getState().globalFilter)
+
+  if (emptyState) {
+    return <>{emptyState}</>
+  }
+
+  return (
+    <Empty className='border-0 py-12'>
+      <EmptyMedia variant='icon'>
+        <SearchX className='text-muted-foreground size-5' aria-hidden='true' />
+      </EmptyMedia>
+      <EmptyHeader>
+        <EmptyTitle>{t('dataTable.common.noResults')}</EmptyTitle>
+        <EmptyDescription>
+          {hasActiveFilters
+            ? t('dataTable.common.noResultsFilteredDesc')
+            : t('dataTable.common.noResultsEmptyDesc')}
+        </EmptyDescription>
+      </EmptyHeader>
+      {hasActiveFilters && (
+        <EmptyContent>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              table.resetColumnFilters()
+              table.resetGlobalFilter?.()
+              onResetFilters?.()
+            }}
+          >
+            <RotateCcw className='mr-1.5 size-3.5' aria-hidden='true' />
+            {t('dataTable.common.clearFilters')}
+          </Button>
+        </EmptyContent>
+      )}
+    </Empty>
+  )
 }
 
 export function DataTable<TData>({
@@ -60,9 +123,10 @@ export function DataTable<TData>({
   virtualEndReachedThreshold = 10,
   hidePagination,
   totalRows,
+  emptyState,
+  onResetFilters,
   ...props
 }: DataTableProps<TData>) {
-  const { t } = useTranslation()
   const colSpan = table.getVisibleLeafColumns().length
 
   return (
@@ -90,6 +154,8 @@ export function DataTable<TData>({
             virtualOverscan={virtualOverscan}
             onVirtualEndReached={onVirtualEndReached}
             virtualEndReachedThreshold={virtualEndReachedThreshold}
+            emptyState={emptyState}
+            onResetFilters={onResetFilters}
           />
         ) : (
           <Table>
@@ -144,9 +210,13 @@ export function DataTable<TData>({
                 <TableRow>
                   <TableCell
                     colSpan={table.getAllColumns().length}
-                    className='h-24 text-center'
+                    className='p-0 text-center'
                   >
-                    {t('dataTable.common.noResults')}
+                    <DataTableEmptyState
+                      table={table}
+                      emptyState={emptyState}
+                      onResetFilters={onResetFilters}
+                    />
                   </TableCell>
                 </TableRow>
               )}
@@ -180,6 +250,8 @@ function DataTableVirtualized<TData>({
   virtualOverscan,
   onVirtualEndReached,
   virtualEndReachedThreshold,
+  emptyState,
+  onResetFilters,
 }: {
   table: TanstackTable<TData>
   isFetching?: boolean
@@ -194,8 +266,9 @@ function DataTableVirtualized<TData>({
   virtualOverscan: number
   onVirtualEndReached?: () => void
   virtualEndReachedThreshold: number
+  emptyState?: React.ReactNode
+  onResetFilters?: () => void
 }) {
-  const { t } = useTranslation()
   const tableContainerRef = React.useRef<HTMLDivElement>(null)
   const rows = table.getRowModel().rows
   const visibleColumns = table.getVisibleLeafColumns()
@@ -353,8 +426,14 @@ function DataTableVirtualized<TData>({
               )
             })
           ) : (
-            <tr className='flex h-24 items-center justify-center'>
-              <td className='text-center'>{t('dataTable.common.noResults')}</td>
+            <tr className='flex w-full items-center justify-center'>
+              <td className='w-full p-0 text-center'>
+                <DataTableEmptyState
+                  table={table}
+                  emptyState={emptyState}
+                  onResetFilters={onResetFilters}
+                />
+              </td>
             </tr>
           )}
         </tbody>

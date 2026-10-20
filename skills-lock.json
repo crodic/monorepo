@@ -1,6 +1,42 @@
 {
   "version": 1,
   "skills": {
+    "baseline-ui": {
+      "source": "ibelick/ui-skills",
+      "sourceType": "github",
+      "skillPath": "skills/baseline-ui/SKILL.md",
+      "computedHash": "fea3322f36d58fdafafce2aef56e4556dd2ac7b20876b7dff7d8be7f25fa597f"
+    },
+    "code-review": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/code-review/SKILL.md",
+      "computedHash": "57cfd4ceb011f05e58a1a4f4cad3b2e03419d371f8990f4bcb32ff0d435a039f"
+    },
+    "fixing-accessibility": {
+      "source": "ibelick/ui-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fixing-accessibility/SKILL.md",
+      "computedHash": "6d1661a0ccf9aa9d99538eae780c927c789496565ec4e7f5a3eec5ff394eafda"
+    },
+    "fixing-metadata": {
+      "source": "ibelick/ui-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fixing-metadata/SKILL.md",
+      "computedHash": "82702ccd812ee0d791b33b298b57303e2694468c8d9b225d86335d5532c50538"
+    },
+    "fixing-motion-performance": {
+      "source": "ibelick/ui-skills",
+      "sourceType": "github",
+      "skillPath": "skills/fixing-motion-performance/SKILL.md",
+      "computedHash": "a6e4b84e1aed71bd5f71916a0d128f9632fba77ff754f642e7caf06ce1a30526"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "ac2c94885f34ff8492dc12aa4543182f661f32ea1722b8d6b6c2c7045af33ae3"
+    },
     "nestjs-best-practices": {
       "source": "kadajett/agent-nestjs-skills",
       "sourceType": "github",
@@ -49,42 +85,6 @@
       "skillPath": "typeorm/SKILL.md",
       "computedHash": "afd30a8c3342a934cbee0e83d1a63d1e60b4e9ef167f2d58ccf987a7689c6b03"
     },
-    "vercel-react-best-practices": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/react-best-practices/SKILL.md",
-      "computedHash": "3219a1944e404ffc14d1d9d6aef6dd2e3855b81387ee0a044ccbfe14d34c2357"
-    },
-    "vite": {
-      "source": "antfu/skills",
-      "sourceType": "github",
-      "skillPath": "skills/vite/SKILL.md",
-      "computedHash": "88ee465fd10f711efecc76e91e96accae2b229dda371614dcf219099c264a486"
-    },
-    "baseline-ui": {
-      "source": "ibelick/ui-skills",
-      "sourceType": "github",
-      "skillPath": "skills/baseline-ui/SKILL.md",
-      "computedHash": "fea3322f36d58fdafafce2aef56e4556dd2ac7b20876b7dff7d8be7f25fa597f"
-    },
-    "fixing-accessibility": {
-      "source": "ibelick/ui-skills",
-      "sourceType": "github",
-      "skillPath": "skills/fixing-accessibility/SKILL.md",
-      "computedHash": "6d1661a0ccf9aa9d99538eae780c927c789496565ec4e7f5a3eec5ff394eafda"
-    },
-    "fixing-metadata": {
-      "source": "ibelick/ui-skills",
-      "sourceType": "github",
-      "skillPath": "skills/fixing-metadata/SKILL.md",
-      "computedHash": "82702ccd812ee0d791b33b298b57303e2694468c8d9b225d86335d5532c50538"
-    },
-    "fixing-motion-performance": {
-      "source": "ibelick/ui-skills",
-      "sourceType": "github",
-      "skillPath": "skills/fixing-motion-performance/SKILL.md",
-      "computedHash": "a6e4b84e1aed71bd5f71916a0d128f9632fba77ff754f642e7caf06ce1a30526"
-    },
     "ui-skills": {
       "source": "ibelick/ui-skills",
       "sourceType": "github",
@@ -96,6 +96,18 @@
       "sourceType": "github",
       "skillPath": "skills/ui-skills-root/SKILL.md",
       "computedHash": "d4e1033f910467164a9cd3931277c1b309cb87c6d23cb5f184a65bfdf92b1c9c"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "3219a1944e404ffc14d1d9d6aef6dd2e3855b81387ee0a044ccbfe14d34c2357"
+    },
+    "vite": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vite/SKILL.md",
+      "computedHash": "88ee465fd10f711efecc76e91e96accae2b229dda371614dcf219099c264a486"
     },
     "zod-validation-utilities": {
       "source": "giuseppe-trisciuoglio/developer-kit",

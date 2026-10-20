@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { converter, formatHex, type Hsl } from 'culori'
+import { converter, formatHex, wcagContrast, type Hsl } from 'culori'
 import {
   AlertCircleIcon,
   CheckIcon,
@@ -196,38 +196,46 @@ const colorTokenGroups: {
   title: string
   defaultOpen?: boolean
   keys: ThemeStyleKey[]
+  contrastPair?: { bg: ThemeStyleKey; fg: ThemeStyleKey }
 }[] = [
   {
     title: 'Primary',
     defaultOpen: true,
     keys: ['primary', 'primary-foreground'],
+    contrastPair: { bg: 'primary', fg: 'primary-foreground' },
   },
   {
     title: 'Secondary',
     defaultOpen: true,
     keys: ['secondary', 'secondary-foreground'],
+    contrastPair: { bg: 'secondary', fg: 'secondary-foreground' },
   },
   {
     title: 'Accent',
     defaultOpen: true,
     keys: ['accent', 'accent-foreground'],
+    contrastPair: { bg: 'accent', fg: 'accent-foreground' },
   },
   {
     title: 'Base',
     defaultOpen: true,
     keys: ['background', 'foreground'],
+    contrastPair: { bg: 'background', fg: 'foreground' },
   },
   {
     title: 'Card',
     keys: ['card', 'card-foreground'],
+    contrastPair: { bg: 'card', fg: 'card-foreground' },
   },
   {
     title: 'Popover',
     keys: ['popover', 'popover-foreground'],
+    contrastPair: { bg: 'popover', fg: 'popover-foreground' },
   },
   {
     title: 'Muted',
     keys: ['muted', 'muted-foreground'],
+    contrastPair: { bg: 'muted', fg: 'muted-foreground' },
   },
   {
     title: 'Destructive',
@@ -253,8 +261,51 @@ const colorTokenGroups: {
       'sidebar-border',
       'sidebar-ring',
     ],
+    contrastPair: { bg: 'sidebar', fg: 'sidebar-foreground' },
   },
 ]
+
+function getContrastRatio(bg?: string, fg?: string): number | null {
+  if (!bg || !fg) return null
+  try {
+    const ratio = wcagContrast(bg, fg)
+    return typeof ratio === 'number' && !isNaN(ratio) ? ratio : null
+  } catch {
+    return null
+  }
+}
+
+function WcagContrastBadge({ bg, fg }: { bg?: string; fg?: string }) {
+  const ratio = getContrastRatio(bg, fg)
+  if (ratio === null) return null
+
+  const formatted = ratio.toFixed(1)
+  const isPass = ratio >= 4.5
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold normal-case tabular-nums transition-colors',
+        isPass
+          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+          : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+      )}
+      title={
+        isPass
+          ? `Contrast ratio ${formatted}:1 passes WCAG AA for normal text`
+          : `Contrast ratio ${formatted}:1 is below the WCAG AA minimum 4.5:1`
+      }
+    >
+      <span
+        className={cn(
+          'size-1.5 rounded-full',
+          isPass ? 'bg-emerald-500' : 'bg-amber-500'
+        )}
+      />
+      {isPass ? `AA (${formatted}:1)` : `Low (${formatted}:1)`}
+    </span>
+  )
+}
 
 const tailwindColors = [
   ['slate-50', '#f8fafc'],
@@ -1243,9 +1294,17 @@ export function ThemeTokenEditor({
                   defaultOpen={group.defaultOpen}
                   className='group/collapsible'
                 >
-                  <CollapsibleTrigger className='bg-muted/50 text-muted-foreground hover:bg-muted flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-semibold tracking-wider uppercase transition-colors'>
-                    <ChevronDownIcon className='size-3.5 transition-transform group-data-[state=closed]/collapsible:-rotate-90' />
-                    {group.title}
+                  <CollapsibleTrigger className='bg-muted/50 text-muted-foreground hover:bg-muted flex h-8 w-full items-center justify-between gap-1 rounded-md border px-2.5 text-xs font-semibold tracking-wider uppercase transition-colors'>
+                    <div className='flex items-center gap-1.5'>
+                      <ChevronDownIcon className='size-3.5 transition-transform group-data-[state=closed]/collapsible:-rotate-90' />
+                      <span>{group.title}</span>
+                    </div>
+                    {group.contrastPair && (
+                      <WcagContrastBadge
+                        bg={currentStyles[group.contrastPair.bg]}
+                        fg={currentStyles[group.contrastPair.fg]}
+                      />
+                    )}
                   </CollapsibleTrigger>
                   <CollapsibleContent className='data-[state=closed]:animate-out data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 pt-3'>
                     <div className='grid gap-3'>
