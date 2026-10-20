@@ -4,10 +4,7 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -34,34 +31,6 @@ export function StatesTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [stateToDelete, setStateToDelete] = useState<StateSchema | null>(null)
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-    search,
-  } = useGetFilterParams<StateSchema, typeof stateFilterParsers>({
-    allowedSorts: [
-      StateColumnKey.name,
-      StateColumnKey.countryCode,
-      StateColumnKey.iso2,
-      StateColumnKey.type,
-      StateColumnKey.createdAt,
-    ],
-    filterParsers: stateFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .in('countryCode', filter.countryCode || [])
-    .ilike('iso2', filter.iso2)
-    .applySorts(sortParser(sort))
-    .search(search)
-
-  const { data, isFetching } = useStatesQuery(builder.build())
-
   const handleEdit = useCallback((state: StateSchema) => {
     setSelectedState(state)
     setDialogOpen(true)
@@ -81,13 +50,29 @@ export function StatesTab() {
     [handleEdit, handleDelete]
   )
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder
+      .ilike('name', filter.name)
+      .in('countryCode', filter.countryCode || [])
+      .ilike('iso2', filter.iso2)
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    StateSchema,
+    typeof stateFilterParsers
+  >({
     columns,
-    pageCount: data?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    allowedSorts: [
+      StateColumnKey.name,
+      StateColumnKey.countryCode,
+      StateColumnKey.iso2,
+      StateColumnKey.type,
+      StateColumnKey.createdAt,
+    ],
+    filterParsers: stateFilterParsers,
+    queryHook: useStatesQuery,
+    buildQuery,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

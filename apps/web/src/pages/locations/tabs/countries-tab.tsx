@@ -4,10 +4,7 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -44,35 +41,6 @@ export function CountriesTab() {
 
   const { data: regions } = usePublicRegionsQuery()
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-    search,
-  } = useGetFilterParams<CountrySchema, typeof countryFilterParsers>({
-    allowedSorts: [
-      CountryColumnKey.name,
-      CountryColumnKey.iso2,
-      CountryColumnKey.capital,
-      CountryColumnKey.phonecode,
-      CountryColumnKey.currency,
-      CountryColumnKey.createdAt,
-    ],
-    filterParsers: countryFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .ilike('iso2', filter.iso2)
-    .in('regionId', filter.regionId || [])
-    .applySorts(sortParser(sort))
-    .search(search)
-
-  const { data, isFetching } = useCountriesQuery(builder.build())
-
   const handleEdit = useCallback((country: CountrySchema) => {
     setSelectedCountry(country)
     setDialogOpen(true)
@@ -93,13 +61,30 @@ export function CountriesTab() {
     [regions, handleEdit, handleDelete]
   )
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder
+      .ilike('name', filter.name)
+      .ilike('iso2', filter.iso2)
+      .in('regionId', filter.regionId || [])
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    CountrySchema,
+    typeof countryFilterParsers
+  >({
     columns,
-    pageCount: data?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    allowedSorts: [
+      CountryColumnKey.name,
+      CountryColumnKey.iso2,
+      CountryColumnKey.capital,
+      CountryColumnKey.phonecode,
+      CountryColumnKey.currency,
+      CountryColumnKey.createdAt,
+    ],
+    filterParsers: countryFilterParsers,
+    queryHook: useCountriesQuery,
+    buildQuery,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

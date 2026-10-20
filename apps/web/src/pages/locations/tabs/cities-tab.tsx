@@ -4,10 +4,7 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -35,35 +32,6 @@ export function CitiesTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [cityToDelete, setCityToDelete] = useState<CitySchema | null>(null)
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-    search,
-  } = useGetFilterParams<CitySchema, typeof cityFilterParsers>({
-    allowedSorts: [
-      CityColumnKey.name,
-      CityColumnKey.stateCode,
-      CityColumnKey.countryCode,
-      CityColumnKey.code,
-      CityColumnKey.createdAt,
-    ],
-    filterParsers: cityFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .in('stateCode', filter.stateCode || [])
-    .in('countryCode', filter.countryCode || [])
-    .ilike('code', filter.code)
-    .applySorts(sortParser(sort))
-    .search(search)
-
-  const { data, isFetching } = useCitiesQuery(builder.build())
-
   const handleEdit = useCallback((city: CitySchema) => {
     setSelectedCity(city)
     setDialogOpen(true)
@@ -83,13 +51,30 @@ export function CitiesTab() {
     [handleEdit, handleDelete]
   )
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder
+      .ilike('name', filter.name)
+      .in('stateCode', filter.stateCode || [])
+      .in('countryCode', filter.countryCode || [])
+      .ilike('code', filter.code)
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    CitySchema,
+    typeof cityFilterParsers
+  >({
     columns,
-    pageCount: data?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    allowedSorts: [
+      CityColumnKey.name,
+      CityColumnKey.stateCode,
+      CityColumnKey.countryCode,
+      CityColumnKey.code,
+      CityColumnKey.createdAt,
+    ],
+    filterParsers: cityFilterParsers,
+    queryHook: useCitiesQuery,
+    buildQuery,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 
