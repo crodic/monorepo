@@ -1,12 +1,9 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -25,35 +22,22 @@ export function PageRoleOverview() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<RoleSchema, typeof rolesFilterParsers>({
-    allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
-    filterParsers: rolesFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataRoleOverview(builder.build())
-
-  const totalPages = data?.meta.totalPages ?? 0
-
   const columns = useMemo(() => getRolesTableColumns(), [])
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns: columns,
-    pageCount: totalPages,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder.ilike('name', filter.name)
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    RoleSchema,
+    typeof rolesFilterParsers
+  >({
+    allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
+    filterParsers: rolesFilterParsers,
+    queryHook: useDataRoleOverview,
+    buildQuery,
+    columns,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

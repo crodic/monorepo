@@ -275,3 +275,15 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 
 - Existing files previously stored under `local` or `public` disk remain accessible through their recorded URLs in `files.url`.
 - Newly uploaded files will default to S3 and take full advantage of CloudFront CDN delivery and S3 multipart uploading.
+
+---
+
+## 7. Frontend Architecture (`useFileManagerCore`)
+
+`apps/web` encapsulates file management state and orchestration into [`useFileManagerCore`](file:///apps/web/src/pages/files/use-file-manager-core.ts):
+
+- **Decoupled Business Logic**: Extracts 16 distinct modal/dialog state hooks and React Query mutations away from the layout component.
+- **View Mode Persistence**: Synchronizes view mode (`grid` vs `table`) seamlessly to `localStorage`.
+- **Folder Tree & Hierarchy**: Merges remote server folders with optimistic local states and handles breadcrumb traversal.
+- **Upload Dropzone & Chunks**: Coordinates full drag-and-drop overlays with concurrent multipart chunk uploads.
+- **Multi-File Operations**: Coordinates inspector drawers, batch deletion alerts, and presigned URL generation.

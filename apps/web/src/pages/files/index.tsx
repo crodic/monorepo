@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FolderPlus,
   LayoutGrid,
@@ -8,29 +6,15 @@ import {
   PanelRight,
   PlusIcon,
 } from 'lucide-react'
-import {
-  parseAsArrayOf,
-  parseAsInteger,
-  parseAsString,
-  useQueryState,
-  useQueryStates,
-} from 'nuqs'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { getSortingStateParser } from '@/lib/parsers'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { restApiErrorHandler } from '@/lib/rest-api-handler'
-import { cn, normalizeDate, sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { Main } from '@/components/layout/main'
-import { getFilesTableColumns } from './columns'
 import {
   DeleteFolderDialog,
   FileBreadcrumbs,
@@ -51,322 +35,79 @@ import {
 import { bulkDownloadFiles } from './download-helper'
 import { FilePickerDialog } from './file-picker-dialog'
 import { FilesTableActionBar } from './file-table-action-bar'
-import {
-  apiCreateFolder,
-  apiDeleteFile,
-  apiDeleteFiles,
-  apiDeleteFolder,
-  apiRenameFolder,
-  apiUpdateFile,
-  fileQueryKeys,
-  useDataFileFolders,
-  useDataFileOverview,
-  useInfiniteDataFileOverview,
-} from './queries'
-import { ColumnKey, type FileSchema, type FolderSchema } from './schema'
-
-const fileFilterParsers = {
-  [ColumnKey.originalName]: parseAsString,
-  [ColumnKey.folder]: parseAsString,
-  [ColumnKey.resourceType]: parseAsString,
-  [ColumnKey.mime]: parseAsString,
-  [ColumnKey.status]: parseAsString,
-  [ColumnKey.createdAt]: parseAsArrayOf(parseAsInteger, ','),
-} as const
-
-const fileAllowedSorts = [
-  ColumnKey.originalName,
-  ColumnKey.folder,
-  ColumnKey.resourceType,
-  ColumnKey.mime,
-  ColumnKey.status,
-  ColumnKey.size,
-  ColumnKey.createdAt,
-]
-
-async function copyFileUrl(file: FileSchema) {
-  await navigator.clipboard.writeText(file.url)
-}
+import { useFileManagerCore } from './use-file-manager-core'
 
 export function PageFileOverview() {
   const { t } = useTranslation()
   const { ability } = useAuthStore()
-  const queryClient = useQueryClient()
-
-  const [activeFolder, setActiveFolder] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem('file-manager:view-mode')
-    if (saved === 'grid' || saved === 'table') {
-      setViewMode(saved)
-    }
-  }, [])
-  const [localFolders, setLocalFolders] = useState<FolderSchema[]>([])
-  const [uploadOpen, setUploadOpen] = useState(false)
-  const [droppedFiles, setDroppedFiles] = useState<File[]>([])
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
-  const [renameFolderOpen, setRenameFolderOpen] = useState(false)
-  const [folderToRename, setFolderToRename] = useState<string | null>(null)
-  const [previewFile, setPreviewFile] = useState<FileSchema | null>(null)
-  const [inspectorOpen, setInspectorOpen] = useState(false)
-  const [inspectedFile, setInspectedFile] = useState<FileSchema | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [pickedUrl, setPickedUrl] = useState<string | null>(null)
-  const [movingFile, setMovingFile] = useState<FileSchema | null>(null)
-  const [renamingFile, setRenamingFile] = useState<FileSchema | null>(null)
-  const [sharingFile, setSharingFile] = useState<FileSchema | null>(null)
-  const [deletingFile, setDeletingFile] = useState<FileSchema | null>(null)
-  const [bulkDeletingFiles, setBulkDeletingFiles] = useState<FileSchema[]>([])
-  const [deletingFolder, setDeletingFolder] = useState<string | null>(null)
-  const [deleteFolderFiles, setDeleteFolderFiles] = useState(false)
-
-  const [, setPageQuery] = useQueryState('page', parseAsInteger.withDefault(1))
-  const [, setSearchQuery] = useQueryState(
-    'search',
-    parseAsString.withDefault('')
-  )
-  const [, setSortQuery] = useQueryState(
-    'sort',
-    getSortingStateParser<FileSchema>(fileAllowedSorts).withDefault([])
-  )
-  const [, setFilterQuery] = useQueryStates(fileFilterParsers)
 
   const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-    search,
-  } = useGetFilterParams<FileSchema, typeof fileFilterParsers>({
-    allowedSorts: fileAllowedSorts,
-    filterParsers: fileFilterParsers,
-  })
+    // Navigation & View
+    activeFolder,
+    viewMode,
+    handleViewModeChange,
+    activeCategory,
+    handleFolderSelect,
+    handleCategorySelect,
+    handleDropFiles,
 
-  const createdFrom = normalizeDate(filter.createdAt?.[0])
-  const createdTo = normalizeDate(filter.createdAt?.[1])
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('original_name', filter.original_name)
-    .ilike('folder', filter.folder)
-    .ilike('mime', filter.mime)
-    .eq('resource_type', filter.resource_type)
-    .eq('status', filter.status)
-    .btw('createdAt', createdFrom, createdTo)
-    .applySorts(sortParser(sort))
-    .search(search)
-
-  if (activeFolder) {
-    builder.eq('folder', activeFolder)
-  }
-
-  // Derive activeCategory from URL params so it persists across page reloads
-  const activeCategory = useMemo(() => {
-    const mime = typeof filter.mime === 'string' ? filter.mime : null
-    const resourceType =
-      typeof filter.resource_type === 'string' ? filter.resource_type : null
-    if (mime === 'audio') return 'audio'
-    if (resourceType) return resourceType
-    return null
-  }, [filter.mime, filter.resource_type])
-
-  const isGridView = viewMode === 'grid'
-
-  const params = builder.build()
-  const { data: pagedData, isFetching: isPagedFetching } = useDataFileOverview(
-    params,
-    { enabled: !isGridView }
-  )
-
-  const infiniteParams = useMemo(
-    () => ({
-      ...params,
-      limit: 24,
-    }),
-    [params]
-  )
-
-  const {
-    data: infiniteData,
-    isFetching: isInfiniteFetching,
-    isFetchingNextPage,
+    // Data & Collections
+    folders,
+    currentFiles,
+    totalItems,
+    isFetching,
     hasNextPage,
+    isFetchingNextPage,
     fetchNextPage,
-  } = useInfiniteDataFileOverview(infiniteParams, { enabled: isGridView })
+    table,
 
-  const { data: remoteFolders = [] } = useDataFileFolders()
+    // Modal States & Setters
+    uploadOpen,
+    setUploadOpen,
+    droppedFiles,
+    setDroppedFiles,
+    folderDialogOpen,
+    setFolderDialogOpen,
+    renameFolderOpen,
+    setRenameFolderOpen,
+    folderToRename,
+    setFolderToRename,
+    previewFile,
+    setPreviewFile,
+    inspectorOpen,
+    setInspectorOpen,
+    inspectedFile,
+    setInspectedFile,
+    pickerOpen,
+    setPickerOpen,
+    pickedUrl,
+    setPickedUrl,
+    movingFile,
+    setMovingFile,
+    renamingFile,
+    setRenamingFile,
+    sharingFile,
+    setSharingFile,
+    deletingFile,
+    setDeletingFile,
+    bulkDeletingFiles,
+    setBulkDeletingFiles,
+    deletingFolder,
+    setDeletingFolder,
+    deleteFolderFiles,
+    setDeleteFolderFiles,
 
-  const allGridFiles = useMemo(
-    () => infiniteData?.pages.flatMap((page) => page.data) ?? [],
-    [infiniteData?.pages]
-  )
-
-  const currentFiles = isGridView ? allGridFiles : (pagedData?.data ?? [])
-  const isFetching = isGridView ? isInfiniteFetching : isPagedFetching
-  const totalItems = isGridView
-    ? infiniteData?.pages[0]?.meta.totalItems
-    : pagedData?.meta.totalItems
-
-  const folders = useMemo(() => {
-    const map = new Map<string, FolderSchema>()
-    for (const folder of [...localFolders, ...remoteFolders]) {
-      map.set(folder.folder, folder)
-    }
-    return Array.from(map.values()).sort((a, b) =>
-      a.folder.localeCompare(b.folder)
-    )
-  }, [localFolders, remoteFolders])
-
-  const invalidateFiles = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: fileQueryKeys.all }),
-      queryClient.invalidateQueries({ queryKey: fileQueryKeys.folders }),
-    ])
-  }
-
-  const deleteFileMutation = useMutation({
-    mutationFn: apiDeleteFile,
-    onSuccess: async () => {
-      await invalidateFiles()
-      if (inspectedFile?.public_id === deletingFile?.public_id) {
-        setInspectedFile(null)
-      }
-      setDeletingFile(null)
-    },
-  })
-
-  const deleteFolderMutation = useMutation({
-    mutationFn: apiDeleteFolder,
-    onSuccess: async () => {
-      setLocalFolders((current) =>
-        current.filter((folder) => folder.folder !== deletingFolder)
-      )
-      if (activeFolder === deletingFolder) {
-        setActiveFolder(null)
-      }
-      setDeletingFolder(null)
-      setDeleteFolderFiles(false)
-      await invalidateFiles()
-    },
-    onError: (error) => restApiErrorHandler(error as never),
-  })
-
-  const handleInspectFile = useCallback((file: FileSchema) => {
-    setInspectedFile(file)
-    setInspectorOpen(true)
-  }, [])
-
-  const columns = useMemo(
-    () =>
-      getFilesTableColumns({
-        onPreview: setPreviewFile,
-        onCopyUrl: copyFileUrl,
-        onMove: setMovingFile,
-        onDelete: setDeletingFile,
-        onRename: setRenamingFile,
-        onShare: setSharingFile,
-        canUpdate: ability.can('update', 'FILE'),
-        canDelete: ability.can('delete', 'FILE'),
-      }),
-    [ability]
-  )
-
-  const { table } = useDataTable({
-    data: currentFiles,
-    columns,
-    pageCount: pagedData?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { left: ['select'], right: ['actions'] },
-    },
-    getRowId: (row) => row.public_id,
-  })
-
-  const bulkDeleteFileMutation = useMutation({
-    mutationFn: (files: FileSchema[]) =>
-      apiDeleteFiles(files.map((file) => file.public_id)),
-    onSuccess: async (_, files) => {
-      table.resetRowSelection()
-      setBulkDeletingFiles([])
-      await invalidateFiles()
-      toast.success(t('files.delete.bulkSuccess', { count: files.length }))
-    },
-    onError: (error) => restApiErrorHandler(error as never),
-  })
-
-  const handleFolderSelect = useCallback(
-    (folder: string | null) => {
-      if (folder === activeFolder) return
-
-      setActiveFolder(folder)
-      table.setPageIndex(0)
-      table.resetColumnFilters()
-      table.resetSorting()
-      table.resetRowSelection()
-      void setPageQuery(1)
-      void setSearchQuery(null)
-      void setSortQuery(null)
-      void setFilterQuery({
-        [ColumnKey.originalName]: null,
-        [ColumnKey.folder]: null,
-        [ColumnKey.resourceType]: null,
-        [ColumnKey.mime]: null,
-        [ColumnKey.status]: null,
-        [ColumnKey.createdAt]: null,
-      })
-    },
-    [
-      activeFolder,
-      table,
-      setPageQuery,
-      setSearchQuery,
-      setSortQuery,
-      setFilterQuery,
-    ]
-  )
-
-  const handleCategorySelect = useCallback(
-    (category: string | null) => {
-      table.setPageIndex(0)
-      void setPageQuery(1)
-
-      if (!category || category === 'all') {
-        void setFilterQuery((current) => ({
-          ...current,
-          [ColumnKey.resourceType]: null,
-          [ColumnKey.mime]: null,
-        }))
-      } else if (category === 'audio') {
-        void setFilterQuery((current) => ({
-          ...current,
-          [ColumnKey.resourceType]: null,
-          [ColumnKey.mime]: 'audio',
-        }))
-      } else {
-        void setFilterQuery((current) => ({
-          ...current,
-          [ColumnKey.resourceType]: category,
-          [ColumnKey.mime]: null,
-        }))
-      }
-    },
-    [table, setPageQuery, setFilterQuery]
-  )
-
-  const handleViewModeChange = (mode: 'grid' | 'table') => {
-    setViewMode(mode)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('file-manager:view-mode', mode)
-    }
-  }
-
-  const handleDropFiles = useCallback((files: File[]) => {
-    if (files.length > 0) {
-      setDroppedFiles(files)
-      setUploadOpen(true)
-    }
-  }, [])
+    // Actions & Operations
+    invalidateFiles,
+    handleInspectFile,
+    handleCreateFolder,
+    handleRenameFolder,
+    handleMoveFile,
+    copyFileUrl,
+    deleteFileMutation,
+    deleteFolderMutation,
+    bulkDeleteFileMutation,
+  } = useFileManagerCore()
 
   return (
     <>
@@ -573,7 +314,7 @@ export function PageFileOverview() {
         </div>
       </Main>
 
-      {/* Bulk Action Bar (Visible in both Grid and Table views when items are selected) */}
+      {/* Bulk Action Bar */}
       <FilesTableActionBar
         table={table}
         onDelete={(files) => setBulkDeletingFiles(files)}
@@ -620,14 +361,7 @@ export function PageFileOverview() {
         submitLabel={t('files.actions.createFolder')}
         existingFolders={folders.map((item) => item.folder)}
         onOpenChange={setFolderDialogOpen}
-        onSubmit={async (folder) => {
-          const created = await apiCreateFolder({ folder })
-          setLocalFolders((current) => [
-            ...current.filter((item) => item.folder !== created.folder),
-            created,
-          ])
-          handleFolderSelect(created.folder)
-        }}
+        onSubmit={handleCreateFolder}
       />
 
       {/* Rename Folder Dialog */}
@@ -641,17 +375,7 @@ export function PageFileOverview() {
           setRenameFolderOpen(open)
           if (!open) setFolderToRename(null)
         }}
-        onSubmit={async (folder) => {
-          const target = folderToRename ?? activeFolder
-          if (!target) return
-          const renamed = await apiRenameFolder({
-            folder: target,
-            data: { folder },
-          })
-          handleFolderSelect(renamed.folder)
-          setFolderToRename(null)
-          await invalidateFiles()
-        }}
+        onSubmit={handleRenameFolder}
       />
 
       {/* Move File Dialog */}
@@ -659,18 +383,7 @@ export function PageFileOverview() {
         file={movingFile}
         folders={folders}
         onOpenChange={(open) => !open && setMovingFile(null)}
-        onMoved={async (folder) => {
-          if (!movingFile) return
-          await apiUpdateFile({
-            publicId: movingFile.public_id,
-            data: { folder },
-          })
-          if (inspectedFile?.public_id === movingFile.public_id) {
-            setInspectedFile((prev) => (prev ? { ...prev, folder } : null))
-          }
-          setMovingFile(null)
-          await invalidateFiles()
-        }}
+        onMoved={handleMoveFile}
       />
 
       {/* Preview Dialog */}

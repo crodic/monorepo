@@ -567,3 +567,46 @@ const queryString = new PaginateQueryBuilder()
 // Chuỗi query sinh ra:
 // page=1&limit=20&sort=createdAt:DESC&filter.status=$eq:ACTIVE&filter.role=$in:ADMIN,USER&filter.age=$btw:18,65&search=john&searchBy=email&searchBy=name
 ```
+
+### 3. Query Contracts dùng chung (`ResourceQueryContract`)
+
+Nhằm kết nối whitelist của backend với định nghĩa filter/sort ở frontend một cách an toàn và tránh sai lệch kiểu dữ liệu, `@repo/query-builder` xuất bản các helper hợp đồng:
+
+```typescript
+import {
+  defineQueryContract,
+  isAllowedSort,
+  isAllowedFilter,
+  type ResourceQueryContract,
+} from "@repo/query-builder";
+
+export const userQueryContract = defineQueryContract<UserDto>({
+  allowedSorts: ["name", "email", "createdAt"],
+  allowedFilters: ["name", "email", { name: "status", operator: "eq" }],
+  allowedIncludes: ["roles", "profile"],
+  defaultSort: "-createdAt",
+  defaultLimit: 20,
+  maxLimit: 100,
+});
+```
+
+### 4. Hook Bảng Cao Cấp (`useResourceTable` & `useRestResourceTable`)
+
+`apps/web` cung cấp các hook pipeline khép kín kết nối trực tiếp Query Builder với TanStack Table:
+
+- **`useResourceTable`**: Kết nối `PaginateQueryBuilder` + `PaginateQueryParams` với TanStack Table.
+- **`useRestResourceTable`**: Kết nối `RestQueryBuilder` + `RestQueryParams` với TanStack Table.
+
+```typescript
+import { useRestResourceTable } from "@/hooks/use-rest-resource-table";
+
+const { table, isFetching } = useRestResourceTable({
+  columns,
+  allowedSorts: ["name", "createdAt"],
+  queryHook: useUsersQuery,
+  buildQuery: (builder, filter) => {
+    builder.filterIlike("name", filter.name).include("roles");
+  },
+  getRowId: (row) => row.id,
+});
+```

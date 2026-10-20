@@ -9,34 +9,52 @@ rows, and optional virtualization.
 
 ## Main Pieces
 
-The DataTable feature is split into a few reusable parts:
+The DataTable feature is split into high-level pipelines and low-level primitives:
+
+### High-Level Pipelines (Recommended)
+
+- `useResourceTable` in `apps/web/src/hooks/use-resource-table.ts`
+  - High-level pipeline designed for **NestJS Paginate** endpoints (`filter.status=$eq:...`).
+  - Collapses URL state (`nuqs`), query building (`PaginateQueryBuilder`), sorting translation, React Query execution, and TanStack Table initialization into a single declarative hook call.
+- `useRestResourceTable` in `apps/web/src/hooks/use-rest-resource-table.ts`
+  - High-level pipeline designed for **REST / Spatie** query endpoints (`filter[status]=...`, `sort=-createdAt`, `include=...`).
+  - Seamlessly integrates with `RestQueryBuilder` and `RestQueryParams`.
+
+### Low-Level Primitives
 
 - `useDataTable` in `apps/web/src/hooks/use-data-table.ts`
-  - Creates the TanStack Table instance.
+  - Creates the underlying TanStack Table instance.
   - Owns table state for pagination, sorting, filters, row selection, expanded rows, and column visibility.
   - Syncs page, page size, sorting, and filters to URL query params with `nuqs`.
 - `DataTable` in `apps/web/src/components/data-table/data-table.tsx`
-  - Renders the table UI, loading state, empty state, pagination, optional row click handling, optional sub-row detail panels, virtual rows, virtual columns, and virtual infinite scrolling callbacks.
+  - Renders the table UI, loading state, empty state (`DataTableEmptyState`), pagination, optional row click handling, optional sub-row detail panels, virtual rows, virtual columns, and virtual infinite scrolling callbacks.
 - `DataTableToolbar`
-  - Renders column filters from `columnDef.meta`.
+  - Renders column filters from `columnDef.meta` (inline inputs, select dropdowns, faceted filters).
   - Includes column visibility controls through `DataTableViewOptions`.
 - `DataTableSortList`
   - Provides the “Sort” popover for multi-sort configuration.
 - `DataTableColumnHeader`
   - Standard table header component used by most columns.
 
-Most pages follow this shape:
+### Standard Page Implementation (Recommended Pattern)
+
+Most resource overview pages in `apps/web` use `useResourceTable`:
 
 ```tsx
 const columns = useMemo(() => getMyTableColumns(), []);
 
-const { table } = useDataTable({
-  data: data?.data ?? [],
+const { table, isFetching } = useResourceTable<
+  MySchema,
+  typeof myFilterParsers
+>({
   columns,
-  pageCount: data?.meta.totalPages ?? 0,
-  initialState: {
-    columnPinning: { right: ["actions"] },
+  allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
+  filterParsers: myFilterParsers,
+  queryHook: useDataMyOverview,
+  buildQuery: (builder, filter) => {
+    builder.ilike("name", filter.name);
   },
+  initialColumnPinning: { right: ["actions"] },
   getRowId: (row) => row.id,
 });
 
@@ -47,6 +65,24 @@ return (
     </DataTableToolbar>
   </DataTable>
 );
+```
+
+For REST endpoints, swap `useResourceTable` with `useRestResourceTable`:
+
+```tsx
+const { table, isFetching } = useRestResourceTable<
+  MySchema,
+  typeof myFilterParsers
+>({
+  columns,
+  allowedSorts: ["name", "createdAt"],
+  filterParsers: myFilterParsers,
+  queryHook: useRestDataOverview,
+  buildQuery: (builder, filter) => {
+    builder.filterIlike("name", filter.name).include("roles");
+  },
+  getRowId: (row) => row.id,
+});
 ```
 
 ## Server-Side Data Flow

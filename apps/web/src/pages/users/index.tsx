@@ -1,12 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { normalizeDate, sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { normalizeDate } from '@/lib/utils'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -35,39 +33,25 @@ export function PageUserOverview() {
 
   const columns = useMemo(() => getUsersTableColumns(), [])
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-    search,
-  } = useGetFilterParams<UserSchema, typeof userFilterParsers>({
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    const createdFrom = normalizeDate(filter.createdAt?.[0])
+    const createdTo = normalizeDate(filter.createdAt?.[1])
+    builder
+      .btw('createdAt', createdFrom, createdTo)
+      .ilike('email', filter.email)
+      .ilike('fullName', filter.fullName)
+      .eq('id', filter.id)
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    UserSchema,
+    typeof userFilterParsers
+  >({
+    columns,
     allowedSorts: [ColumnKey.createdAt],
     filterParsers: userFilterParsers,
-  })
-
-  const createdFrom = normalizeDate(filter.createdAt?.[0])
-  const createdTo = normalizeDate(filter.createdAt?.[1])
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .btw('createdAt', createdFrom, createdTo)
-    .ilike('email', filter.email)
-    .ilike('fullName', filter.fullName)
-    .eq('id', filter.id)
-    .applySorts(sortParser(sort))
-    .search(search)
-
-  const { data, isFetching } = useDataUserOverview(builder.build())
-
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns,
-    pageCount: data?.meta.totalPages ?? -1,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    queryHook: useDataUserOverview,
+    buildQuery,
     getRowId: (originalRow) => originalRow.id,
     clearOnDefault: true,
   })

@@ -1,13 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { parseAsBoolean, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/stores/auth-store'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -28,12 +25,21 @@ export function PageWhiteLabelOverview() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { ability } = useAuthStore()
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<WhiteLabelSchema, typeof whiteLabelFilterParsers>({
+
+  const columns = useMemo(() => defaultColumns, [])
+
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder
+      .ilike('name', filter.name)
+      .ilike('slug', filter.slug)
+      .eq('target', filter.target)
+      .eq('isActive', filter.isActive)
+  }, [])
+
+  const { table, isFetching } = useResourceTable<
+    WhiteLabelSchema,
+    typeof whiteLabelFilterParsers
+  >({
     allowedSorts: [
       ColumnKey.name,
       ColumnKey.target,
@@ -41,27 +47,10 @@ export function PageWhiteLabelOverview() {
       ColumnKey.updatedAt,
     ],
     filterParsers: whiteLabelFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .ilike('slug', filter.slug)
-    .eq('target', filter.target)
-    .eq('isActive', filter.isActive)
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataWhiteLabelOverview(builder.build())
-  const columns = useMemo(() => defaultColumns, [])
-
-  const { table } = useDataTable({
-    data: data?.data ?? [],
+    queryHook: useDataWhiteLabelOverview,
+    buildQuery,
     columns,
-    pageCount: data?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

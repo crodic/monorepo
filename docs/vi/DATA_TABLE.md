@@ -9,34 +9,52 @@ hàng (expanding rows) và ảo hóa (virtualization).
 
 ## Các Thành Phần Chính
 
-Tính năng DataTable được chia thành các phần tái sử dụng:
+Hệ thống DataTable được chia thành 2 tầng rõ rệt: Tầng Pipeline Cấp Cao (khuyên dùng) và Tầng Primitive Cấp Thấp:
+
+### 1. Tầng Pipeline Cấp Cao (Recommended)
+
+- `useResourceTable` trong `apps/web/src/hooks/use-resource-table.ts`
+  - Pipeline chuẩn chuyên dùng cho các endpoint **NestJS Paginate** (`filter.status=$eq:...`).
+  - Gói gọn 6 bước lặp lại (đọc URL với `nuqs`, dựng `PaginateQueryBuilder`, dịch sort params, gọi React Query, khởi tạo TanStack Table) thành **1 hook duy nhất**.
+- `useRestResourceTable` trong `apps/web/src/hooks/use-rest-resource-table.ts`
+  - Pipeline chuyên dùng cho các endpoint chuẩn **REST / Spatie** (`filter[status]=...`, `sort=-createdAt`, `include=...`).
+  - Tích hợp liền mạch với `RestQueryBuilder` và `RestQueryParams`.
+
+### 2. Tầng Primitives Cấp Thấp
 
 - `useDataTable` trong `apps/web/src/hooks/use-data-table.ts`
-  - Khởi tạo instance của TanStack Table.
+  - Khởi tạo instance nền tảng của TanStack Table.
   - Quản lý trạng thái bảng: phân trang, sắp xếp, bộ lọc, chọn hàng, mở rộng hàng và ẩn hiện cột.
   - Đồng bộ trang, kích thước trang, sắp xếp và bộ lọc vào URL query params qua thư viện `nuqs`.
 - `DataTable` trong `apps/web/src/components/data-table/data-table.tsx`
-  - Render giao diện bảng, trạng thái loading, trạng thái rỗng, phân trang, xử lý click hàng tùy chọn, panel chi tiết hàng con, hàng ảo, cột ảo và callback cuộn vô tận ảo (virtual infinite scrolling).
+  - Render giao diện bảng, trạng thái loading, trạng thái rỗng (`DataTableEmptyState`), phân trang, click hàng, panel chi tiết hàng con, virtualization.
 - `DataTableToolbar`
-  - Render các bộ lọc cột từ `columnDef.meta`.
-  - Bao gồm nút điều khiển ẩn hiện cột qua `DataTableViewOptions`.
+  - Render các bộ lọc cột inline từ `columnDef.meta` (input, select, faceted chips).
+  - Điều khiển ẩn hiện cột qua `DataTableViewOptions`.
 - `DataTableSortList`
   - Cung cấp popover "Sắp xếp" hỗ trợ đa tiêu chí sắp xếp.
 - `DataTableColumnHeader`
   - Component tiêu đề cột chuẩn được hầu hết các cột sử dụng.
 
-Hầu hết các trang tuân theo cấu trúc sau:
+### Cấu Trúc Khuyên Dùng Cho Trang Danh Sách
+
+Các trang quản trị tổng quan (`admins`, `users`, `roles`, `white-labels`,...) sử dụng `useResourceTable`:
 
 ```tsx
 const columns = useMemo(() => getMyTableColumns(), []);
 
-const { table } = useDataTable({
-  data: data?.data ?? [],
+const { table, isFetching } = useResourceTable<
+  MySchema,
+  typeof myFilterParsers
+>({
   columns,
-  pageCount: data?.meta.totalPages ?? 0,
-  initialState: {
-    columnPinning: { right: ["actions"] },
+  allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
+  filterParsers: myFilterParsers,
+  queryHook: useDataMyOverview,
+  buildQuery: (builder, filter) => {
+    builder.ilike("name", filter.name);
   },
+  initialColumnPinning: { right: ["actions"] },
   getRowId: (row) => row.id,
 });
 
@@ -47,6 +65,24 @@ return (
     </DataTableToolbar>
   </DataTable>
 );
+```
+
+Đối với các endpoint chuẩn REST, chỉ cần đổi sang `useRestResourceTable`:
+
+```tsx
+const { table, isFetching } = useRestResourceTable<
+  MySchema,
+  typeof myFilterParsers
+>({
+  columns,
+  allowedSorts: ["name", "createdAt"],
+  filterParsers: myFilterParsers,
+  queryHook: useRestDataOverview,
+  buildQuery: (builder, filter) => {
+    builder.filterIlike("name", filter.name).include("roles");
+  },
+  getRowId: (row) => row.id,
+});
 ```
 
 ## Luồng Dữ Liệu Phía Server (Server-Side Data Flow)

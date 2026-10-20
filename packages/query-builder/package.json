@@ -9,7 +9,8 @@
     "./nestjs-paginate-query-builder": "./src/nestjs-paginate-query-builder.ts",
     "./nestjs-paginate": "./src/nestjs-paginate-query-builder.ts",
     "./rest-query-builder": "./src/rest-query-builder.ts",
-    "./rest": "./src/rest-query-builder.ts"
+    "./rest": "./src/rest-query-builder.ts",
+    "./contracts": "./src/contracts.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

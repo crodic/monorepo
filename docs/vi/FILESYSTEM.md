@@ -275,3 +275,15 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 
 - Các tệp đã lưu trước đó trong disk `local` hoặc `public` vẫn truy cập bình thường qua URL đã ghi trong `files.url`.
 - Các tệp tải lên mới sẽ mặc định lưu trên S3, tận dụng tốc độ phân phối của CloudFront CDN và tính năng tải lên phân đoạn AWS S3 Multipart.
+
+---
+
+## 7. Kiến Trúc Frontend Quản Lý Tệp (`useFileManagerCore`)
+
+`apps/web` đóng gói toàn bộ trạng thái và các luồng nghiệp vụ phức tạp của File Manager vào [`useFileManagerCore`](file:///apps/web/src/pages/files/use-file-manager-core.ts):
+
+- **Tách Biệt Nghiệp Vụ Khỏi Giao Diện**: Tách 16 biến state modals/dialogs và các mutation của React Query ra khỏi component hiển thị layout, giúp code gọn hơn 50%.
+- **Lưu Trữ Chế Độ Xem (View Mode)**: Tự động đồng bộ và ghi nhớ chế độ xem `grid` hoặc `table` vào `localStorage`.
+- **Cây Thư Mục & Phân Cấp**: Tự động gộp cây thư mục từ máy chủ với các thư mục tạo mới cục bộ, quản lý đường dẫn breadcrumb linh hoạt.
+- **Khu Vực Kéo Thả (Dropzone)**: Tích hợp overlay kéo thả tải tệp trực tiếp vào thư mục hiện hành.
+- **Thao Tác Tệp Nâng Cao**: Điều khiển drawer kiểm tra chi tiết tệp, cảnh báo xóa hàng loạt, và tạo liên kết chia sẻ tạm thời.

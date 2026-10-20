@@ -251,6 +251,40 @@ export function useUsersList(params: UserListParams) {
 
 ### C. Integration with TanStack Table (`apps/web`)
 
+Use the dedicated high-level pipelines **`useResourceTable`** (for NestJS Paginate) or **`useRestResourceTable`** (for REST endpoints):
+
+```tsx
+import { useMemo } from "react";
+import { useRestResourceTable } from "@/hooks/use-rest-resource-table";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
+import { DataTableSortList } from "@/components/data-table/data-table-sort-list";
+
+export function UserTableContainer() {
+  const columns = useMemo(() => getUserTableColumns(), []);
+
+  const { table, isFetching } = useRestResourceTable({
+    columns,
+    allowedSorts: ["name", "createdAt"],
+    queryHook: useUsersQuery,
+    buildQuery: (builder, filter) => {
+      builder.filter("status", filter.status).include("roles");
+    },
+    getRowId: (row) => row.id,
+  });
+
+  return (
+    <DataTable table={table} isFetching={isFetching}>
+      <DataTableToolbar table={table}>
+        <DataTableSortList table={table} />
+      </DataTableToolbar>
+    </DataTable>
+  );
+}
+```
+
+#### Low-Level Manual Integration (Optional)
+
 Bridge TanStack Table state (`pagination`, `sorting`, `columnFilters`) directly to `RestQueryBuilder`:
 
 ```tsx

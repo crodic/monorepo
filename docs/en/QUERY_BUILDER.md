@@ -568,3 +568,46 @@ const queryString = new PaginateQueryBuilder()
 // Output:
 // page=1&limit=20&sort=createdAt:DESC&filter.status=$eq:ACTIVE&filter.role=$in:ADMIN,USER&filter.age=$btw:18,65&search=john&searchBy=email&searchBy=name
 ```
+
+### 3. Shared Query Contracts (`ResourceQueryContract`)
+
+To bridge backend whitelists with frontend table options without type drift, `@repo/query-builder` exports typed contract helpers:
+
+```typescript
+import {
+  defineQueryContract,
+  isAllowedSort,
+  isAllowedFilter,
+  type ResourceQueryContract,
+} from "@repo/query-builder";
+
+export const userQueryContract = defineQueryContract<UserDto>({
+  allowedSorts: ["name", "email", "createdAt"],
+  allowedFilters: ["name", "email", { name: "status", operator: "eq" }],
+  allowedIncludes: ["roles", "profile"],
+  defaultSort: "-createdAt",
+  defaultLimit: 20,
+  maxLimit: 100,
+});
+```
+
+### 4. High-Level React Table Hooks (`useResourceTable` & `useRestResourceTable`)
+
+`apps/web` provides declarative hooks that connect query builders directly to TanStack Table:
+
+- **`useResourceTable`**: Connects `PaginateQueryBuilder` + `PaginateQueryParams` with TanStack Table.
+- **`useRestResourceTable`**: Connects `RestQueryBuilder` + `RestQueryParams` with TanStack Table.
+
+```typescript
+import { useRestResourceTable } from "@/hooks/use-rest-resource-table";
+
+const { table, isFetching } = useRestResourceTable({
+  columns,
+  allowedSorts: ["name", "createdAt"],
+  queryHook: useUsersQuery,
+  buildQuery: (builder, filter) => {
+    builder.filterIlike("name", filter.name).include("roles");
+  },
+  getRowId: (row) => row.id,
+});
+```

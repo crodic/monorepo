@@ -8,3 +8,4 @@
 
 export * from "./nestjs-paginate-query-builder";
 export * from "./rest-query-builder";
+export * from "./contracts";

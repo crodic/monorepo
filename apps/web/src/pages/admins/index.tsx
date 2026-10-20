@@ -1,12 +1,9 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import { useResourceTable } from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -27,26 +24,6 @@ const adminsFilterParsers = {
 export function PageAdminOverview() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<AdminSchema, typeof adminsFilterParsers>({
-    allowedSorts: [ColumnKey.email, ColumnKey.fullName, ColumnKey.verifiedAt],
-    filterParsers: adminsFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('email', filter.email)
-    .ilike('fullName', filter.fullName)
-    .in('roles.id', filter.role || [])
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataAdminOverview(builder.build())
   const { data: rolesData } = useDataRoleFormOptions()
 
   const columns = useMemo(
@@ -54,15 +31,22 @@ export function PageAdminOverview() {
     [rolesData]
   )
 
-  const totalPages = data?.meta.totalPages ?? 0
+  const buildQuery = useCallback((builder: any, filter: any) => {
+    builder
+      .ilike('email', filter.email)
+      .ilike('fullName', filter.fullName)
+      .in('roles.id', filter.role || [])
+  }, [])
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns: columns,
-    pageCount: totalPages,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+  const { table, isFetching } = useResourceTable<
+    AdminSchema,
+    typeof adminsFilterParsers
+  >({
+    columns,
+    allowedSorts: [ColumnKey.email, ColumnKey.fullName, ColumnKey.verifiedAt],
+    filterParsers: adminsFilterParsers,
+    queryHook: useDataAdminOverview,
+    buildQuery,
     getRowId: (row) => row.id,
   })
 

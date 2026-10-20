@@ -4,11 +4,48 @@
 export type SortDirection = "ASC" | "DESC";
 
 /**
+ * Supported filter operators in nestjs-paginate query syntax.
+ */
+export type PaginateFilterOperator =
+  | "eq"
+  | "not"
+  | "in"
+  | "notin"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "btw"
+  | "ilike"
+  | "sw"
+  | "contains"
+  | "null"
+  | "notnull";
+
+/**
+ * Structured query parameters representation for `nestjs-paginate` compatible endpoints.
+ */
+export interface PaginateQueryParams {
+  limit?: number;
+  page?: number;
+  cursor?: string;
+  sortBy?: string;
+  sort?: string;
+  search?: string;
+  searchBy?: string[];
+  select?: string[];
+  withDeleted?: boolean;
+  with?: string[];
+  filter?: Record<string, any>;
+  [key: string]: any;
+}
+
+/**
  * Filter condition representation for nestjs-paginate queries.
  */
 export interface FilterCondition {
   field: string;
-  operator?: string;
+  operator?: PaginateFilterOperator | string;
   value?: any;
 }
 
@@ -706,9 +743,9 @@ export class PaginateQueryBuilder {
    * - sort: An array of tuples containing the field name and direction to sort by.
    * - filter: An object containing the filter conditions to apply.
    *
-   * @returns {Record<string, any>} A query object.
+   * @returns {PaginateQueryParams} A query object.
    * */
-  public build(): Record<string, any> {
+  public build(): PaginateQueryParams {
     const params: Record<string, any> = {};
 
     if (this.isValidValue(this.pageParam)) params.page = this.pageParam;
