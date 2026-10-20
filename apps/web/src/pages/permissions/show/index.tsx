@@ -16,13 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { useDataPermissionById } from '../queries'
 import { FORBIDDEN_ROLE_PERMISSION_KEYS } from '../schema'
@@ -40,15 +35,6 @@ export default function PagePermissionShow() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main>
         <div className='space-y-6'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -67,11 +53,11 @@ export default function PagePermissionShow() {
 
             <div className='flex flex-wrap items-center gap-2'>
               <Button onClick={() => navigate(-1)} variant='outline'>
-                <ArrowLeftIcon size={16} />
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
                 Back
               </Button>
               <Button onClick={() => navigate(`/permissions/${data.id}/edit`)}>
-                <Edit2Icon size={16} />
+                <Edit2Icon className='size-4' aria-hidden='true' />
                 Edit metadata
               </Button>
             </div>
@@ -81,7 +67,7 @@ export default function PagePermissionShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-md'>
-                  <ShieldCheckIcon className='size-5' />
+                  <ShieldCheckIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Name</p>
@@ -92,7 +78,7 @@ export default function PagePermissionShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-muted flex size-10 items-center justify-center rounded-md'>
-                  <LayersIcon className='size-5' />
+                  <LayersIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Group</p>
@@ -103,11 +89,11 @@ export default function PagePermissionShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-muted flex size-10 items-center justify-center rounded-md'>
-                  <KeyRoundIcon className='size-5' />
+                  <KeyRoundIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Updated</p>
-                  <p className='text-sm font-medium'>
+                  <p className='text-sm font-medium tabular-nums'>
                     {format(data.updatedAt, 'yyyy-MM-dd HH:mm')}
                   </p>
                 </div>

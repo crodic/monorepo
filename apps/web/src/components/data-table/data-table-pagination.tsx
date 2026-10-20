@@ -39,7 +39,7 @@ export function DataTablePagination<TData>({
       )}
       {...props}
     >
-      <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap'>
+      <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap tabular-nums'>
         {t('dataTable.pagination.selectedRows', {
           selected: table.getFilteredSelectedRowModel().rows.length,
           total: totalRows ?? table.getFilteredRowModel().rows.length,
@@ -68,7 +68,7 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
-        <div className='flex items-center justify-center text-sm font-medium'>
+        <div className='flex items-center justify-center text-sm font-medium tabular-nums'>
           {t('dataTable.pagination.pageOf', {
             current: table.getState().pagination.pageIndex + 1,
             total: table.getPageCount(),

@@ -1,48 +1,32 @@
-import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { AppBreadcrumb } from './app-breadcrumb'
 
 type HeaderProps = React.HTMLAttributes<HTMLElement> & {
   fixed?: boolean
   ref?: React.Ref<HTMLElement>
 }
 
-export function Header({ className, fixed, children, ...props }: HeaderProps) {
-  const [offset, setOffset] = useState(0)
-
-  useEffect(() => {
-    const onScroll = () => {
-      setOffset(document.body.scrollTop || document.documentElement.scrollTop)
-    }
-
-    // Add scroll listener to the body
-    document.addEventListener('scroll', onScroll, { passive: true })
-
-    // Clean up the event listener on unmount
-    return () => document.removeEventListener('scroll', onScroll)
-  }, [])
-
+export function Header({
+  className,
+  fixed = true,
+  children,
+  ...props
+}: HeaderProps) {
   return (
     <header
       className={cn(
-        'z-50 h-16',
+        'border-border/40 bg-background/80 z-40 h-16 w-full border-b backdrop-blur-md transition-colors',
         fixed && 'header-fixed peer/header sticky top-0 w-[inherit]',
-        offset > 10 && fixed ? 'shadow' : 'shadow-none',
         className
       )}
       {...props}
     >
-      <div
-        className={cn(
-          'relative flex h-full items-center gap-3 p-4 sm:gap-4',
-          offset > 10 &&
-            fixed &&
-            'after:bg-background/20 after:absolute after:inset-0 after:-z-10 after:backdrop-blur-lg'
-        )}
-      >
-        <SidebarTrigger variant='outline' className='max-md:scale-125' />
+      <div className='flex h-full items-center gap-3 px-4 sm:gap-4 sm:px-6'>
+        <SidebarTrigger variant='outline' className='max-md:scale-110' />
         <Separator orientation='vertical' className='h-6' />
+        <AppBreadcrumb />
         {children}
       </div>
     </header>

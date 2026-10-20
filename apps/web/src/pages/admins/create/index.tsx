@@ -24,16 +24,11 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ConfigDrawer } from '@/components/config-drawer'
 import AutoCompleteSelectControl from '@/components/forms/auto-complete-select-control'
 import { DatePickerForm } from '@/components/forms/date-picker-form'
 import { PhoneInput } from '@/components/forms/phone-input'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { PasswordInput } from '@/components/password-input'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { useDataRoleFormOptions } from '@/pages/roles/queries'
 import { apiCreateAdmin } from '../queries'
 import { type AdminCreateSchema, adminCreateSchema } from '../schema'
@@ -70,15 +65,6 @@ export function PageAdminCreate() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
@@ -96,11 +82,11 @@ export function PageAdminCreate() {
                     void navigate(-1)
                   }}
                 >
-                  <ArrowLeftIcon className='h-4 w-4' />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   {t('buttons.cancel')}
                 </Button>
                 <Button type='submit'>
-                  <SaveIcon className='h-4 w-4' />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   {t('buttons.save')}
                 </Button>
               </div>
@@ -291,11 +277,11 @@ export function PageAdminCreate() {
                     void navigate(-1)
                   }}
                 >
-                  <ArrowLeftIcon className='h-4 w-4' />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   {t('buttons.cancel')}
                 </Button>
                 <Button type='submit'>
-                  <SaveIcon className='h-4 w-4' />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   {t('buttons.save')}
                 </Button>
               </div>

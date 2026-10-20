@@ -79,7 +79,11 @@ export function SignInForm({
           )}
         />
         <Button className='mt-2' disabled={isPending}>
-          {isPending ? <Loader2 className='animate-spin' /> : <LogIn />}
+          {isPending ? (
+            <Loader2 className='size-4 animate-spin' aria-hidden='true' />
+          ) : (
+            <LogIn className='size-4' aria-hidden='true' />
+          )}
           {t('auth.signIn.messageSignIn')}
         </Button>
       </form>

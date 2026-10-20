@@ -40,11 +40,11 @@ export function FilesTableActionBar({
   return (
     <ActionBar open={rows.length > 0} onOpenChange={onOpenChange}>
       <ActionBarSelection>
-        <span className='font-medium'>{rows.length}</span>
+        <span className='font-medium tabular-nums'>{rows.length}</span>
         <span>selected</span>
         <ActionBarSeparator />
-        <ActionBarClose>
-          <X />
+        <ActionBarClose aria-label='Clear selection'>
+          <X aria-hidden='true' />
         </ActionBarClose>
       </ActionBarSelection>
       <ActionBarSeparator />
@@ -54,7 +54,7 @@ export function FilesTableActionBar({
             onClick={() => onBulkDownload(rows.map((row) => row.original))}
             disabled={disabled}
           >
-            <Download />
+            <Download aria-hidden='true' />
             Download
           </ActionBarItem>
         )}
@@ -63,7 +63,7 @@ export function FilesTableActionBar({
           onClick={() => onDelete(rows.map((row) => row.original))}
           disabled={disabled}
         >
-          <Trash2 />
+          <Trash2 aria-hidden='true' />
           Delete
         </ActionBarItem>
       </ActionBarGroup>

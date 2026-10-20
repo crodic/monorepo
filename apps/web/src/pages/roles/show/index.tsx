@@ -24,13 +24,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { apiDeleteRole, useDataRoleById } from '../queries'
 import { isProtectedRole } from '../schema'
@@ -136,14 +131,6 @@ export default function PageRoleShow() {
           isLoading={deleteRoleMutation.isPending}
         />
       )}
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
 
       <Main>
         <div className='space-y-6'>
@@ -167,7 +154,7 @@ export default function PageRoleShow() {
 
             <div className='flex flex-wrap items-center gap-2'>
               <Button onClick={() => navigate(-1)} variant='outline'>
-                <ArrowLeftIcon size={16} />
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
                 <span>{t('buttons.back')}</span>
               </Button>
               <Button
@@ -175,7 +162,7 @@ export default function PageRoleShow() {
                 variant='default'
                 disabled={isProtected}
               >
-                <Edit2Icon size={16} />
+                <Edit2Icon className='size-4' aria-hidden='true' />
                 <span>{t('buttons.edit')}</span>
               </Button>
               <Button
@@ -183,7 +170,7 @@ export default function PageRoleShow() {
                 onClick={() => setIsShowDeleteDialog(true)}
                 disabled={isProtected}
               >
-                <Trash2Icon size={16} />
+                <Trash2Icon className='size-4' aria-hidden='true' />
                 <span>{t('buttons.delete')}</span>
               </Button>
             </div>
@@ -193,18 +180,20 @@ export default function PageRoleShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-md'>
-                  <ShieldCheckIcon className='size-5' />
+                  <ShieldCheckIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Permissions</p>
-                  <p className='text-2xl font-semibold'>{permissionCount}</p>
+                  <p className='text-2xl font-semibold tabular-nums'>
+                    {permissionCount}
+                  </p>
                 </div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-muted flex size-10 items-center justify-center rounded-md'>
-                  <HashIcon className='size-5' />
+                  <HashIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Role ID</p>
@@ -215,11 +204,11 @@ export default function PageRoleShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-muted flex size-10 items-center justify-center rounded-md'>
-                  <CalendarClockIcon className='size-5' />
+                  <CalendarClockIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Created</p>
-                  <p className='text-sm font-medium'>
+                  <p className='text-sm font-medium tabular-nums'>
                     {format(data.createdAt, 'yyyy-MM-dd HH:mm')}
                   </p>
                 </div>
@@ -228,7 +217,7 @@ export default function PageRoleShow() {
             <Card>
               <CardContent className='flex items-center gap-3 p-4'>
                 <div className='bg-muted flex size-10 items-center justify-center rounded-md'>
-                  <LockKeyholeIcon className='size-5' />
+                  <LockKeyholeIcon className='size-5' aria-hidden='true' />
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Access type</p>
@@ -250,7 +239,9 @@ export default function PageRoleShow() {
                     review.
                   </CardDescription>
                 </div>
-                <Badge variant='secondary'>{permissionCount} permissions</Badge>
+                <Badge variant='secondary' className='tabular-nums'>
+                  {permissionCount} permissions
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>

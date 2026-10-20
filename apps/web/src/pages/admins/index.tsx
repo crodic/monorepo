@@ -8,15 +8,11 @@ import { sortParser } from '@/lib/utils'
 import { useDataTable } from '@/hooks/use-data-table'
 import useGetFilterParams from '@/hooks/use-get-filter-params'
 import { Button } from '@/components/ui/button'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
+import { PageHeader } from '@/components/layout/page-shell'
 import { useDataRoleFormOptions } from '../roles/queries'
 import { getAdminsTableColumns } from './columns'
 import { useDataAdminOverview } from './queries'
@@ -75,43 +71,26 @@ export function PageAdminOverview() {
   }
 
   return (
-    <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
-      <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>
-              {t('adminUsers.overview.title')}
-            </h2>
-            <p className='text-muted-foreground'>
-              {t('adminUsers.overview.description')}
-            </p>
-          </div>
-          <div>
-            <Button onClick={() => navigate('create')}>
-              <PlusIcon />
-              {t('buttons.create')}
-            </Button>
-          </div>
-        </div>
-        <DataTable
-          table={table}
-          onClickRowAction={handleRowClick}
-          isFetching={isFetching}
-        >
-          <DataTableToolbar table={table}>
-            <DataTableSortList table={table} />
-          </DataTableToolbar>
-        </DataTable>
-      </Main>
-    </>
+    <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
+      <PageHeader
+        title={t('adminUsers.overview.title')}
+        description={t('adminUsers.overview.description')}
+        actions={
+          <Button onClick={() => navigate('create')}>
+            <PlusIcon className='size-4' aria-hidden='true' />
+            {t('buttons.create')}
+          </Button>
+        }
+      />
+      <DataTable
+        table={table}
+        onClickRowAction={handleRowClick}
+        isFetching={isFetching}
+      >
+        <DataTableToolbar table={table}>
+          <DataTableSortList table={table} />
+        </DataTableToolbar>
+      </DataTable>
+    </Main>
   )
 }

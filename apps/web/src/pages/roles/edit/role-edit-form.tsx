@@ -111,7 +111,7 @@ export function RoleEditForm({ data }: { data: RoleSchema }) {
                 type='button'
                 onClick={() => navigate(-1)}
               >
-                <ArrowLeftIcon className='h-4 w-4' />
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
                 {t('buttons.cancel')}
               </Button>
               <Button
@@ -123,7 +123,7 @@ export function RoleEditForm({ data }: { data: RoleSchema }) {
                   permissionsQuery.isError
                 }
               >
-                <SaveIcon className='h-4 w-4' />
+                <SaveIcon className='size-4' aria-hidden='true' />
                 {t('buttons.save')}
               </Button>
             </div>

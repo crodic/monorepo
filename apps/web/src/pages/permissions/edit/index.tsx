@@ -24,13 +24,8 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { apiEditPermission, useDataPermissionEdit } from '../queries'
 import { permissionFormSchema, type PermissionFormSchema } from '../schema'
@@ -88,15 +83,6 @@ export function PagePermissionEdit() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
@@ -115,14 +101,14 @@ export function PagePermissionEdit() {
                   variant='outline'
                   onClick={() => navigate(-1)}
                 >
-                  <ArrowLeftIcon className='size-4' />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   Cancel
                 </Button>
                 <Button
                   type='submit'
                   disabled={editPermissionMutation.isPending}
                 >
-                  <SaveIcon className='size-4' />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   Save
                 </Button>
               </div>

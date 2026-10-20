@@ -80,11 +80,11 @@ export function UserEditForm({ data }: { data: UserSchema }) {
                   void navigate(-1)
                 }}
               >
-                <ArrowLeftIcon className='h-4 w-4' />
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
                 {t('buttons.cancel')}
               </Button>
               <Button type='submit'>
-                <SaveIcon className='h-4 w-4' />
+                <SaveIcon className='size-4' aria-hidden='true' />
                 {t('buttons.save')}
               </Button>
             </div>
@@ -152,11 +152,11 @@ export function UserEditForm({ data }: { data: UserSchema }) {
                   void navigate(-1)
                 }}
               >
-                <ArrowLeftIcon className='h-4 w-4' />
+                <ArrowLeftIcon className='size-4' aria-hidden='true' />
                 {t('buttons.cancel')}
               </Button>
               <Button type='submit'>
-                <SaveIcon className='h-4 w-4' />
+                <SaveIcon className='size-4' aria-hidden='true' />
                 {t('buttons.save')}
               </Button>
             </div>

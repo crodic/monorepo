@@ -25,7 +25,7 @@ export function SetupGuard() {
   // or maybe we should show an error page. Let's just proceed for now or show error.
   if (error) {
     return (
-      <div className='flex h-screen w-screen items-center justify-center'>
+      <div className='flex h-dvh w-dvw items-center justify-center'>
         <p className='text-destructive'>
           Failed to connect to server. Please try again later.
         </p>

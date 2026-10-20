@@ -7,15 +7,10 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Form } from '@/components/ui/form'
-import { ConfigDrawer } from '@/components/config-drawer'
 import CoverUploadField from '@/components/forms/cover-upload-field'
 import SortableImageUploadField from '@/components/forms/sortable-image-upload-field'
 import type { ExistingImage, ImagePayload } from '@/components/forms/types'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 
 const existingImageSchema = z.object({
   type: z.literal('existing'),
@@ -352,15 +347,6 @@ export function FormExamplesDemo() {
 export function PageFormExamples() {
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='space-y-6'>
         <FormExamplesDemo />
       </Main>

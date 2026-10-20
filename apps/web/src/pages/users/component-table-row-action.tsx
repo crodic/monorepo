@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Row } from '@tanstack/react-table'
 import { Edit2Icon, Trash2Icon } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -13,7 +12,7 @@ import { type UserSchema } from '../users/schema'
 export default function ComponentTableRowActions({
   row,
 }: {
-  row: Row<UserSchema>
+  row: { original: UserSchema }
 }) {
   const queryClient = useQueryClient()
   const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
@@ -39,7 +38,7 @@ export default function ComponentTableRowActions({
   }
 
   return (
-    <div>
+    <div className='flex items-center gap-1'>
       {isShowDeleteDialog && (
         <DeleteAlertDialog
           open={isShowDeleteDialog}
@@ -50,16 +49,17 @@ export default function ComponentTableRowActions({
       )}
 
       <Button variant='ghost' size='icon' asChild>
-        <Link to={`/users/${row.original.id}/edit`}>
-          <Edit2Icon size={16} className='text-primary' />
+        <Link to={`/users/${row.original.id}/edit`} aria-label='Edit user'>
+          <Edit2Icon className='text-primary size-4' aria-hidden='true' />
         </Link>
       </Button>
       <Button
         variant='ghost'
         size='icon'
+        aria-label='Delete user'
         onClick={() => setIsShowDeleteDialog(true)}
       >
-        <Trash2Icon size={16} className='text-destructive' />
+        <Trash2Icon className='text-destructive size-4' aria-hidden='true' />
       </Button>
     </div>
   )

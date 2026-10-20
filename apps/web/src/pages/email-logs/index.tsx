@@ -5,15 +5,10 @@ import { PaginateQueryBuilder } from '@/lib/query-builder'
 import { sortParser } from '@/lib/utils'
 import { useDataTable } from '@/hooks/use-data-table'
 import useGetFilterParams from '@/hooks/use-get-filter-params'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { getEmailTableColumns } from './columns'
 import { useDataEmailLogs } from './queries'
 import { ColumnKey, type EmailLogSchema } from './schema'
@@ -65,15 +60,6 @@ export function PageEmailLogOverview() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main fluid className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div>
           <h2 className='text-2xl font-bold tracking-tight'>Email Logs</h2>

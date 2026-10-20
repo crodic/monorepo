@@ -6,13 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DescriptionItem, Descriptions } from '@/components/common/descriptions'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { useDataEmailLogDetail } from '@/pages/email-logs/queries'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { EmailPreview } from './email-preview'
@@ -56,15 +51,6 @@ export default function PageEmailLogShow() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main>
         <div className='space-y-6'>
           <div className='flex items-center justify-between'>

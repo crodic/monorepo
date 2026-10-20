@@ -2,13 +2,8 @@ import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { CmsPageForm } from '../cms-page-form'
 import { apiUpdateCmsPage, useDataCmsPageById } from '../queries'
@@ -44,14 +39,6 @@ export function PageCmsPageEdit() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
       <Main fixed fluid className='h-[calc(100svh-4rem)] min-h-0 p-0'>
         <CmsPageForm
           initialData={data}

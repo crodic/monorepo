@@ -58,11 +58,7 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { WhiteLabelPreview } from '../components/white-label-preview'
 import {
   apiActivateWhiteLabel,
@@ -166,7 +162,7 @@ export default function PageWhiteLabelShow() {
 
   if (isLoading) {
     return (
-      <div className='flex h-screen items-center justify-center'>
+      <div className='flex h-dvh items-center justify-center'>
         <Loader2 className='text-primary size-8 animate-spin' />
       </div>
     )
@@ -191,15 +187,6 @@ export default function PageWhiteLabelShow() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='flex flex-1 flex-col gap-6'>
         {/* Top Header Bar */}
         <div className='flex flex-wrap items-center justify-between gap-4'>

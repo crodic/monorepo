@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -91,6 +92,9 @@ export function ResetPasswordForm({
           )}
         />
         <Button type='submit' disabled={isLoading} className='mt-2'>
+          {isLoading && (
+            <Loader2 className='mr-2 size-4 animate-spin' aria-hidden='true' />
+          )}
           {isLoading
             ? t('auth.resetPassword.buttonResetting')
             : t('auth.resetPassword.buttonReset')}

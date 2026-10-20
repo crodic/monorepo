@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   AlertDialog,
@@ -55,6 +56,12 @@ export function DeleteAlertDialog({
             onClick={handleDelete}
             disabled={isLoading}
           >
+            {isLoading && (
+              <Loader2
+                className='mr-2 size-4 animate-spin'
+                aria-hidden='true'
+              />
+            )}
             {t(confirmText as any) ?? t('buttons.delete')}
           </AlertDialogAction>
         </AlertDialogFooter>

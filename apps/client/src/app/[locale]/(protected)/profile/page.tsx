@@ -25,7 +25,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   setRequestLocale(locale);
 
   return (
-    <div className="bg-muted/20 flex min-h-screen flex-col">
+    <div className="bg-muted/20 flex min-h-dvh flex-col">
       <Header />
       <main className="flex-1 py-6 sm:py-10">
         <ProfileView />

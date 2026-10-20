@@ -17,12 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { useDataPermissionFormOptions } from '@/pages/permissions/queries'
 import { RolePermissionsField } from '../components/role-permissions-field'
 import { apiCreateRole } from '../queries'
@@ -77,14 +72,6 @@ export default function PageRoleCreate() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
       <Main>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
@@ -96,7 +83,7 @@ export default function PageRoleCreate() {
                   variant='outline'
                   onClick={() => navigate(-1)}
                 >
-                  <ArrowLeftIcon size={16} />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   {t('buttons.cancel')}
                 </Button>
                 <Button
@@ -107,7 +94,7 @@ export default function PageRoleCreate() {
                     permissionsQuery.isError
                   }
                 >
-                  <SaveIcon size={16} />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   {t('buttons.save')}
                 </Button>
               </div>

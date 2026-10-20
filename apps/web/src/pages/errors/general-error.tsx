@@ -29,13 +29,17 @@ export function GeneralError({
 
   const navigate = useNavigate()
   return (
-    <div className={cn('h-svh w-full', className)}>
+    <div className={cn('min-h-dvh w-full', className)}>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
         {!minimal && (
-          <h1 className='text-[7rem] leading-tight font-bold'>500</h1>
+          <h1 className='text-[7rem] leading-tight font-bold tabular-nums'>
+            500
+          </h1>
         )}
-        <span className='font-medium'>{t('errors.general.title')}</span>
-        <p className='text-muted-foreground text-center'>
+        <span className='font-medium text-balance'>
+          {t('errors.general.title')}
+        </span>
+        <p className='text-muted-foreground text-center text-pretty'>
           {t('errors.general.description')}
         </p>
         <p className='text-center text-red-600'>{errorMessage}</p>

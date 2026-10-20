@@ -1000,7 +1000,7 @@ export default function SortableImageUpload({
           role='dialog'
           aria-modal='true'
           aria-label={t('forms.sortableImage.preview')}
-          className='fixed inset-0 z-[100] flex items-center justify-center bg-black/95'
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/95'
           onClick={closeLightbox}
         >
           <Button

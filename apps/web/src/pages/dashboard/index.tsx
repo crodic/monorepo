@@ -25,12 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 
 type HealthIndicator = {
   status?: string
@@ -108,14 +103,6 @@ export function Dashboard() {
       </Helmet>
 
       {/* ===== Top Heading ===== */}
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
 
       {/* ===== Main ===== */}
       <Main className='flex flex-1 flex-col gap-6'>

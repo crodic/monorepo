@@ -313,8 +313,12 @@ export function getFilesTableColumns({
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon'>
-              <MoreHorizontal className='size-4' />
+            <Button
+              variant='ghost'
+              size='icon'
+              aria-label={i18n.t('files.table.actions', 'Actions')}
+            >
+              <MoreHorizontal className='size-4' aria-hidden='true' />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>

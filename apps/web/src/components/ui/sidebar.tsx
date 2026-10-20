@@ -263,6 +263,7 @@ function SidebarTrigger({
       data-slot='sidebar-trigger'
       variant='ghost'
       size='icon'
+      aria-label='Toggle Sidebar'
       className={cn('size-7', className)}
       onClick={(event) => {
         onClick?.(event)
@@ -270,7 +271,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PanelLeftIcon aria-hidden='true' />
       <span className='sr-only'>Toggle Sidebar</span>
     </Button>
   )

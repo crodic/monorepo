@@ -33,8 +33,8 @@ export default async function AuthLayout({
   const t = await getTranslations({ locale, namespace: "Auth.layout" });
 
   return (
-    <section className={cn("min-h-screen w-full")}>
-      <div className="grid min-h-screen lg:grid-cols-2">
+    <section className={cn("min-h-dvh w-full")}>
+      <div className="grid min-h-dvh lg:grid-cols-2">
         <div
           className={cn(
             "relative hidden flex-col justify-between overflow-hidden p-10 lg:flex",

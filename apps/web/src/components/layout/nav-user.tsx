@@ -51,9 +51,10 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size='lg'
+                aria-label='User profile menu'
                 className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
               >
-                <Avatar className='h-8 w-8 rounded-lg'>
+                <Avatar className='size-8 rounded-lg'>
                   <AvatarImage
                     src={data.avatar ?? undefined}
                     alt={data.fullName}
@@ -66,7 +67,7 @@ export function NavUser() {
                   </span>
                   <span className='truncate text-xs'>{data.email}</span>
                 </div>
-                <ChevronsUpDown className='ms-auto size-4' />
+                <ChevronsUpDown className='ms-auto size-4' aria-hidden='true' />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -77,7 +78,7 @@ export function NavUser() {
             >
               <DropdownMenuLabel className='p-0 font-normal'>
                 <div className='flex items-center gap-2 px-1 py-1.5 text-start text-sm'>
-                  <Avatar className='h-8 w-8 rounded-lg'>
+                  <Avatar className='size-8 rounded-lg'>
                     <AvatarImage
                       src={data.avatar ?? undefined}
                       alt={data.fullName}
@@ -101,19 +102,19 @@ export function NavUser() {
               <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                   <Link to='/settings/account'>
-                    <UserCheck />
+                    <UserCheck aria-hidden='true' />
                     {t('settings.account.title')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to='/settings/appearance'>
-                    <PaletteIcon />
+                    <PaletteIcon aria-hidden='true' />
                     {t('settings.appearance.title')}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to='/settings/password'>
-                    <Lock />
+                    <Lock aria-hidden='true' />
                     {t('settings.password.title')}
                   </Link>
                 </DropdownMenuItem>
@@ -125,7 +126,7 @@ export function NavUser() {
                 variant='destructive'
                 onClick={() => setOpen(true)}
               >
-                <LogOut />
+                <LogOut aria-hidden='true' />
                 {t('common.logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>

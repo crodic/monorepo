@@ -20,7 +20,7 @@ export function AuthLayout({ children, className }: AuthLayoutProps) {
   }, [isAuthenticated, navigate])
 
   return (
-    <div className='container grid h-svh max-w-none items-center justify-center'>
+    <div className='container grid min-h-dvh max-w-none items-center justify-center'>
       <div
         className={cn(
           'mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:w-120 sm:p-8',

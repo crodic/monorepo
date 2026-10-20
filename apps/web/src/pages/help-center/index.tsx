@@ -25,12 +25,7 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 
 const featuredTopics = [
   {
@@ -119,15 +114,6 @@ export function PageHelpCenter() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='space-y-8'>
         <section className='grid gap-6 lg:grid-cols-[1fr_360px] lg:items-stretch'>
           <div className='border-border/70 bg-card rounded-lg border p-6 sm:p-8'>

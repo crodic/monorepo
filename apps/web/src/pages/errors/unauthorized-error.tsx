@@ -7,11 +7,15 @@ export function UnauthorizedError() {
   const { t } = useTranslation()
 
   return (
-    <div className='h-svh'>
+    <div className='min-h-dvh'>
       <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
-        <h1 className='text-[7rem] leading-tight font-bold'>401</h1>
-        <span className='font-medium'>{t('errors.unauthorized.title')}</span>
-        <p className='text-muted-foreground text-center'>
+        <h1 className='text-[7rem] leading-tight font-bold tabular-nums'>
+          401
+        </h1>
+        <span className='font-medium text-balance'>
+          {t('errors.unauthorized.title')}
+        </span>
+        <p className='text-muted-foreground text-center text-pretty'>
           {t('errors.unauthorized.description')}
         </p>
         <div className='mt-6 flex gap-4'>

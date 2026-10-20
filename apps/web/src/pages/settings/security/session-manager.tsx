@@ -91,7 +91,10 @@ export function SessionManager() {
         <CardHeader className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
           <div className='space-y-1.5'>
             <CardTitle className='flex items-center gap-2'>
-              <KeyRoundIcon className='text-primary size-5' />
+              <KeyRoundIcon
+                className='text-primary size-5'
+                aria-hidden='true'
+              />
               {t('settings.security.sessionsTitle')}
             </CardTitle>
             <CardDescription>
@@ -104,7 +107,7 @@ export function SessionManager() {
             disabled={sessions.length === 0 || revokeAllMutation.isPending}
           >
             {revokeAllMutation.isPending && (
-              <Loader2Icon className='size-4 animate-spin' />
+              <Loader2Icon className='size-4 animate-spin' aria-hidden='true' />
             )}
             {t('settings.security.sessionsRevokeAll')}
           </Button>
@@ -230,8 +233,10 @@ function SessionRow({
           </div>
         </div>
       </TableCell>
-      <TableCell>{session.ipAddress || '-'}</TableCell>
-      <TableCell>
+      <TableCell className='font-mono tabular-nums'>
+        {session.ipAddress || '-'}
+      </TableCell>
+      <TableCell className='tabular-nums'>
         {formatDistanceToNow(new Date(session.createdAt), {
           addSuffix: true,
         })}
@@ -243,7 +248,7 @@ function SessionRow({
           onClick={onRevoke}
           disabled={isRevoking || session.isCurrent}
         >
-          <Trash2Icon className='size-4' />
+          <Trash2Icon className='size-4' aria-hidden='true' />
           {t('settings.security.sessionsRevoke')}
         </Button>
       </TableCell>
@@ -312,14 +317,18 @@ function detectDeviceName(ua: string, os: string) {
 }
 
 function DeviceIcon({ device }: { device: DeviceInfo }) {
-  if (device.kind === 'mobile') return <SmartphoneIcon className='size-4' />
-  if (device.kind === 'tablet') return <TabletIcon className='size-4' />
-  if (device.kind === 'desktop') return <LaptopIcon className='size-4' />
-  if (device.browser === 'Chrome') return <ChromeIcon className='size-4' />
+  if (device.kind === 'mobile')
+    return <SmartphoneIcon className='size-4' aria-hidden='true' />
+  if (device.kind === 'tablet')
+    return <TabletIcon className='size-4' aria-hidden='true' />
+  if (device.kind === 'desktop')
+    return <LaptopIcon className='size-4' aria-hidden='true' />
+  if (device.browser === 'Chrome')
+    return <ChromeIcon className='size-4' aria-hidden='true' />
 
   return device.os === 'Unknown OS' ? (
-    <Globe2Icon className='size-4' />
+    <Globe2Icon className='size-4' aria-hidden='true' />
   ) : (
-    <MonitorIcon className='size-4' />
+    <MonitorIcon className='size-4' aria-hidden='true' />
   )
 }

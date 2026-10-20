@@ -32,10 +32,15 @@ export function PasswordInput({
         size='icon'
         variant='ghost'
         disabled={disabled}
-        className='text-muted-foreground absolute end-1 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md'
+        aria-label={showPassword ? 'Hide password' : 'Show password'}
+        className='text-muted-foreground absolute end-1 top-1/2 size-6 -translate-y-1/2 rounded-md'
         onClick={() => setShowPassword((prev) => !prev)}
       >
-        {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+        {showPassword ? (
+          <Eye className='size-4' aria-hidden='true' />
+        ) : (
+          <EyeOff className='size-4' aria-hidden='true' />
+        )}
       </Button>
     </div>
   )

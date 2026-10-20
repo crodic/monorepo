@@ -190,6 +190,23 @@ const queryString = new RestQueryBuilder()
   - In `apps/web`, use `useTranslation()` from `react-i18next`.
 - **Image Optimization**: Always use Next.js `<Image />` from `next/image` in `apps/client` for WebP/AVIF responsive loading. Never use native `<img>` tags.
 - **Error Feedback**: Never swallow exceptions silently in empty catch blocks. Always inform users of API failures using **Sonner** toasts or inline form errors.
+- **UI Hygiene & Baseline Standards (via `baseline-ui`)**:
+  - **Layout & Viewport**: NEVER use `h-screen` (causes viewport jump on mobile browsers); always use `h-dvh` or `min-h-dvh`.
+  - **Sizing Tokens**: Use `size-*` for square elements instead of `w-* h-*` (e.g. `size-4`, `size-8`).
+  - **Fixed Z-Index Scale**: Always use standard Tailwind z-index tokens (`z-10`, `z-20`, `z-50`). Avoid arbitrary `z-[...]` values.
+  - **Destructive Actions**: ALWAYS prompt user confirmation via `AlertDialog` (or `DeleteAlertDialog`) before performing any irreversible or destructive action.
+  - **Typography Rules**:
+    - Use `text-balance` for headings and titles to avoid orphan words.
+    - Use `text-pretty` for long paragraphs and readable body copy.
+    - Use `tabular-nums` for numeric data, currencies, timers, and data table columns.
+- **Accessibility & Component Hygiene (via `fixing-accessibility`)**:
+  - **Accessible Names**: Every interactive control must have an accessible name. Icon-only buttons (`size="icon"`) MUST declare an `aria-label` or `aria-labelledby`.
+  - **Decorative Icons**: All visual/decorative icons accompanying text must include `aria-hidden="true"`.
+  - **Form Validation Linking**: Ensure error messages and descriptions are bound to inputs via `aria-describedby` and set `aria-invalid={true}` on error.
+- **Motion Performance (via `fixing-motion-performance`)**:
+  - Only animate compositor properties (`transform`, `opacity`). NEVER animate layout properties (`width`, `height`, `top`, `left`, `margin`, `padding`).
+  - Interaction feedback animation must not exceed 200ms.
+  - Respect `prefers-reduced-motion` for non-essential animations.
 
 ### Backend & API Rules
 

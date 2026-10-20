@@ -236,11 +236,11 @@ export function CmsPageForm({
                 type='button'
                 onClick={() => navigate(-1)}
               >
-                <ArrowLeftIcon className='mr-2 h-4 w-4' />
+                <ArrowLeftIcon className='mr-2 size-4' aria-hidden='true' />
                 {t('buttons.cancel')}
               </Button>
               <Button type='submit' disabled={isSubmitting}>
-                <SaveIcon className='mr-2 h-4 w-4' />
+                <SaveIcon className='mr-2 size-4' aria-hidden='true' />
                 {t('buttons.save')}
               </Button>
             </div>

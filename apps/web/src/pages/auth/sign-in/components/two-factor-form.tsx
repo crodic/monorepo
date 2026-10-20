@@ -177,7 +177,11 @@ export function TwoFactorForm({
         </Button>
 
         <Button disabled={isPending}>
-          {isPending ? <Loader2 className='animate-spin' /> : <ShieldCheck />}
+          {isPending ? (
+            <Loader2 className='size-4 animate-spin' aria-hidden='true' />
+          ) : (
+            <ShieldCheck className='size-4' aria-hidden='true' />
+          )}
           {t('auth.twoFactor.buttonVerify')}
         </Button>
 

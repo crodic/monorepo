@@ -32,13 +32,8 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { apiDeleteCmsPage, useDataCmsPageById } from '../queries'
 
@@ -91,14 +86,6 @@ export function PageCmsPageShow() {
         handleDelete={() => deleteMutation.mutate(id)}
         isLoading={deleteMutation.isPending}
       />
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         {/* Top Header */}
         <div className='flex flex-wrap items-end justify-between gap-3'>
@@ -135,26 +122,26 @@ export function PageCmsPageShow() {
             </Select>
 
             <Button variant='outline' onClick={() => navigate(-1)}>
-              <ArrowLeftIcon className='h-4 w-4' />
+              <ArrowLeftIcon className='size-4' aria-hidden='true' />
               {t('buttons.back', 'Back')}
             </Button>
 
             {translation?.slug && (
               <Button variant='outline' asChild>
                 <a href={displayUrl} target='_blank' rel='noreferrer'>
-                  <ExternalLinkIcon className='h-4 w-4' />
+                  <ExternalLinkIcon className='size-4' aria-hidden='true' />
                   {t('buttons.open', 'Open')}
                 </a>
               </Button>
             )}
 
             <Button onClick={() => navigate(`/cms-pages/${data.id}/edit`)}>
-              <EditIcon className='h-4 w-4' />
+              <EditIcon className='size-4' aria-hidden='true' />
               {t('buttons.edit', 'Edit')}
             </Button>
 
             <Button variant='destructive' onClick={() => setIsDeleteOpen(true)}>
-              <TrashIcon className='h-4 w-4' />
+              <TrashIcon className='size-4' aria-hidden='true' />
               {t('buttons.delete', 'Delete')}
             </Button>
           </div>

@@ -59,7 +59,7 @@ export default function OAuthCallback() {
   }, [queryClient, router, searchParams, t]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-6">
+    <div className="flex min-h-dvh items-center justify-center px-6">
       <p className="text-muted-foreground text-sm">{t("loading")}</p>
     </div>
   );

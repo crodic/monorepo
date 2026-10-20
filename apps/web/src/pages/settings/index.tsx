@@ -2,12 +2,7 @@ import { LockIcon, Palette, ShieldCheck, UserCog, Wrench } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { Separator } from '@/components/ui/separator'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { SidebarNav } from './components/sidebar-nav'
 
 const sidebarNavItems = [
@@ -43,14 +38,6 @@ export function Settings() {
   return (
     <>
       {/* ===== Top Heading ===== */}
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
 
       <Main>
         <div className='space-y-0.5'>

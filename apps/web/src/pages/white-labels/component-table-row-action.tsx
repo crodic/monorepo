@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Row } from '@tanstack/react-table'
 import {
   CopyIcon,
   Edit2Icon,
@@ -52,7 +51,7 @@ import type { WhiteLabelSchema } from './schema'
 export default function ComponentTableRowActions({
   row,
 }: {
-  row: Row<WhiteLabelSchema>
+  row: { original: WhiteLabelSchema }
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -178,8 +177,12 @@ export default function ComponentTableRowActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant='ghost' size='icon'>
-            <MoreHorizontalIcon className='size-4' />
+          <Button
+            variant='ghost'
+            size='icon'
+            aria-label={t('whiteLabels.actions.more', 'More actions')}
+          >
+            <MoreHorizontalIcon className='size-4' aria-hidden='true' />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>

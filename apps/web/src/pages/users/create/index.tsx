@@ -23,13 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { ConfigDrawer } from '@/components/config-drawer'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { PasswordInput } from '@/components/password-input'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { apiCreateUser } from '../queries'
 import { userCreateSchema, type UserCreateSchema } from '../schema'
 
@@ -61,15 +56,6 @@ export function PageUserCreate() {
 
   return (
     <>
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
@@ -87,11 +73,11 @@ export function PageUserCreate() {
                     void navigate(-1)
                   }}
                 >
-                  <ArrowLeftIcon className='h-4 w-4' />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   {t('buttons.cancel')}
                 </Button>
                 <Button type='submit'>
-                  <SaveIcon className='h-4 w-4' />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   {t('buttons.save')}
                 </Button>
               </div>
@@ -191,11 +177,11 @@ export function PageUserCreate() {
                     void navigate(-1)
                   }}
                 >
-                  <ArrowLeftIcon className='h-4 w-4' />
+                  <ArrowLeftIcon className='size-4' aria-hidden='true' />
                   {t('buttons.cancel')}
                 </Button>
                 <Button type='submit'>
-                  <SaveIcon className='h-4 w-4' />
+                  <SaveIcon className='size-4' aria-hidden='true' />
                   {t('buttons.save')}
                 </Button>
               </div>

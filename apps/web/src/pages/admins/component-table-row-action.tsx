@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { Row } from '@tanstack/react-table'
 import { Edit2Icon, Trash2Icon } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
@@ -15,7 +14,7 @@ import { type AdminSchema } from './schema'
 export default function ComponentTableRowActions({
   row,
 }: {
-  row: Row<AdminSchema>
+  row: { original: AdminSchema }
 }) {
   const { id } = useAuthStore()
   const queryClient = useQueryClient()
@@ -54,10 +53,12 @@ export default function ComponentTableRowActions({
       <Button variant='ghost' size='icon' asChild>
         <Link
           to={`/admins/${row.original.id}/edit`}
+          aria-label='Edit admin'
           className={cn({ 'pointer-events-none': row.original.id === id })}
         >
           <Edit2Icon
             size={16}
+            aria-hidden='true'
             className={
               row.original.id === id ? 'text-primary/50' : 'text-primary'
             }
@@ -67,10 +68,11 @@ export default function ComponentTableRowActions({
       <Button
         variant='ghost'
         size='icon'
+        aria-label='Delete admin'
         disabled={row.original.id === id}
         onClick={() => setIsShowDeleteDialog(true)}
       >
-        <Trash2Icon size={16} className='text-destructive' />
+        <Trash2Icon size={16} aria-hidden='true' className='text-destructive' />
       </Button>
     </div>
   )

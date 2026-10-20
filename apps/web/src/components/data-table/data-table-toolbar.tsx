@@ -93,7 +93,10 @@ function DataTableToolbarFilter<TData>({
     case 'text':
       return (
         <div className='relative'>
-          <SearchIcon className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+          <SearchIcon
+            className='text-muted-foreground absolute top-1/2 left-2 size-4 -translate-y-1/2'
+            aria-hidden='true'
+          />
           <Input
             placeholder={columnMeta.placeholder ?? columnMeta.label}
             value={(column.getFilterValue() as string) ?? ''}
@@ -104,10 +107,11 @@ function DataTableToolbarFilter<TData>({
             <Button
               variant='ghost'
               size='icon'
+              aria-label='Clear filter'
               onClick={() => column.setFilterValue('')}
-              className='absolute top-1/2 right-1 h-6 w-6 -translate-y-1/2'
+              className='absolute top-1/2 right-1 size-6 -translate-y-1/2'
             >
-              <X className='h-4 w-4' />
+              <X className='size-4' aria-hidden='true' />
             </Button>
           )}
         </div>
@@ -116,7 +120,10 @@ function DataTableToolbarFilter<TData>({
     case 'number':
       return (
         <div className='relative'>
-          <SearchIcon className='text-muted-foreground absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2' />
+          <SearchIcon
+            className='text-muted-foreground absolute top-1/2 left-2 size-4 -translate-y-1/2'
+            aria-hidden='true'
+          />
           <Input
             type='number'
             inputMode='numeric'

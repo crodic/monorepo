@@ -26,15 +26,10 @@ import { useDataTable } from '@/hooks/use-data-table'
 import useGetFilterParams from '@/hooks/use-get-filter-params'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
-import { ConfigDrawer } from '@/components/config-drawer'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { getFilesTableColumns } from './columns'
 import {
   DeleteFolderDialog,
@@ -381,15 +376,6 @@ export function PageFileOverview() {
         disabled={!ability.can('create', 'FILE')}
       />
 
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
-
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         {/* Top Header & Action Controls */}
         <div className='border-border/70 flex flex-wrap items-center justify-between gap-3 border-b pb-4'>
@@ -413,20 +399,22 @@ export function PageFileOverview() {
               <Button
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                 size='icon'
+                aria-label={t('files.view.grid', 'Grid view')}
                 className='size-7 rounded-md'
                 onClick={() => handleViewModeChange('grid')}
                 title={t('files.view.grid')}
               >
-                <LayoutGrid className='size-3.5' />
+                <LayoutGrid className='size-3.5' aria-hidden='true' />
               </Button>
               <Button
                 variant={viewMode === 'table' ? 'secondary' : 'ghost'}
                 size='icon'
+                aria-label={t('files.view.table', 'Table view')}
                 className='size-7 rounded-md'
                 onClick={() => handleViewModeChange('table')}
                 title={t('files.view.table')}
               >
-                <List className='size-3.5' />
+                <List className='size-3.5' aria-hidden='true' />
               </Button>
             </div>
 
@@ -434,6 +422,7 @@ export function PageFileOverview() {
             <Button
               variant={inspectorOpen ? 'secondary' : 'outline'}
               size='icon'
+              aria-label={t('files.inspector.title', 'File inspector')}
               className={cn(
                 'size-8',
                 inspectorOpen && 'border-primary/50 text-primary'
@@ -441,7 +430,7 @@ export function PageFileOverview() {
               onClick={() => setInspectorOpen((prev) => !prev)}
               title={t('files.inspector.title')}
             >
-              <PanelRight className='size-4' />
+              <PanelRight className='size-4' aria-hidden='true' />
             </Button>
 
             <Button

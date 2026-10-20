@@ -184,8 +184,13 @@ export function getCitiesTableColumns({
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='ghost' size='icon' className='size-8'>
-              <MoreHorizontalIcon className='size-4' />
+            <Button
+              variant='ghost'
+              size='icon'
+              className='size-8'
+              aria-label='Actions'
+            >
+              <MoreHorizontalIcon className='size-4' aria-hidden='true' />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>

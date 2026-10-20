@@ -62,7 +62,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
             disabled={disabled || isLoading}
           >
             {isLoading ? (
-              <Loader2 />
+              <Loader2 className='size-4 animate-spin' aria-hidden='true' />
             ) : (
               (t(confirmText as any) ?? t('buttons.confirm' as any))
             )}

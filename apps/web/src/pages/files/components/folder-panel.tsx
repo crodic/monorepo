@@ -149,7 +149,7 @@ export function FolderPanel({
           <span className='min-w-0 flex-1 truncate text-left'>
             {t('files.folders.all')}
           </span>
-          <span className='text-muted-foreground text-[11px] font-normal'>
+          <span className='text-muted-foreground text-[11px] font-normal tabular-nums'>
             {totalFiles}
           </span>
         </Button>
@@ -157,7 +157,10 @@ export function FolderPanel({
         {/* Search folders if count > 4 */}
         {folders.length > 4 && (
           <div className='relative my-0.5'>
-            <Search className='text-muted-foreground absolute top-2 left-2 size-3' />
+            <Search
+              className='text-muted-foreground absolute top-2 left-2 size-3'
+              aria-hidden='true'
+            />
             <Input
               value={folderFilter}
               onChange={(e) => setFolderFilter(e.target.value)}
@@ -187,11 +190,14 @@ export function FolderPanel({
                 title={folder.folder}
                 onClick={() => onSelect(folder.folder)}
               >
-                <Folder className='size-3.5 shrink-0 fill-amber-500/20 text-amber-500/80' />
+                <Folder
+                  className='size-3.5 shrink-0 fill-amber-500/20 text-amber-500/80'
+                  aria-hidden='true'
+                />
                 <span className='min-w-0 flex-1 truncate text-left'>
                   {displayName}
                 </span>
-                <span className='text-muted-foreground text-[11px] font-normal'>
+                <span className='text-muted-foreground text-[11px] font-normal tabular-nums'>
                   {folder.count}
                 </span>
               </Button>
@@ -204,8 +210,10 @@ export function FolderPanel({
       {selectedFolder && (
         <div className='border-border flex flex-col gap-2 border-t pt-2.5'>
           <div className='text-muted-foreground flex items-center justify-between px-1 text-[11px]'>
-            <span>{formatBytes(selectedFolder.size)}</span>
-            <span>{selectedFolder.count} files</span>
+            <span className='tabular-nums'>
+              {formatBytes(selectedFolder.size)}
+            </span>
+            <span className='tabular-nums'>{selectedFolder.count} files</span>
           </div>
           <div className='flex gap-1.5'>
             {canUpdate && (
@@ -215,7 +223,7 @@ export function FolderPanel({
                 className='h-7 flex-1 gap-1.5 text-xs'
                 onClick={onRename}
               >
-                <Pencil className='size-3' />
+                <Pencil className='size-3' aria-hidden='true' />
                 {t('buttons.edit')}
               </Button>
             )}
@@ -226,7 +234,7 @@ export function FolderPanel({
                 className='text-destructive hover:text-destructive hover:bg-destructive/10 h-7 flex-1 gap-1.5 text-xs'
                 onClick={onDelete}
               >
-                <Trash2 className='size-3' />
+                <Trash2 className='size-3' aria-hidden='true' />
                 {t('buttons.delete')}
               </Button>
             )}

@@ -11,13 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DescriptionItem, Descriptions } from '@/components/common/descriptions'
-import { ConfigDrawer } from '@/components/config-drawer'
 import DataLoader from '@/components/layout/data-loader'
-import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { Search } from '@/components/search'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { NotFoundError } from '@/pages/errors/not-found-error'
 import { apiDeleteUser, useDataGetUserDetail } from '../queries'
 
@@ -68,14 +63,6 @@ export function PageUserShow() {
           isLoading={deleteUserMutation.isPending}
         />
       )}
-      <Header fixed>
-        <div className='ms-auto flex items-center space-x-4'>
-          <Search />
-          <ThemeSwitch />
-          <ConfigDrawer />
-          <ProfileDropdown />
-        </div>
-      </Header>
 
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
         <div className='flex flex-wrap items-end justify-between gap-2'>
@@ -95,18 +82,18 @@ export function PageUserShow() {
                 void navigate(-1)
               }}
             >
-              <ArrowLeftIcon className='h-4 w-4' />
+              <ArrowLeftIcon className='size-4' aria-hidden='true' />
               {t('buttons.cancel')}
             </Button>
             <Button onClick={() => navigate(`/users/${data?.id}/edit`)}>
-              <EditIcon className='h-4 w-4' />
+              <EditIcon className='size-4' aria-hidden='true' />
               {t('buttons.edit')}
             </Button>
             <Button
               variant='destructive'
               onClick={() => setIsShowDeleteDialog(true)}
             >
-              <TrashIcon className='h-4 w-4' />
+              <TrashIcon className='size-4' aria-hidden='true' />
               {t('buttons.delete')}
             </Button>
           </div>
@@ -116,7 +103,7 @@ export function PageUserShow() {
           <Card className='h-max'>
             <CardContent>
               <div className='flex flex-col items-center gap-4'>
-                <Avatar className='inline-block h-24 w-24'>
+                <Avatar className='inline-block size-24'>
                   <AvatarFallback>CN</AvatarFallback>
                   <AvatarImage
                     src={data?.avatar ?? undefined}
