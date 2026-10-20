@@ -4,7 +4,10 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -51,13 +54,14 @@ export function CitiesTab() {
     [handleEdit, handleDelete]
   )
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    builder
-      .ilike('name', filter.name)
-      .in('stateCode', filter.stateCode || [])
-      .in('countryCode', filter.countryCode || [])
-      .ilike('code', filter.code)
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof cityFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('name', filter.name)
+        .in('stateCode', filter.stateCode || [])
+        .in('countryCode', filter.countryCode || [])
+        .ilike('code', filter.code)
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     CitySchema,

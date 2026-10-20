@@ -4,7 +4,10 @@ import { parseAsArrayOf, parseAsInteger, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { normalizeDate } from '@/lib/utils'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -33,15 +36,16 @@ export function PageUserOverview() {
 
   const columns = useMemo(() => getUsersTableColumns(), [])
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    const createdFrom = normalizeDate(filter.createdAt?.[0])
-    const createdTo = normalizeDate(filter.createdAt?.[1])
-    builder
-      .btw('createdAt', createdFrom, createdTo)
-      .ilike('email', filter.email)
-      .ilike('fullName', filter.fullName)
-      .eq('id', filter.id)
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof userFilterParsers> =
+    useCallback((builder, filter) => {
+      const createdFrom = normalizeDate(filter.createdAt?.[0])
+      const createdTo = normalizeDate(filter.createdAt?.[1])
+      builder
+        .btw('createdAt', createdFrom, createdTo)
+        .ilike('email', filter.email)
+        .ilike('fullName', filter.fullName)
+        .eq('id', filter.id)
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     UserSchema,

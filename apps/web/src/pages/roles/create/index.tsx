@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Main } from '@/components/layout/main'
 import { useDataPermissionFormOptions } from '@/pages/permissions/queries'
 import { RolePermissionsField } from '../components/role-permissions-field'
+import { validateAssignablePermissionIds } from '../permission-matrix.helper'
 import { apiCreateRole } from '../queries'
 import { roleFormSchema, type RoleFormSchema } from '../schema'
 
@@ -56,8 +57,9 @@ export default function PageRoleCreate() {
     )
 
     if (
-      values.permissionIds.some(
-        (permissionId) => !assignablePermissionIds.has(permissionId)
+      !validateAssignablePermissionIds(
+        values.permissionIds,
+        assignablePermissionIds
       )
     ) {
       form.setError('permissionIds', {

@@ -3,7 +3,10 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -31,12 +34,13 @@ export function PageAdminOverview() {
     [rolesData]
   )
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    builder
-      .ilike('email', filter.email)
-      .ilike('fullName', filter.fullName)
-      .in('roles.id', filter.role || [])
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof adminsFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('email', filter.email)
+        .ilike('fullName', filter.fullName)
+        .in('roles.id', filter.role || [])
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     AdminSchema,

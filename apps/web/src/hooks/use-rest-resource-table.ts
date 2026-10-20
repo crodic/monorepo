@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import type { ColumnDef, Row, Table } from '@tanstack/react-table'
+import type { ColumnDef, Row, Table, TableState } from '@tanstack/react-table'
+import type { ExtendedColumnSort } from '@/types/data-table'
 import type { SingleParser } from 'nuqs'
 import { RestQueryBuilder, type RestQueryParams } from '@/lib/query-builder'
 import { useDataTable } from '@/hooks/use-data-table'
@@ -8,6 +9,17 @@ import useGetFilterParams, {
 } from '@/hooks/use-get-filter-params'
 
 const DEFAULT_COLUMN_PINNING = { right: ['actions'] }
+
+export type RestResourceQueryBuilderFn<
+  TParsers extends Record<string, SingleParser<any>> = Record<
+    string,
+    SingleParser<any>
+  >,
+> = (
+  builder: RestQueryBuilder,
+  filter: InferParsers<TParsers>,
+  search?: string
+) => void
 
 export interface UseRestResourceTableOptions<
   TData,
@@ -19,11 +31,7 @@ export interface UseRestResourceTableOptions<
   columns: ColumnDef<TData, any>[]
   allowedSorts?: string[]
   filterParsers?: TParsers
-  buildQuery?: (
-    builder: RestQueryBuilder,
-    filter: InferParsers<TParsers>,
-    search?: string
-  ) => void
+  buildQuery?: RestResourceQueryBuilderFn<TParsers>
   queryHook: (params: RestQueryParams) => {
     data?: {
       data: TData[]
@@ -33,6 +41,9 @@ export interface UseRestResourceTableOptions<
     [key: string]: any
   }
   initialColumnPinning?: { left?: string[]; right?: string[] }
+  initialState?: Omit<Partial<TableState>, 'sorting'> & {
+    sorting?: ExtendedColumnSort<TData>[]
+  }
   getRowId?: (row: TData) => string
   enableRowSelection?: boolean | ((row: Row<TData>) => boolean)
   clearOnDefault?: boolean
@@ -70,6 +81,7 @@ export function useRestResourceTable<
   buildQuery,
   queryHook,
   initialColumnPinning = DEFAULT_COLUMN_PINNING,
+  initialState,
   getRowId = (row: any) => row.id,
   enableRowSelection,
   clearOnDefault,
@@ -117,6 +129,7 @@ export function useRestResourceTable<
     pageCount: totalPages,
     initialState: {
       columnPinning: initialColumnPinning,
+      ...initialState,
     },
     getRowId,
     enableRowSelection,

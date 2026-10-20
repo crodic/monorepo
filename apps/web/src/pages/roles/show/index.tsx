@@ -27,32 +27,14 @@ import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import DataLoader from '@/components/layout/data-loader'
 import { Main } from '@/components/layout/main'
 import { NotFoundError } from '@/pages/errors/not-found-error'
+import {
+  getFallbackPermissionDetails,
+  getPermissionAction,
+  groupPermissions,
+  isSuperAdminPermissions,
+} from '../permission-matrix.helper'
 import { apiDeleteRole, useDataRoleById } from '../queries'
 import { isProtectedRole } from '../schema'
-
-type RolePermissionDetail = {
-  id: string
-  key: string
-  name: string
-  group: string
-  description?: string | null
-}
-
-function getPermissionAction(permissionKey: string) {
-  return permissionKey.split(':')[0] ?? permissionKey
-}
-
-function getFallbackPermissionDetails(
-  permissions: string[]
-): RolePermissionDetail[] {
-  return permissions.map((permission) => ({
-    id: permission,
-    key: permission,
-    name: permission,
-    group: permission.split(':')[1] ?? 'Other',
-    description: null,
-  }))
-}
 
 export default function PageRoleShow() {
   const params = useParams()
@@ -91,12 +73,7 @@ export default function PageRoleShow() {
     }
   }
 
-  const isSuperAdmin = data?.permissions
-    .map((perm) => ({
-      action: perm.split(':')[0],
-      subject: perm.split(':')[1],
-    }))
-    .some((claim) => claim.subject === 'all' && claim.action === 'manage')
+  const isSuperAdmin = isSuperAdminPermissions(data?.permissions)
 
   if (isFetching) return <DataLoader />
 
@@ -110,15 +87,7 @@ export default function PageRoleShow() {
     data.permissionDetails.length > 0
       ? data.permissionDetails
       : getFallbackPermissionDetails(data.permissions)
-  const groupedPermissions = permissionDetails.reduce<
-    Record<string, RolePermissionDetail[]>
-  >((groups, permission) => {
-    const group = permission.group || 'Other'
-
-    groups[group] = [...(groups[group] ?? []), permission]
-
-    return groups
-  }, {})
+  const groupedPermissions = groupPermissions(permissionDetails)
   const permissionCount = permissionDetails.length
 
   return (

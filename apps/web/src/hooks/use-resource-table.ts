@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import type { ColumnDef, Row, Table } from '@tanstack/react-table'
+import type { ColumnDef, Row, Table, TableState } from '@tanstack/react-table'
+import type { ExtendedColumnSort } from '@/types/data-table'
 import type { SingleParser } from 'nuqs'
 import {
   PaginateQueryBuilder,
@@ -13,6 +14,17 @@ import useGetFilterParams, {
 
 const DEFAULT_COLUMN_PINNING = { right: ['actions'] }
 
+export type ResourceQueryBuilderFn<
+  TParsers extends Record<string, SingleParser<any>> = Record<
+    string,
+    SingleParser<any>
+  >,
+> = (
+  builder: PaginateQueryBuilder,
+  filter: InferParsers<TParsers>,
+  search?: string
+) => void
+
 export interface UseResourceTableOptions<
   TData,
   TParsers extends Record<string, SingleParser<any>> = Record<
@@ -23,11 +35,7 @@ export interface UseResourceTableOptions<
   columns: ColumnDef<TData, any>[]
   allowedSorts?: string[]
   filterParsers?: TParsers
-  buildQuery?: (
-    builder: PaginateQueryBuilder,
-    filter: InferParsers<TParsers>,
-    search?: string
-  ) => void
+  buildQuery?: ResourceQueryBuilderFn<TParsers>
   queryHook: (params: PaginateQueryParams) => {
     data?: {
       data: TData[]
@@ -37,6 +45,9 @@ export interface UseResourceTableOptions<
     [key: string]: any
   }
   initialColumnPinning?: { left?: string[]; right?: string[] }
+  initialState?: Omit<Partial<TableState>, 'sorting'> & {
+    sorting?: ExtendedColumnSort<TData>[]
+  }
   getRowId?: (row: TData) => string
   enableRowSelection?: boolean | ((row: Row<TData>) => boolean)
   clearOnDefault?: boolean
@@ -74,6 +85,7 @@ export function useResourceTable<
   buildQuery,
   queryHook,
   initialColumnPinning = DEFAULT_COLUMN_PINNING,
+  initialState,
   getRowId = (row: any) => row.id,
   enableRowSelection,
   clearOnDefault,
@@ -116,6 +128,7 @@ export function useResourceTable<
     pageCount: totalPages,
     initialState: {
       columnPinning: initialColumnPinning,
+      ...initialState,
     },
     getRowId,
     enableRowSelection,

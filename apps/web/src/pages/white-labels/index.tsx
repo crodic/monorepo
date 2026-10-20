@@ -4,7 +4,10 @@ import { parseAsBoolean, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { useAuthStore } from '@/stores/auth-store'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -28,13 +31,14 @@ export function PageWhiteLabelOverview() {
 
   const columns = useMemo(() => defaultColumns, [])
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    builder
-      .ilike('name', filter.name)
-      .ilike('slug', filter.slug)
-      .eq('target', filter.target)
-      .eq('isActive', filter.isActive)
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof whiteLabelFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('name', filter.name)
+        .ilike('slug', filter.slug)
+        .eq('target', filter.target)
+        .eq('isActive', filter.isActive)
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     WhiteLabelSchema,

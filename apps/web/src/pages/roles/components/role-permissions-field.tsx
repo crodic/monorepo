@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { SearchIcon, ShieldCheckIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -7,11 +7,13 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormItem } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import type { PermissionSchema } from '@/pages/permissions/schema'
 import {
-  isAssignableRolePermission,
-  type PermissionSchema,
-} from '@/pages/permissions/schema'
+  formatSubjectLabel,
+  getPermissionAction,
+} from '../permission-matrix.helper'
 import type { RoleFormSchema } from '../schema'
+import { usePermissionMatrix } from '../use-permission-matrix'
 
 interface RolePermissionsFieldProps {
   form: UseFormReturn<RoleFormSchema>
@@ -19,18 +21,6 @@ interface RolePermissionsFieldProps {
   disabled?: boolean
   isLoading?: boolean
   isError?: boolean
-}
-
-function getPermissionAction(permissionKey: string) {
-  return permissionKey.split(':')[0] ?? permissionKey
-}
-
-function getSubjectLabel(subject: string) {
-  return subject
-    .toLowerCase()
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 }
 
 export function RolePermissionsField({
@@ -41,43 +31,13 @@ export function RolePermissionsField({
   isError = false,
 }: RolePermissionsFieldProps) {
   const { t } = useTranslation()
-  const [searchValue, setSearchValue] = useState('')
   const watchedPermissionIds = form.watch('permissionIds')
   const selectedPermissionIds = useMemo(
     () => watchedPermissionIds ?? [],
     [watchedPermissionIds]
   )
 
-  const assignablePermissions = useMemo(
-    () =>
-      permissions.filter(isAssignableRolePermission).filter((permission) => {
-        const keyword = searchValue.trim().toLowerCase()
-
-        if (!keyword) return true
-
-        return [
-          permission.key,
-          permission.name,
-          permission.group,
-          permission.description,
-        ]
-          .filter(Boolean)
-          .some((value) => value?.toLowerCase().includes(keyword))
-      }),
-    [permissions, searchValue]
-  )
-
-  const assignablePermissionIds = useMemo(
-    () =>
-      new Set(
-        permissions
-          .filter(isAssignableRolePermission)
-          .map((permission) => permission.id)
-      ),
-    [permissions]
-  )
-
-  const setPermissionIds = useCallback(
+  const handlePermissionIdsChange = useCallback(
     (permissionIds: string[]) => {
       form.setValue('permissionIds', permissionIds, {
         shouldDirty: true,
@@ -88,87 +48,25 @@ export function RolePermissionsField({
     [form]
   )
 
-  useEffect(() => {
-    if (isLoading || isError || permissions.length === 0) {
-      return
-    }
-
-    const nextPermissionIds = selectedPermissionIds.filter((permissionId) =>
-      assignablePermissionIds.has(permissionId)
-    )
-
-    if (nextPermissionIds.length !== selectedPermissionIds.length) {
-      setPermissionIds(nextPermissionIds)
-    }
-  }, [
-    assignablePermissionIds,
-    isError,
-    isLoading,
-    permissions.length,
+  const {
+    searchValue,
+    setSearchValue,
+    assignablePermissions,
+    groupedPermissions,
+    selectedCount,
+    availableCount,
+    isGroupChecked,
+    isGroupIndeterminate,
+    isPermissionChecked,
+    toggleGroup,
+    togglePermission,
+  } = usePermissionMatrix({
+    permissions,
     selectedPermissionIds,
-    setPermissionIds,
-  ])
-
-  const groupedPermissions = useMemo(() => {
-    return assignablePermissions.reduce<Record<string, PermissionSchema[]>>(
-      (groups, permission) => {
-        const subject =
-          permission.group || permission.key.split(':')[1] || 'Other'
-
-        groups[subject] = [...(groups[subject] ?? []), permission]
-
-        return groups
-      },
-      {}
-    )
-  }, [assignablePermissions])
-
-  const handleGroupChange = (group: string, checked: boolean) => {
-    const groupPermissionIds =
-      groupedPermissions[group]?.map((permission) => permission.id) ?? []
-    const current = new Set(selectedPermissionIds)
-
-    groupPermissionIds.forEach((permissionId) => {
-      if (checked) {
-        current.add(permissionId)
-      } else {
-        current.delete(permissionId)
-      }
-    })
-
-    setPermissionIds(Array.from(current))
-  }
-
-  const handlePermissionChange = (permissionId: string, checked: boolean) => {
-    const current = new Set(selectedPermissionIds)
-
-    if (checked) {
-      current.add(permissionId)
-    } else {
-      current.delete(permissionId)
-    }
-
-    setPermissionIds(Array.from(current))
-  }
-
-  const isGroupChecked = (group: string) => {
-    const groupPermissionIds =
-      groupedPermissions[group]?.map((permission) => permission.id) ?? []
-
-    return (
-      groupPermissionIds.length > 0 &&
-      groupPermissionIds.every((permissionId) =>
-        selectedPermissionIds.includes(permissionId)
-      )
-    )
-  }
-
-  const selectedCount = selectedPermissionIds.length
-  const availableCount = assignablePermissionIds.size
-
-  const isPermissionChecked = (permissionId: string) => {
-    return selectedPermissionIds.includes(permissionId)
-  }
+    onPermissionIdsChange: handlePermissionIdsChange,
+    isLoading,
+    isError,
+  })
 
   return (
     <div className='col-span-3 space-y-2'>
@@ -245,15 +143,21 @@ export function RolePermissionsField({
                     <div className='bg-muted/40 flex items-center justify-between gap-3 border-b p-4'>
                       <FormItem className='flex items-center gap-3 space-y-0'>
                         <Checkbox
-                          checked={isGroupChecked(group)}
+                          checked={
+                            isGroupChecked(group)
+                              ? true
+                              : isGroupIndeterminate(group)
+                                ? 'indeterminate'
+                                : false
+                          }
                           onCheckedChange={(checked) =>
-                            handleGroupChange(group, Boolean(checked))
+                            toggleGroup(group, Boolean(checked))
                           }
                           disabled={disabled}
                         />
                         <div className='space-y-0.5'>
                           <label className='font-semibold'>
-                            {getSubjectLabel(group)}
+                            {formatSubjectLabel(group)}
                           </label>
                           <p className='text-muted-foreground text-xs'>
                             {groupSelectedCount}/{groupPermissions.length}{' '}
@@ -273,10 +177,7 @@ export function RolePermissionsField({
                           <Checkbox
                             checked={isPermissionChecked(permission.id)}
                             onCheckedChange={(checked) =>
-                              handlePermissionChange(
-                                permission.id,
-                                Boolean(checked)
-                              )
+                              togglePermission(permission.id, Boolean(checked))
                             }
                             disabled={disabled}
                             className='mt-1'
@@ -294,7 +195,7 @@ export function RolePermissionsField({
                               </Badge>
                             </div>
                             {permission.description && (
-                              <p className='text-muted-foreground text-sm leading-relaxed'>
+                              <p className='text-muted-foreground mt-1 text-sm leading-relaxed'>
                                 {permission.description}
                               </p>
                             )}

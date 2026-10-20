@@ -1,11 +1,11 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
@@ -26,28 +26,6 @@ export function PageActivityLogOverview() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<ActivityLogSchema, typeof activitiesFilterParsers>({
-    allowedSorts: [ColumnKey.entityId, ColumnKey.timestamp],
-    filterParsers: activitiesFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('entityId', filter.entityId)
-    .ilike('entity', filter.entity)
-    .ilike('description', filter.description)
-    .eq('userId', filter.userId)
-    .in('action', filter.action || [])
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataLogOverview(builder.build())
-
   const columns = useMemo(
     () =>
       getActivitiesTableColumns({
@@ -56,15 +34,26 @@ export function PageActivityLogOverview() {
     []
   )
 
-  const totalPages = data?.meta.totalPages ?? 0
+  const buildQuery: ResourceQueryBuilderFn<typeof activitiesFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('entityId', filter.entityId)
+        .ilike('entity', filter.entity)
+        .ilike('description', filter.description)
+        .eq('userId', filter.userId)
+        .in('action', filter.action || [])
+    }, [])
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns: columns,
-    pageCount: totalPages,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+  const { table, isFetching } = useResourceTable<
+    ActivityLogSchema,
+    typeof activitiesFilterParsers
+  >({
+    columns,
+    allowedSorts: [ColumnKey.entityId, ColumnKey.timestamp],
+    filterParsers: activitiesFilterParsers,
+    queryHook: useDataLogOverview,
+    buildQuery,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

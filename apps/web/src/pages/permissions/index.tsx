@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { parseAsString } from 'nuqs'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
@@ -20,34 +20,23 @@ const permissionFilterParsers = {
 
 export function PagePermissionOverview() {
   const navigate = useNavigate()
-
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<PermissionSchema, typeof permissionFilterParsers>({
-    allowedSorts: [ColumnKey.name, ColumnKey.group, ColumnKey.updatedAt],
-    filterParsers: permissionFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('name', filter.name)
-    .ilike('group', filter.group)
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataPermissionOverview(builder.build())
   const columns = useMemo(() => getPermissionsTableColumns(), [])
 
-  const { table } = useDataTable({
-    data: data?.data ?? [],
+  const buildQuery: ResourceQueryBuilderFn<typeof permissionFilterParsers> =
+    useCallback((builder, filter) => {
+      builder.ilike('name', filter.name).ilike('group', filter.group)
+    }, [])
+
+  const { table, isFetching } = useResourceTable<
+    PermissionSchema,
+    typeof permissionFilterParsers
+  >({
     columns,
-    pageCount: data?.meta.totalPages ?? 0,
-    initialState: {
-      columnPinning: { right: ['actions'] },
-    },
+    allowedSorts: [ColumnKey.name, ColumnKey.group, ColumnKey.updatedAt],
+    filterParsers: permissionFilterParsers,
+    queryHook: useDataPermissionOverview,
+    buildQuery,
+    initialColumnPinning: { right: ['actions'] },
     getRowId: (row) => row.id,
   })
 

@@ -4,7 +4,10 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -52,9 +55,10 @@ export function RegionsTab() {
     [handleEdit, handleDelete]
   )
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    builder.ilike('name', filter.name)
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof regionFilterParsers> =
+    useCallback((builder, filter) => {
+      builder.ilike('name', filter.name)
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     RegionSchema,

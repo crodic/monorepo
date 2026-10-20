@@ -27,6 +27,7 @@ import { Main } from '@/components/layout/main'
 import { useDataPermissionFormOptions } from '@/pages/permissions/queries'
 import { apiEditRole } from '@/pages/roles/queries'
 import { RolePermissionsField } from '../components/role-permissions-field'
+import { validateAssignablePermissionIds } from '../permission-matrix.helper'
 import {
   isProtectedRole,
   roleFormSchema,
@@ -79,8 +80,9 @@ export function RoleEditForm({ data }: { data: RoleSchema }) {
     )
 
     if (
-      values.permissionIds.some(
-        (permissionId) => !assignablePermissionIds.has(permissionId)
+      !validateAssignablePermissionIds(
+        values.permissionIds,
+        assignablePermissionIds
       )
     ) {
       form.setError('permissionIds', {

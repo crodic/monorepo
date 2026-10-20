@@ -3,7 +3,10 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { useResourceTable } from '@/hooks/use-resource-table'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -24,9 +27,10 @@ export function PageRoleOverview() {
 
   const columns = useMemo(() => getRolesTableColumns(), [])
 
-  const buildQuery = useCallback((builder: any, filter: any) => {
-    builder.ilike('name', filter.name)
-  }, [])
+  const buildQuery: ResourceQueryBuilderFn<typeof rolesFilterParsers> =
+    useCallback((builder, filter) => {
+      builder.ilike('name', filter.name)
+    }, [])
 
   const { table, isFetching } = useResourceTable<
     RoleSchema,

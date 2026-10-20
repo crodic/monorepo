@@ -1,12 +1,12 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
@@ -25,12 +25,21 @@ const pageFilterParsers = {
 export function PageCmsPageOverview() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<CmsPageSchema, typeof pageFilterParsers>({
+  const columns = useMemo(() => getCmsPagesTableColumns(), [])
+
+  const buildQuery: ResourceQueryBuilderFn<typeof pageFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('title', filter.title)
+        .ilike('slug', filter.slug)
+        .eq('status', filter.status)
+    }, [])
+
+  const { table, isFetching } = useResourceTable<
+    CmsPageSchema,
+    typeof pageFilterParsers
+  >({
+    columns,
     allowedSorts: [
       ColumnKey.title,
       ColumnKey.slug,
@@ -38,23 +47,8 @@ export function PageCmsPageOverview() {
       ColumnKey.updatedAt,
     ],
     filterParsers: pageFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('title', filter.title)
-    .ilike('slug', filter.slug)
-    .eq('status', filter.status)
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataCmsPageOverview(builder.build())
-  const columns = useMemo(() => getCmsPagesTableColumns(), [])
-
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns,
-    pageCount: data?.meta.totalPages ?? 0,
+    queryHook: useDataCmsPageOverview,
+    buildQuery,
     getRowId: (row) => row.id,
   })
 
@@ -80,7 +74,6 @@ export function PageCmsPageOverview() {
           isFetching={isFetching}
           onClickRowAction={(row) => {
             if (row.id.startsWith('group-')) {
-              // Optionally toggle expand here instead, or do nothing
               return
             }
             const actualId = row.id.startsWith('sub-')

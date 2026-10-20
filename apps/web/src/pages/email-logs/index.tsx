@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { parseAsArrayOf, parseAsString } from 'nuqs'
 import { useNavigate } from 'react-router'
-import { PaginateQueryBuilder } from '@/lib/query-builder'
-import { sortParser } from '@/lib/utils'
-import { useDataTable } from '@/hooks/use-data-table'
-import useGetFilterParams from '@/hooks/use-get-filter-params'
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from '@/hooks/use-resource-table'
 import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
@@ -21,12 +21,21 @@ const emailLogFilterParsers = {
 
 export function PageEmailLogOverview() {
   const navigate = useNavigate()
-  const {
-    page,
-    perPage,
-    sorting: sort,
-    filter,
-  } = useGetFilterParams<EmailLogSchema, typeof emailLogFilterParsers>({
+  const columns = useMemo(() => getEmailTableColumns(), [])
+
+  const buildQuery: ResourceQueryBuilderFn<typeof emailLogFilterParsers> =
+    useCallback((builder, filter) => {
+      builder
+        .ilike('subject', filter.subject)
+        .in('status', filter.status || [])
+        .in('source', filter.source || [])
+    }, [])
+
+  const { table, isFetching } = useResourceTable<
+    EmailLogSchema,
+    typeof emailLogFilterParsers
+  >({
+    columns,
     allowedSorts: [
       ColumnKey.createdAt,
       ColumnKey.scheduledAt,
@@ -34,24 +43,8 @@ export function PageEmailLogOverview() {
       ColumnKey.status,
     ],
     filterParsers: emailLogFilterParsers,
-  })
-
-  const builder = new PaginateQueryBuilder()
-    .page(page)
-    .limit(perPage)
-    .ilike('subject', filter.subject)
-    .in('status', filter.status || [])
-    .in('source', filter.source || [])
-    .applySorts(sortParser(sort))
-
-  const { data, isFetching } = useDataEmailLogs(builder.build())
-  const columns = useMemo(() => getEmailTableColumns(), [])
-  const totalPages = data?.meta.totalPages ?? 0
-
-  const { table } = useDataTable({
-    data: data?.data ?? [],
-    columns,
-    pageCount: totalPages,
+    queryHook: useDataEmailLogs,
+    buildQuery,
     initialState: {
       sorting: [{ id: ColumnKey.createdAt, desc: true }],
     },
