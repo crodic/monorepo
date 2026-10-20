@@ -213,6 +213,19 @@ Form đăng nhập đón nhận các mã này và hiển thị banner cảnh bá
 - Cung cấp 2 lựa chọn: **Thử Lại** (gọi `refetch()`) và **Đăng Xuất** (xóa session và về `/sign-in`).
 - Tuân thủ 100% tiêu chuẩn đa ngôn ngữ `react-i18next`.
 
+### 5.4. Permission & Role Matrix Core (`pages/roles/`)
+
+- **Domain Helpers (`permission-matrix.helper.ts`)**:
+  - `parsePermissionKey(key)`: Phân tích cú pháp chuỗi quyền `action:subject`.
+  - `getPermissionAction(key)`: Trích xuất action verb theo chuẩn CASL.
+  - `formatSubjectLabel(subject)`: Format định dạng Title Case (ví dụ `admin_user` -> `Admin User`).
+  - `isSuperAdminPermissions(permissions)`: Nhận diện quyền quản trị toàn hệ thống (`manage:all`).
+  - `groupPermissions(permissions)`: Nhóm danh sách quyền theo functional domain hoặc subject.
+  - `validateAssignablePermissionIds(selected, assignable)`: Xác thực payload khi submit form phân quyền.
+- **Matrix Hook (`use-permission-matrix.ts`)**:
+  - Đóng gói toàn bộ logic tìm kiếm, nhóm quyền, toggle theo nhóm/từng quyền, trạng thái `indeterminate` checkbox và auto-cleaning unassignable IDs.
+  - Sử dụng trong `RolePermissionsField` (rút gọn từ 320 xuống ~170 dòng) và `PageRoleShow`.
+
 ---
 
 ## 6. Lệnh Kiểm Thử & Kiểm Tra Sức Khỏe Toàn Bộ Ứng Dụng

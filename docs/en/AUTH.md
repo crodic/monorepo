@@ -213,6 +213,19 @@ The login form renders these codes through localized notifications (`useTranslat
 - Offers **Retry** (calls `refetch()` without wiping state) and **Sign Out** (resets session and navigates to `/sign-in`).
 - 100% compliant with `react-i18next` localization.
 
+### 5.4. Permission & Role Matrix Core (`pages/roles/`)
+
+- **Domain Helpers (`permission-matrix.helper.ts`)**:
+  - `parsePermissionKey(key)`: Formats and parses `action:subject` permission strings.
+  - `getPermissionAction(key)`: Extracts CASL action verb.
+  - `formatSubjectLabel(subject)`: Generates Title Case subject names (e.g., `admin_user` -> `Admin User`).
+  - `isSuperAdminPermissions(permissions)`: Evaluates full administrative access (`manage:all`).
+  - `groupPermissions(permissions)`: Groups capabilities by functional domain.
+  - `validateAssignablePermissionIds(selected, assignable)`: Validates form submission payloads.
+- **Matrix Hook (`use-permission-matrix.ts`)**:
+  - Centralizes search filtering, permission grouping, assignable capability gating, and indeterminate parent checkbox toggling.
+  - Used in `RolePermissionsField` (reduced from 320 to ~170 LOC) and `PageRoleShow`.
+
 ---
 
 ## 6. Verification & Health Checks

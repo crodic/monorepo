@@ -38,10 +38,24 @@ Hệ thống DataTable được chia thành 2 tầng rõ rệt: Tầng Pipeline 
 
 ### Cấu Trúc Khuyên Dùng Cho Trang Danh Sách
 
-Các trang quản trị tổng quan (`admins`, `users`, `roles`, `white-labels`,...) sử dụng `useResourceTable`:
+Các trang quản trị tổng quan (`admins`, `users`, `roles`, `white-labels`, `locations`, `permissions`, `activity-log`, `cms-pages`, `email-logs`,...) sử dụng `useResourceTable` cùng type helper `ResourceQueryBuilderFn`:
 
 ```tsx
+import {
+  useResourceTable,
+  type ResourceQueryBuilderFn,
+} from "@/hooks/use-resource-table";
+
 const columns = useMemo(() => getMyTableColumns(), []);
+
+const buildQuery: ResourceQueryBuilderFn<typeof myFilterParsers> = useCallback(
+  (builder, filter) => {
+    // builder có type PaginateQueryBuilder (đầy đủ gợi ý code .ilike, .eq, .in)
+    // filter có type InferParsers<typeof myFilterParsers> sạch sẽ, 0 any
+    builder.ilike("name", filter.name);
+  },
+  [],
+);
 
 const { table, isFetching } = useResourceTable<
   MySchema,
@@ -51,10 +65,11 @@ const { table, isFetching } = useResourceTable<
   allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
   filterParsers: myFilterParsers,
   queryHook: useDataMyOverview,
-  buildQuery: (builder, filter) => {
-    builder.ilike("name", filter.name);
-  },
+  buildQuery,
   initialColumnPinning: { right: ["actions"] },
+  initialState: {
+    sorting: [{ id: ColumnKey.createdAt, desc: true }],
+  },
   getRowId: (row) => row.id,
 });
 
@@ -67,20 +82,28 @@ return (
 );
 ```
 
-Đối với các endpoint chuẩn REST, chỉ cần đổi sang `useRestResourceTable`:
+Đối với các endpoint chuẩn REST, chỉ cần đổi sang `useRestResourceTable` và `RestResourceQueryBuilderFn`:
 
 ```tsx
+import {
+  useRestResourceTable,
+  type RestResourceQueryBuilderFn,
+} from "@/hooks/use-rest-resource-table";
+
+const buildQuery: RestResourceQueryBuilderFn<typeof myFilterParsers> =
+  useCallback((builder, filter) => {
+    builder.filterExact("status", filter.status);
+  }, []);
+
 const { table, isFetching } = useRestResourceTable<
   MySchema,
   typeof myFilterParsers
 >({
   columns,
-  allowedSorts: ["name", "createdAt"],
+  allowedSorts: [ColumnKey.name, ColumnKey.createdAt],
   filterParsers: myFilterParsers,
-  queryHook: useRestDataOverview,
-  buildQuery: (builder, filter) => {
-    builder.filterIlike("name", filter.name).include("roles");
-  },
+  queryHook: useDataMyRestOverview,
+  buildQuery,
   getRowId: (row) => row.id,
 });
 ```
