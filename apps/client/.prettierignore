@@ -1,0 +1,11 @@
+# Build and cache
+.next
+out
+build
+dist
+node_modules
+.turbo
+
+# Auto-generated types
+messages/*.d.json.ts
+next-env.d.ts
