@@ -1,0 +1,13 @@
+{
+  "healthchecks": {
+    "web": [
+      {
+        "type": "startup",
+        "name": "API readiness",
+        "path": "/health",
+        "port": 3000,
+        "attempts": 5
+      }
+    ]
+  }
+}
