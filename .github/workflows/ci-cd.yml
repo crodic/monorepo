@@ -238,7 +238,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=sha,prefix=sha-
+            type=sha,format=long,prefix=sha-
 
       - name: Extract web Docker metadata
         id: web-meta
@@ -248,7 +248,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=sha,prefix=sha-
+            type=sha,format=long,prefix=sha-
 
       - name: Extract client Docker metadata
         id: client-meta
@@ -258,7 +258,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=sha,prefix=sha-
+            type=sha,format=long,prefix=sha-
 
       - name: Build and push API image
         uses: docker/build-push-action@v6
