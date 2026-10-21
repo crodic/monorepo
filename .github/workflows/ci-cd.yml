@@ -295,3 +295,37 @@ jobs:
           labels: ${{ steps.client-meta.outputs.labels }}
           cache-from: type=gha,scope=client
           cache-to: type=gha,mode=max,scope=client
+
+  deploy:
+    name: Deploy to Dokku
+    runs-on: [self-hosted, linux, dokku]
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Configure Dokku SSH key
+        env:
+          DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DOKKU_SSH_PRIVATE_KEY" > ~/.ssh/dokku_deploy
+          chmod 600 ~/.ssh/dokku_deploy
+          ssh-keyscan -H 127.0.0.1 >> ~/.ssh/known_hosts
+
+      - name: Deploy API
+        run: >-
+          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
+          git:from-image crodic-api
+          ghcr.io/crodic/monorepo-api:sha-${GITHUB_SHA}
+
+      - name: Deploy admin
+        run: >-
+          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
+          git:from-image crodic-admin
+          ghcr.io/crodic/monorepo-web:sha-${GITHUB_SHA}
+
+      - name: Deploy client
+        run: >-
+          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
+          git:from-image crodic-client
+          ghcr.io/crodic/monorepo-client:sha-${GITHUB_SHA}
