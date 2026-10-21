@@ -33,6 +33,11 @@ Hệ thống DataTable được chia thành 2 tầng rõ rệt: Tầng Pipeline 
   - Điều khiển ẩn hiện cột qua `DataTableViewOptions`.
 - `DataTableSortList`
   - Cung cấp popover "Sắp xếp" hỗ trợ đa tiêu chí sắp xếp.
+- `DataTableExport` tại `apps/web/src/components/data-table/data-table-export.tsx`
+  - Component dropdown xuất dữ liệu client-side hiệu năng cao, hỗ trợ **CSV (Excel)** và **JSON**.
+  - 2 chế độ: **Export Selected** (dòng đã tick chọn) và **Export Filtered** (dữ liệu đang lọc trên bảng).
+  - Tự động tích hợp sẵn vào `DataTableToolbar` (có thể tắt qua `hideExport={true}`, đặt tên file tùy chỉnh qua `exportFilename="roles"`).
+  - Tích hợp chuẩn UTF-8 BOM (`\uFEFF`) chống lỗi font tiếng Việt khi mở trực tiếp bằng Excel.
 - `DataTableColumnHeader`
   - Component tiêu đề cột chuẩn được hầu hết các cột sử dụng.
 

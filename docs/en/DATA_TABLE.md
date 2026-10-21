@@ -33,6 +33,11 @@ The DataTable feature is split into high-level pipelines and low-level primitive
   - Includes column visibility controls through `DataTableViewOptions`.
 - `DataTableSortList`
   - Provides the “Sort” popover for multi-sort configuration.
+- `DataTableExport` in `apps/web/src/components/data-table/data-table-export.tsx`
+  - High-performance client-side data export dropdown supporting **CSV (Excel)** and **JSON**.
+  - Dual modes: **Export Selected** (only checked rows) and **Export Filtered** (all data matching active filters in view).
+  - Automatically embedded in `DataTableToolbar` (toggleable via `hideExport={true}`, custom filename with `exportFilename="roles"`).
+  - Encoded with UTF-8 BOM (`\uFEFF`) to prevent Excel character encoding issues with Vietnamese or international characters.
 - `DataTableColumnHeader`
   - Standard table header component used by most columns.
 

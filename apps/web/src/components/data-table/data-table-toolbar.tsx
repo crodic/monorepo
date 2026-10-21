@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DataTableDateFilter } from '@/components/data-table/data-table-date-filter'
+import { DataTableExport } from '@/components/data-table/data-table-export'
 import { DataTableFacetedFilter } from '@/components/data-table/data-table-faceted-filter'
 import { DataTableSliderFilter } from '@/components/data-table/data-table-slider-filter'
 import { DataTableViewOptions } from '@/components/data-table/data-table-view-options'
@@ -16,6 +17,8 @@ import { DataTableAsyncSelectFilter } from './data-table-async-select-filter'
 interface DataTableToolbarProps<TData> extends React.ComponentProps<'div'> {
   table: Table<TData>
   hideViewOptions?: boolean
+  hideExport?: boolean
+  exportFilename?: string
 }
 
 export function DataTableToolbar<TData>({
@@ -23,6 +26,8 @@ export function DataTableToolbar<TData>({
   children,
   className,
   hideViewOptions,
+  hideExport = false,
+  exportFilename,
   ...props
 }: DataTableToolbarProps<TData>) {
   const { t } = useTranslation()
@@ -70,6 +75,13 @@ export function DataTableToolbar<TData>({
       </div>
       <div className='flex items-center gap-2'>
         {children}
+        {!hideExport && (
+          <DataTableExport
+            table={table}
+            filename={exportFilename}
+            align='end'
+          />
+        )}
         {!hideViewOptions && <DataTableViewOptions table={table} align='end' />}
       </div>
     </div>
