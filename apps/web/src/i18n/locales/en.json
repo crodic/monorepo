@@ -16,6 +16,7 @@
   "navigation.management.whiteLabels": "White Label",
   "navigation.management.files": "Files",
   "navigation.management.locations": "Locations",
+  "navigation.management.apiEndpoints": "API Endpoints",
   "navigation.orders.title": "Orders",
   "navigation.other.title": "Other",
   "navigation.other.settings": "Settings",

@@ -38,22 +38,30 @@ import {
 export function NavGroup({ title, items, onlyDevMode }: NavGroupProps) {
   const { t } = useTranslation()
   const { state, isMobile } = useSidebar()
-  const { ability } = useAuthStore()
+  const { ability, permissions } = useAuthStore()
+  const isSuperAdmin = permissions.includes('manage:all')
   const { pathname: href } = useLocation()
 
   if (onlyDevMode && !import.meta.env.DEV) return null
 
+  const isItemAllowed = (i: {
+    permission?: any
+    requireSuperAdmin?: boolean
+  }) => {
+    if (i.requireSuperAdmin && !isSuperAdmin) return false
+    if (i.permission && !ability.can('read', i.permission)) return false
+    return true
+  }
+
   const filteredItems = items
     .map((item) => {
       if (item.items) {
-        const subItems = item.items.filter(
-          (sub) => !sub.permission || ability.can('read', sub.permission)
-        )
+        const subItems = item.items.filter((sub) => isItemAllowed(sub))
         if (subItems.length === 0) return null
         return { ...item, items: subItems }
       }
 
-      if (!item.permission || ability.can('read', item.permission)) return item
+      if (isItemAllowed(item)) return item
       return null
     })
     .filter(Boolean) as NavItem[]

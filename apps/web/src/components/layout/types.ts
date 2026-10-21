@@ -6,6 +6,7 @@ type BaseNavItem = {
   badge?: string
   icon?: React.ElementType
   permission?: Subjects
+  requireSuperAdmin?: boolean
 }
 
 type NavLink = BaseNavItem & {

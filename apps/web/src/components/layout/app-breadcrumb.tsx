@@ -24,6 +24,7 @@ const ROUTE_NAME_MAP: Record<string, string> = {
   'white-labels': 'navigation.management.whiteLabels',
   files: 'navigation.management.files',
   locations: 'navigation.management.locations',
+  'api-endpoints': 'navigation.management.apiEndpoints',
   'cms-pages': 'navigation.general.cmsPages',
   logs: 'navigation.general.activityLogs',
   'email-logs': 'navigation.general.emailLogs',

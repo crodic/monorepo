@@ -17,6 +17,11 @@ const PageActivityLogOverview = lazy(() =>
   }))
 )
 const PageActivityLogShow = lazy(() => import('@/pages/activity-log/show'))
+const PageApiEndpoints = lazy(() =>
+  import('@/pages/api-endpoints').then((m) => ({
+    default: m.PageApiEndpoints,
+  }))
+)
 const PageAdminOverview = lazy(() =>
   import('@/pages/admins').then((m) => ({ default: m.PageAdminOverview }))
 )
@@ -557,6 +562,14 @@ const appRoutes: RouteObject[] = [
             ),
           },
         ],
+      },
+      {
+        path: 'api-endpoints',
+        element: (
+          <RouteAuthorize requireSuperAdmin>
+            <PageApiEndpoints />
+          </RouteAuthorize>
+        ),
       },
 
       {

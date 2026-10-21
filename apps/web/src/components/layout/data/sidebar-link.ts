@@ -13,6 +13,7 @@ import {
   FlaskConicalIcon,
   BookOpenText,
   MapPin,
+  Zap,
 } from 'lucide-react'
 import { type SidebarData } from '../types'
 
@@ -96,6 +97,12 @@ export const sidebarLink: SidebarData = {
           url: '/locations',
           icon: MapPin,
           permission: 'LOCATION',
+        },
+        {
+          title: 'navigation.management.apiEndpoints',
+          url: '/api-endpoints',
+          icon: Zap,
+          requireSuperAdmin: true,
         },
       ],
     },
