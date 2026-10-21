@@ -604,7 +604,6 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                   </SelectItem>
                   {folders.map((f) => {
                     const depth = f.depth ?? f.folder.split('/').length - 1
-                    const indent = '—'.repeat(depth)
                     const displayName =
                       f.name ?? f.folder.split('/').pop() ?? f.folder
                     return (
@@ -612,9 +611,10 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                         key={f.folder}
                         value={f.folder}
                         className='text-xs'
+                        style={{ paddingLeft: `${8 + depth * 12}px` }}
+                        title={f.folder}
                       >
-                        📁 {indent ? `${indent} ` : ''}
-                        {displayName}
+                        📁 {displayName}
                       </SelectItem>
                     )
                   })}
