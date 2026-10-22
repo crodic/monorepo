@@ -447,8 +447,8 @@ export function useFileManagerCore() {
   }, [])
 
   const handleCreateFolder = useCallback(
-    async (folderName: string) => {
-      const created = await apiCreateFolder({ folder: folderName })
+    async (folderName: string, color?: string) => {
+      const created = await apiCreateFolder({ folder: folderName, color })
       setLocalFolders((current) => [
         ...current.filter((item) => item.folder !== created.folder),
         created,
@@ -459,12 +459,12 @@ export function useFileManagerCore() {
   )
 
   const handleRenameFolder = useCallback(
-    async (newFolderName: string) => {
+    async (newFolderName: string, color?: string) => {
       const target = folderToRename ?? activeFolder
       if (!target) return
       const renamed = await apiRenameFolder({
         folder: target,
-        data: { folder: newFolderName },
+        data: { folder: newFolderName, color },
       })
       handleFolderSelect(renamed.folder)
       setFolderToRename(null)

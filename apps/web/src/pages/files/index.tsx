@@ -329,6 +329,10 @@ export function PageFileOverview() {
         title={t('files.folders.renameTitle')}
         submitLabel={t('buttons.save')}
         defaultValue={folderToRename ?? activeFolder ?? ''}
+        defaultColor={
+          folders.find((f) => f.folder === (folderToRename ?? activeFolder))
+            ?.color ?? '#8B5CF6'
+        }
         existingFolders={folders.map((item) => item.folder)}
         onOpenChange={(open) => {
           setRenameFolderOpen(open)

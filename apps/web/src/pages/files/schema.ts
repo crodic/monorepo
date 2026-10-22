@@ -71,6 +71,7 @@ export const updateFileSchema = z.object({
 
 export const createFolderSchema = z.object({
   folder: folderNameSchema,
+  color: z.string().max(20).optional(),
 })
 
 export function isValidFolderName(folder: string) {
