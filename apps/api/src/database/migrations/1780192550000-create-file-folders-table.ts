@@ -9,6 +9,7 @@ export class CreateFileFoldersTable1780192550000 implements MigrationInterface {
         "id" BIGSERIAL NOT NULL,
         "name" character varying(255) NOT NULL,
         "title" character varying(255),
+        "color" character varying(20) NOT NULL DEFAULT '#8B5CF6',
         "parent_id" bigint,
         "depth" integer NOT NULL DEFAULT 0,
         "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),

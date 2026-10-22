@@ -40,6 +40,7 @@ export interface FilesSubSidebarProps {
   activeFolder: string | null
   totalFiles: number
   starredCount: number
+  trashCount?: number
   onSelectFolder: (folder: string | null) => void
   onUploadClick: () => void
   onCreateFolderClick: () => void
@@ -58,6 +59,7 @@ export function FilesSubSidebar({
   activeFolder,
   totalFiles,
   starredCount,
+  trashCount,
   onSelectFolder,
   onUploadClick,
   onCreateFolderClick,
@@ -202,6 +204,14 @@ export function FilesSubSidebar({
           <span className='min-w-0 flex-1 truncate text-left'>
             {t('files.nav.trash', 'Trash')}
           </span>
+          {typeof trashCount === 'number' && trashCount > 0 && (
+            <Badge
+              variant='secondary'
+              className='text-destructive h-5 px-1.5 py-0 text-[10px] font-medium'
+            >
+              {trashCount}
+            </Badge>
+          )}
         </Button>
       </div>
 

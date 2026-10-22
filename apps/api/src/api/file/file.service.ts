@@ -1,3 +1,4 @@
+import { AutoIncrementID } from '../../common/types/common.type';
 import { StorageDisk } from '../../filesystem/config/storage-config.type';
 import { StorageDriver } from '../../filesystem/drivers/storage-driver.interface';
 import { FilesystemService } from '../../filesystem/filesystem.service';
@@ -8,10 +9,9 @@ import {
 } from '../../utils/filesystem';
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -24,7 +24,7 @@ import {
 } from 'nestjs-paginate';
 import { posix as posixPath } from 'path';
 import sharp from 'sharp';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   FILE_UPLOAD_MAX_SIZE,
@@ -147,7 +147,30 @@ export class FileService {
   }
 
   async findAll(query: PaginateQuery): Promise<Paginated<FileResDto>> {
-    const queryBuilder = this.fileRepository.createQueryBuilder('file');
+    const queryBuilder = this.fileRepository
+      .createQueryBuilder('file')
+      .leftJoinAndSelect('file.createdByAdmin', 'createdByAdmin')
+      .leftJoinAndSelect('file.updatedByAdmin', 'updatedByAdmin');
+
+    const rawStatus =
+      typeof query.filter?.status === 'string'
+        ? query.filter.status.replace(/^\$[a-z]+:/, '')
+        : query.filter?.status;
+
+    const isTrash =
+      rawStatus === 'trash' ||
+      rawStatus === 'archived' ||
+      query.filter?.is_trash === 'true' ||
+      query.filter?.trash === 'true';
+
+    if (isTrash) {
+      queryBuilder.withDeleted().andWhere('file.deleted_at IS NOT NULL');
+      if (query.filter) {
+        delete query.filter.status;
+        delete query.filter.is_trash;
+        delete query.filter.trash;
+      }
+    }
 
     const result = await paginate(query, queryBuilder, {
       sortableColumns: [
@@ -164,6 +187,7 @@ export class FileService {
         'is_starred',
         'createdAt',
         'updatedAt',
+        'deletedAt',
       ],
       searchableColumns: [
         'public_id',
@@ -185,6 +209,7 @@ export class FileService {
         status: [FilterOperator.EQ, FilterOperator.IN],
         is_starred: [FilterOperator.EQ],
         createdAt: [FilterOperator.GTE, FilterOperator.LTE, FilterOperator.BTW],
+        deletedAt: [FilterOperator.GTE, FilterOperator.LTE, FilterOperator.BTW],
       },
     });
 
@@ -195,17 +220,37 @@ export class FileService {
   }
 
   async findOne(publicId: string): Promise<FileResDto> {
-    const file = await this.fileRepository.findOneByOrFail({
-      public_id: publicId,
+    const file = await this.fileRepository.findOne({
+      where: { public_id: publicId },
+      relations: ['createdByAdmin', 'updatedByAdmin'],
+      withDeleted: true,
     });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
 
     return this.toDto(file);
   }
 
-  async update(publicId: string, dto: UpdateFileDto): Promise<FileResDto> {
-    const file = await this.fileRepository.findOneByOrFail({
-      public_id: publicId,
+  async update(
+    publicId: string,
+    dto: UpdateFileDto,
+    adminId?: AutoIncrementID,
+  ): Promise<FileResDto> {
+    const file = await this.fileRepository.findOne({
+      where: { public_id: publicId },
+      relations: ['createdByAdmin', 'updatedByAdmin'],
+      withDeleted: true,
     });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    if (adminId) {
+      file.updatedByAdminId = adminId;
+    }
 
     if (dto.folder !== undefined) {
       const normalizedFolder = this.fileFolderService.normalizeFolder(
@@ -270,8 +315,7 @@ export class FileService {
     }
 
     const saved = await this.fileRepository.save(file);
-
-    return this.toDto(saved);
+    return this.findOne(saved.public_id);
   }
 
   async upload(
@@ -279,9 +323,10 @@ export class FileService {
     folder?: string,
     disk?: string,
     visibility?: 'public' | 'private',
+    adminId?: AutoIncrementID,
   ) {
     if (!file) {
-      throw new HttpException('File not provided', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('File not provided');
     }
 
     this.fileValidator.validateFile(file, {
@@ -321,15 +366,69 @@ export class FileService {
       size: file.size,
       resourceType,
       buffer: file.buffer,
+      createdByAdminId: adminId,
+      updatedByAdminId: adminId,
     });
 
-    return this.toDto(media);
+    const reloaded = await this.fileRepository.findOne({
+      where: { public_id: media.public_id },
+      relations: ['createdByAdmin', 'updatedByAdmin'],
+      withDeleted: true,
+    });
+
+    return this.toDto(reloaded || media);
   }
 
-  async delete(publicId: string): Promise<{ message: string }> {
+  async delete(
+    publicId: string,
+    adminId?: AutoIncrementID,
+  ): Promise<{ message: string }> {
+    return this.softDelete(publicId, adminId);
+  }
+
+  async softDelete(
+    publicId: string,
+    adminId?: AutoIncrementID,
+  ): Promise<{ message: string }> {
     const file = await this.fileRepository.findOneByOrFail({
       public_id: publicId,
     });
+
+    if (adminId) {
+      file.updatedByAdminId = adminId;
+      await this.fileRepository.save(file);
+    }
+
+    await this.fileRepository.softDelete({ public_id: publicId });
+
+    return {
+      message: 'File moved to trash successfully',
+    };
+  }
+
+  async restore(
+    publicId: string,
+    adminId?: AutoIncrementID,
+  ): Promise<FileResDto> {
+    await this.fileRepository.restore({ public_id: publicId });
+    if (adminId) {
+      await this.fileRepository.update(
+        { public_id: publicId },
+        { updatedByAdminId: adminId },
+      );
+    }
+    return this.findOne(publicId);
+  }
+
+  async permanentDelete(publicId: string): Promise<{ message: string }> {
+    const file = await this.fileRepository.findOne({
+      where: { public_id: publicId },
+      withDeleted: true,
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
+    }
 
     await this.deleteStoredFileIfExists(file);
 
@@ -343,8 +442,62 @@ export class FileService {
     await this.fileRepository.delete({ public_id: publicId });
 
     return {
-      message: 'Successfully deleted',
+      message: 'File permanently deleted',
     };
+  }
+
+  async bulkSoftDelete(
+    publicIds: string[],
+    adminId?: AutoIncrementID,
+  ): Promise<{ count: number; message: string }> {
+    if (!publicIds.length) return { count: 0, message: 'No files provided' };
+    if (adminId) {
+      await this.fileRepository.update(
+        { public_id: In(publicIds) },
+        { updatedByAdminId: adminId },
+      );
+    }
+    await this.fileRepository.softDelete({ public_id: In(publicIds) });
+    return {
+      count: publicIds.length,
+      message: 'Files moved to trash successfully',
+    };
+  }
+
+  async bulkRestore(
+    publicIds: string[],
+    adminId?: AutoIncrementID,
+  ): Promise<{ count: number; message: string }> {
+    if (!publicIds.length) return { count: 0, message: 'No files provided' };
+    await this.fileRepository.restore({ public_id: In(publicIds) });
+    if (adminId) {
+      await this.fileRepository.update(
+        { public_id: In(publicIds) },
+        { updatedByAdminId: adminId },
+      );
+    }
+    return { count: publicIds.length, message: 'Files restored successfully' };
+  }
+
+  async bulkPermanentDelete(
+    publicIds: string[],
+  ): Promise<{ count: number; message: string }> {
+    if (!publicIds.length) return { count: 0, message: 'No files provided' };
+    const files = await this.fileRepository.find({
+      where: { public_id: In(publicIds) },
+      withDeleted: true,
+    });
+    for (const file of files) {
+      await this.deleteStoredFileIfExists(file);
+      try {
+        const disk = this.diskForFile(file);
+        await disk.deleteDirectory(`.cache/transforms/${file.public_id}`);
+      } catch {
+        // ignore
+      }
+    }
+    await this.fileRepository.delete({ public_id: In(publicIds) });
+    return { count: publicIds.length, message: 'Files permanently deleted' };
   }
 
   async getTemporaryUrl(
@@ -505,6 +658,8 @@ export class FileService {
     resourceType,
     buffer,
     metadataPath,
+    createdByAdminId,
+    updatedByAdminId,
   }: {
     publicId: string;
     folder: string | null;
@@ -517,6 +672,8 @@ export class FileService {
     resourceType: string;
     buffer?: Buffer;
     metadataPath?: string;
+    createdByAdminId?: AutoIncrementID | null;
+    updatedByAdminId?: AutoIncrementID | null;
   }): Promise<FileEntity> {
     let width: number | null = null;
     let height: number | null = null;
@@ -554,6 +711,8 @@ export class FileService {
       duration: null,
       resource_type: resourceType,
       status: 'active',
+      createdByAdminId,
+      updatedByAdminId,
     });
 
     return this.fileRepository.save(media);

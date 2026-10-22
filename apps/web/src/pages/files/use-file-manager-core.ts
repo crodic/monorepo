@@ -23,12 +23,17 @@ import {
   apiDeleteFile,
   apiDeleteFiles,
   apiDeleteFolder,
+  apiPermanentDeleteFile,
+  apiPermanentDeleteFiles,
   apiRenameFolder,
+  apiRestoreFile,
+  apiRestoreFiles,
   apiUpdateFile,
   fileQueryKeys,
   useDataFileFolders,
   useDataFileOverview,
   useDataFileStarredCount,
+  useDataFileTrashCount,
   useInfiniteDataFileOverview,
 } from './queries'
 import { ColumnKey, type FileSchema, type FolderSchema } from './schema'
@@ -66,6 +71,7 @@ export function useFileManagerCore() {
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const { data: starredCount = 0 } = useDataFileStarredCount()
+  const { data: trashCount = 0 } = useDataFileTrashCount()
 
   useEffect(() => {
     const saved = window.localStorage.getItem('file-manager:view-mode')
@@ -97,7 +103,12 @@ export function useFileManagerCore() {
   const [renamingFile, setRenamingFile] = useState<FileSchema | null>(null)
   const [sharingFile, setSharingFile] = useState<FileSchema | null>(null)
   const [deletingFile, setDeletingFile] = useState<FileSchema | null>(null)
+  const [permanentDeletingFile, setPermanentDeletingFile] =
+    useState<FileSchema | null>(null)
   const [bulkDeletingFiles, setBulkDeletingFiles] = useState<FileSchema[]>([])
+  const [bulkPermanentDeletingFiles, setBulkPermanentDeletingFiles] = useState<
+    FileSchema[]
+  >([])
   const [deletingFolder, setDeletingFolder] = useState<string | null>(null)
   const [deleteFolderFiles, setDeleteFolderFiles] = useState(false)
 
@@ -140,7 +151,7 @@ export function useFileManagerCore() {
 
     // Handle view-specific filtering/sorting
     if (activeView === 'trash') {
-      builder.eq('status', 'archived')
+      builder.eq('status', 'trash')
     } else {
       if (filter.status) {
         builder.eq('status', filter.status)
@@ -261,6 +272,7 @@ export function useFileManagerCore() {
     },
     onError: (error) => restApiErrorHandler(error as never),
   })
+  const { mutate: toggleStarMutate } = toggleStarMutation
 
   const isStarred = useCallback(
     (publicId?: string | null) => {
@@ -276,12 +288,12 @@ export function useFileManagerCore() {
     (publicId: string) => {
       const found = currentFiles.find((f) => f.public_id === publicId)
       const currentVal = Boolean(found?.is_starred)
-      toggleStarMutation.mutate({
+      toggleStarMutate({
         publicId,
         is_starred: !currentVal,
       })
     },
-    [currentFiles, toggleStarMutation]
+    [currentFiles, toggleStarMutate]
   )
 
   // --- Inspect Handler ---
@@ -289,6 +301,57 @@ export function useFileManagerCore() {
     setInspectedFile(file)
     setInspectorOpen(true)
   }, [])
+
+  // --- Restore & Permanent Delete Mutations ---
+  const restoreFileMutation = useMutation({
+    mutationFn: (file: FileSchema) => apiRestoreFile(file.public_id),
+    onSuccess: async () => {
+      await invalidateFiles()
+      toast.success(t('files.restore.success', 'File restored successfully.'))
+    },
+    onError: (error) => restApiErrorHandler(error as never),
+  })
+  const { mutate: restoreFileMutate } = restoreFileMutation
+
+  const permanentDeleteFileMutation = useMutation({
+    mutationFn: (file: FileSchema) => apiPermanentDeleteFile(file.public_id),
+    onSuccess: async () => {
+      await invalidateFiles()
+      if (inspectedFile?.public_id === permanentDeletingFile?.public_id) {
+        setInspectedFile(null)
+      }
+      setPermanentDeletingFile(null)
+      toast.success(
+        t('files.delete.permanentSuccess', 'File permanently deleted.')
+      )
+    },
+    onError: (error) => restApiErrorHandler(error as never),
+  })
+
+  const bulkRestoreFilesMutation = useMutation({
+    mutationFn: (files: FileSchema[]) =>
+      apiRestoreFiles(files.map((file) => file.public_id)),
+    onSuccess: async (_, files) => {
+      table.resetRowSelection()
+      await invalidateFiles()
+      toast.success(t('files.restore.bulkSuccess', { count: files.length }))
+    },
+    onError: (error) => restApiErrorHandler(error as never),
+  })
+
+  const bulkPermanentDeleteFilesMutation = useMutation({
+    mutationFn: (files: FileSchema[]) =>
+      apiPermanentDeleteFiles(files.map((file) => file.public_id)),
+    onSuccess: async (_, files) => {
+      table.resetRowSelection()
+      setBulkPermanentDeletingFiles([])
+      await invalidateFiles()
+      toast.success(
+        t('files.delete.bulkPermanentSuccess', { count: files.length })
+      )
+    },
+    onError: (error) => restApiErrorHandler(error as never),
+  })
 
   // --- Table Configuration ---
   const columns = useMemo(
@@ -298,6 +361,8 @@ export function useFileManagerCore() {
         onCopyUrl: copyFileUrl,
         onMove: setMovingFile,
         onDelete: setDeletingFile,
+        onRestore: (file) => restoreFileMutate(file),
+        onPermanentDelete: setPermanentDeletingFile,
         onRename: setRenamingFile,
         onShare: setSharingFile,
         isStarred,
@@ -305,7 +370,7 @@ export function useFileManagerCore() {
         canUpdate: ability.can('update', 'FILE'),
         canDelete: ability.can('delete', 'FILE'),
       }),
-    [ability, isStarred, toggleStar]
+    [ability, isStarred, toggleStar, restoreFileMutate]
   )
 
   const { table } = useDataTable({
@@ -505,6 +570,7 @@ export function useFileManagerCore() {
     search: search || '',
     setSearch: setSearchQuery,
     starredCount,
+    trashCount,
     isStarred,
     toggleStar,
 
@@ -547,8 +613,12 @@ export function useFileManagerCore() {
     setSharingFile,
     deletingFile,
     setDeletingFile,
+    permanentDeletingFile,
+    setPermanentDeletingFile,
     bulkDeletingFiles,
     setBulkDeletingFiles,
+    bulkPermanentDeletingFiles,
+    setBulkPermanentDeletingFiles,
     deletingFolder,
     setDeletingFolder,
     deleteFolderFiles,
@@ -562,7 +632,11 @@ export function useFileManagerCore() {
     handleMoveFile,
     copyFileUrl,
     deleteFileMutation,
+    restoreFileMutation,
+    permanentDeleteFileMutation,
     deleteFolderMutation,
     bulkDeleteFileMutation,
+    bulkRestoreFilesMutation,
+    bulkPermanentDeleteFilesMutation,
   }
 }

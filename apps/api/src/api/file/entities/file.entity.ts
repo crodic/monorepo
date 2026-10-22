@@ -2,6 +2,7 @@ import { AutoIncrementID } from '../../../common/types/common.type';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -10,6 +11,7 @@ import {
   Relation,
   UpdateDateColumn,
 } from 'typeorm';
+import { AdminUserEntity } from '../../admin-user/entities/admin-user.entity';
 import { FileFolderEntity } from './file-folder.entity';
 
 @Index('IDX_files_folder_created_at', ['folder', 'createdAt'])
@@ -80,6 +82,36 @@ export class FileEntity {
   @Column({ type: 'boolean', default: false })
   is_starred: boolean;
 
+  @Index('IDX_files_created_by_admin_id')
+  @Column({ name: 'created_by_admin_id', type: 'bigint', nullable: true })
+  createdByAdminId?: AutoIncrementID | null;
+
+  @ManyToOne(() => AdminUserEntity, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn({
+    name: 'created_by_admin_id',
+    foreignKeyConstraintName: 'FK_files_created_by_admin',
+  })
+  createdByAdmin?: Relation<AdminUserEntity> | null;
+
+  @Index('IDX_files_updated_by_admin_id')
+  @Column({ name: 'updated_by_admin_id', type: 'bigint', nullable: true })
+  updatedByAdminId?: AutoIncrementID | null;
+
+  @ManyToOne(() => AdminUserEntity, {
+    nullable: true,
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn({
+    name: 'updated_by_admin_id',
+    foreignKeyConstraintName: 'FK_files_updated_by_admin',
+  })
+  updatedByAdmin?: Relation<AdminUserEntity> | null;
+
   get url() {
     const ext = this.path.split('.').pop();
     return `${process.env.APP_URL}/storage/uploads/${this.resource_type}/${this.public_id}.${ext}`;
@@ -100,4 +132,12 @@ export class FileEntity {
     nullable: false,
   })
   updatedAt: Date;
+
+  @DeleteDateColumn({
+    name: 'deleted_at',
+    type: 'timestamptz',
+    default: null,
+    nullable: true,
+  })
+  deletedAt?: Date | null;
 }

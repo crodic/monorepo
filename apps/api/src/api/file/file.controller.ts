@@ -1,3 +1,5 @@
+import { AutoIncrementID } from '../../common/types/common.type';
+import { CurrentUser } from '../../decorators/current-user.decorator';
 import { ApiAuth, ApiPublic } from '../../decorators/http.decorators';
 import { CheckPolicies } from '../../decorators/policies.decorator';
 import { FilesystemService } from '../../filesystem/filesystem.service';
@@ -44,6 +46,7 @@ import {
   memoryStorageConfig,
 } from './config/file.config';
 import { UploadSingle } from './decorators/file.decorator';
+import { BulkFileActionDto } from './dto/bulk-file-action.dto';
 import { CreateChunkUploadSessionDto } from './dto/chunk-upload.dto';
 import { FileResDto } from './dto/file.res.dto';
 import {
@@ -218,8 +221,9 @@ export class FileController {
     @Body('folder') folder?: string,
     @Body('disk') disk?: string,
     @Body('visibility') visibility?: 'public' | 'private',
+    @CurrentUser('id') adminId?: AutoIncrementID,
   ) {
-    return this.fileService.upload(file, folder, disk, visibility);
+    return this.fileService.upload(file, folder, disk, visibility, adminId);
   }
 
   @Post('uploads/sessions')
@@ -267,8 +271,12 @@ export class FileController {
   )
   completeUpload(
     @Param('sessionId', ParseUploadSessionIdPipe) sessionId: string,
+    @CurrentUser('id') adminId?: AutoIncrementID,
   ): Promise<FileResDto> {
-    return this.fileChunkUploadService.completeUploadSession(sessionId);
+    return this.fileChunkUploadService.completeUploadSession(
+      sessionId,
+      adminId,
+    );
   }
 
   @Delete('uploads/:sessionId')
@@ -376,20 +384,90 @@ export class FileController {
   update(
     @Param('publicId') publicId: string,
     @Body() dto: UpdateFileDto,
+    @CurrentUser('id') adminId?: AutoIncrementID,
   ): Promise<FileResDto> {
-    return this.fileService.update(publicId, dto);
+    return this.fileService.update(publicId, dto, adminId);
   }
 
   @Delete(':publicId')
   @ApiAuth({
-    summary: 'Delete file',
-    description: 'Delete file by publicId',
+    summary: 'Move file to trash',
+    description: 'Soft delete file by publicId',
   })
   @CheckPolicies((ability: AppAbility) =>
     ability.can(AppActions.Delete, AppSubjects.File),
   )
-  async delete(@Param('publicId') publicId: string) {
-    return this.fileService.delete(publicId);
+  async delete(
+    @Param('publicId') publicId: string,
+    @CurrentUser('id') adminId?: AutoIncrementID,
+  ) {
+    return this.fileService.softDelete(publicId, adminId);
+  }
+
+  @Post(':publicId/restore')
+  @ApiAuth({
+    type: FileResDto,
+    summary: 'Restore file from trash',
+  })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Update, AppSubjects.File),
+  )
+  async restore(
+    @Param('publicId') publicId: string,
+    @CurrentUser('id') adminId?: AutoIncrementID,
+  ): Promise<FileResDto> {
+    return this.fileService.restore(publicId, adminId);
+  }
+
+  @Delete(':publicId/permanent')
+  @ApiAuth({
+    summary: 'Permanently delete file',
+    description: 'Permanently remove file record and physical storage',
+  })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Delete, AppSubjects.File),
+  )
+  async permanentDelete(@Param('publicId') publicId: string) {
+    return this.fileService.permanentDelete(publicId);
+  }
+
+  @Post('bulk-delete')
+  @ApiAuth({
+    summary: 'Bulk move files to trash',
+  })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Delete, AppSubjects.File),
+  )
+  async bulkDelete(
+    @Body() dto: BulkFileActionDto,
+    @CurrentUser('id') adminId?: AutoIncrementID,
+  ) {
+    return this.fileService.bulkSoftDelete(dto.public_ids, adminId);
+  }
+
+  @Post('bulk-restore')
+  @ApiAuth({
+    summary: 'Bulk restore files from trash',
+  })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Update, AppSubjects.File),
+  )
+  async bulkRestore(
+    @Body() dto: BulkFileActionDto,
+    @CurrentUser('id') adminId?: AutoIncrementID,
+  ) {
+    return this.fileService.bulkRestore(dto.public_ids, adminId);
+  }
+
+  @Post('bulk-permanent-delete')
+  @ApiAuth({
+    summary: 'Bulk permanently delete files',
+  })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Delete, AppSubjects.File),
+  )
+  async bulkPermanentDelete(@Body() dto: BulkFileActionDto) {
+    return this.fileService.bulkPermanentDelete(dto.public_ids);
   }
 
   @Post('images/upload')

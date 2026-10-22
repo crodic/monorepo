@@ -15,11 +15,13 @@ import {
   Lock,
   MoveRight,
   Pencil,
+  RotateCcw,
   Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -64,6 +66,8 @@ interface FileInspectorProps {
   onCopyUrl: (file: FileSchema) => void
   onMove: (file: FileSchema) => void
   onDelete: (file: FileSchema) => void
+  onRestore?: (file: FileSchema) => void
+  onPermanentDelete?: (file: FileSchema) => void
   onRename?: (file: FileSchema) => void
   onShare?: (file: FileSchema) => void
   onFileUpdated?: (file: FileSchema) => void
@@ -81,6 +85,8 @@ export function FileInspector({
   onCopyUrl,
   onMove,
   onDelete,
+  onRestore,
+  onPermanentDelete,
   onRename,
   onShare,
   onFileUpdated,
@@ -291,40 +297,76 @@ export function FileInspector({
                   </Button>
                 )}
 
-                {canUpdate && onRename && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onRename(activeFile)}
-                    className='h-9 justify-center gap-2'
-                  >
-                    <Pencil className='size-4' />
-                    <span>{t('files.actions.rename', 'Rename')}</span>
-                  </Button>
-                )}
+                {activeFile.deletedAt ? (
+                  <>
+                    {canUpdate && onRestore && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onRestore(activeFile)}
+                        className='text-primary hover:text-primary hover:bg-primary/10 col-span-2 h-9 justify-center gap-2'
+                      >
+                        <RotateCcw className='size-4' />
+                        <span>
+                          {t('files.actions.restore', 'Restore File')}
+                        </span>
+                      </Button>
+                    )}
+                    {canDelete && onPermanentDelete && (
+                      <Button
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => onPermanentDelete(activeFile)}
+                        className='col-span-2 h-9 justify-center gap-2'
+                      >
+                        <Trash2 className='size-4' />
+                        <span>
+                          {t(
+                            'files.actions.permanentDelete',
+                            'Delete permanently'
+                          )}
+                        </span>
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {canUpdate && onRename && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onRename(activeFile)}
+                        className='h-9 justify-center gap-2'
+                      >
+                        <Pencil className='size-4' />
+                        <span>{t('files.actions.rename', 'Rename')}</span>
+                      </Button>
+                    )}
 
-                {canUpdate && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onMove(activeFile)}
-                    className='h-9 justify-center gap-2'
-                  >
-                    <MoveRight className='size-4' />
-                    <span>{t('files.actions.move')}</span>
-                  </Button>
-                )}
+                    {canUpdate && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onMove(activeFile)}
+                        className='h-9 justify-center gap-2'
+                      >
+                        <MoveRight className='size-4' />
+                        <span>{t('files.actions.move')}</span>
+                      </Button>
+                    )}
 
-                {canDelete && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onDelete(activeFile)}
-                    className='text-destructive hover:text-destructive hover:bg-destructive/10 col-span-2 h-9 justify-center gap-2'
-                  >
-                    <Trash2 className='size-4' />
-                    <span>{t('files.actions.delete')}</span>
-                  </Button>
+                    {canDelete && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onDelete(activeFile)}
+                        className='text-destructive hover:text-destructive hover:bg-destructive/10 col-span-2 h-9 justify-center gap-2'
+                      >
+                        <Trash2 className='size-4' />
+                        <span>{t('files.actions.delete')}</span>
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -439,7 +481,9 @@ export function FileInspector({
                     <>
                       <Separator />
                       <div className='flex items-center justify-between py-1'>
-                        <span className='text-muted-foreground'>Duration</span>
+                        <span className='text-muted-foreground'>
+                          {t('files.table.duration', 'Duration')}
+                        </span>
                         <span className='text-foreground font-medium'>
                           {activeFile.duration}s
                         </span>
@@ -460,6 +504,32 @@ export function FileInspector({
 
                   <Separator />
 
+                  {/* Uploaded By */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-muted-foreground'>
+                      {t('files.inspector.uploadedBy', 'Uploaded by')}
+                    </span>
+                    <div className='flex items-center gap-1.5'>
+                      <Avatar className='border-border/50 size-5 border'>
+                        {activeFile.createdByAdmin?.avatar && (
+                          <AvatarImage src={activeFile.createdByAdmin.avatar} />
+                        )}
+                        <AvatarFallback className='bg-primary/10 text-primary text-[9px] font-semibold'>
+                          {(activeFile.createdByAdmin?.fullName ||
+                            activeFile.createdByAdmin?.email ||
+                            'U')[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className='text-foreground max-w-36 truncate text-xs font-medium'>
+                        {activeFile.createdByAdmin?.fullName ||
+                          activeFile.createdByAdmin?.email ||
+                          t('files.table.system', 'System')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div className='flex items-center justify-between py-1'>
                     <span className='text-muted-foreground'>
                       {t('files.inspector.uploaded')}
@@ -469,10 +539,72 @@ export function FileInspector({
                     </span>
                   </div>
 
+                  {activeFile.updatedByAdmin && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-muted-foreground'>
+                          {t(
+                            'files.inspector.lastModifiedBy',
+                            'Last modified by'
+                          )}
+                        </span>
+                        <div className='flex items-center gap-1.5'>
+                          <Avatar className='border-border/50 size-5 border'>
+                            {activeFile.updatedByAdmin?.avatar && (
+                              <AvatarImage
+                                src={activeFile.updatedByAdmin.avatar}
+                              />
+                            )}
+                            <AvatarFallback className='bg-primary/10 text-primary text-[9px] font-semibold'>
+                              {(activeFile.updatedByAdmin?.fullName ||
+                                activeFile.updatedByAdmin?.email ||
+                                'U')[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className='text-foreground max-w-36 truncate text-xs font-medium'>
+                            {activeFile.updatedByAdmin?.fullName ||
+                              activeFile.updatedByAdmin?.email}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {activeFile.updatedAt && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-muted-foreground'>
+                          {t('files.inspector.lastActivity', 'Last activity')}
+                        </span>
+                        <span className='text-foreground font-medium'>
+                          {format(new Date(activeFile.updatedAt), 'PPpp')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {activeFile.deletedAt && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-destructive font-medium'>
+                          {t('files.inspector.deletedAt', 'Deleted at')}
+                        </span>
+                        <span className='text-destructive font-medium'>
+                          {format(new Date(activeFile.deletedAt), 'PPpp')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
                   <Separator />
 
                   <div className='flex items-center justify-between py-1'>
-                    <span className='text-muted-foreground'>Public ID</span>
+                    <span className='text-muted-foreground'>
+                      {t('files.inspector.publicId', 'Public ID')}
+                    </span>
                     <span className='text-muted-foreground max-w-45 truncate font-mono text-[11px]'>
                       {activeFile.public_id}
                     </span>

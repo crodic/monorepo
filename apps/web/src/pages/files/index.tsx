@@ -47,6 +47,7 @@ export function PageFileOverview() {
     search,
     setSearch,
     starredCount,
+    trashCount,
     isStarred,
     toggleStar,
 
@@ -89,8 +90,12 @@ export function PageFileOverview() {
     setSharingFile,
     deletingFile,
     setDeletingFile,
+    permanentDeletingFile,
+    setPermanentDeletingFile,
     bulkDeletingFiles,
     setBulkDeletingFiles,
+    bulkPermanentDeletingFiles,
+    setBulkPermanentDeletingFiles,
     deletingFolder,
     setDeletingFolder,
     deleteFolderFiles,
@@ -104,8 +109,12 @@ export function PageFileOverview() {
     handleMoveFile,
     copyFileUrl,
     deleteFileMutation,
+    restoreFileMutation,
+    permanentDeleteFileMutation,
     deleteFolderMutation,
     bulkDeleteFileMutation,
+    bulkRestoreFilesMutation,
+    bulkPermanentDeleteFilesMutation,
   } = useFileManagerCore()
 
   return (
@@ -166,6 +175,7 @@ export function PageFileOverview() {
             activeFolder={activeFolder}
             totalFiles={totalItems ?? 0}
             starredCount={starredCount}
+            trashCount={trashCount}
             onSelectFolder={handleFolderSelect}
             onUploadClick={() => {
               setDroppedFiles([])
@@ -238,6 +248,8 @@ export function PageFileOverview() {
                   onCopyUrl={copyFileUrl}
                   onMoveFile={setMovingFile}
                   onDeleteFile={setDeletingFile}
+                  onRestoreFile={(file) => restoreFileMutation.mutate(file)}
+                  onPermanentDeleteFile={setPermanentDeletingFile}
                   onRenameFile={setRenamingFile}
                   onShareFile={setSharingFile}
                   isStarred={isStarred}
@@ -276,7 +288,10 @@ export function PageFileOverview() {
       <FilesTableActionBar
         table={table}
         onDelete={(files) => setBulkDeletingFiles(files)}
+        onRestore={(files) => bulkRestoreFilesMutation.mutate(files)}
+        onPermanentDelete={(files) => setBulkPermanentDeletingFiles(files)}
         onBulkDownload={(files) => void bulkDownloadFiles(files)}
+        isTrash={activeView === 'trash'}
         disabled={ability.can('delete', 'FILE') === false}
       />
 
@@ -291,6 +306,8 @@ export function PageFileOverview() {
         onCopyUrl={copyFileUrl}
         onMove={setMovingFile}
         onDelete={setDeletingFile}
+        onRestore={(file) => restoreFileMutation.mutate(file)}
+        onPermanentDelete={setPermanentDeletingFile}
         onRename={setRenamingFile}
         onShare={setSharingFile}
         onFileUpdated={(file) => setInspectedFile(file)}
@@ -418,6 +435,37 @@ export function PageFileOverview() {
           title='files.delete.bulkTitle'
           description='files.delete.bulkDescription'
           translationValues={{ count: String(bulkDeletingFiles.length) }}
+        />
+      )}
+
+      {/* Permanent Delete Single File Alert */}
+      {permanentDeletingFile && (
+        <DeleteAlertDialog
+          open={Boolean(permanentDeletingFile)}
+          onOpenChange={(open) => !open && setPermanentDeletingFile(null)}
+          handleDelete={() =>
+            permanentDeleteFileMutation.mutate(permanentDeletingFile)
+          }
+          isLoading={permanentDeleteFileMutation.isPending}
+          title='files.delete.permanentTitle'
+          description='files.delete.permanentDescription'
+        />
+      )}
+
+      {/* Permanent Delete Bulk Files Alert */}
+      {bulkPermanentDeletingFiles.length > 0 && (
+        <DeleteAlertDialog
+          open={bulkPermanentDeletingFiles.length > 0}
+          onOpenChange={(open) => !open && setBulkPermanentDeletingFiles([])}
+          handleDelete={() =>
+            bulkPermanentDeleteFilesMutation.mutate(bulkPermanentDeletingFiles)
+          }
+          isLoading={bulkPermanentDeleteFilesMutation.isPending}
+          title='files.delete.bulkPermanentTitle'
+          description='files.delete.bulkPermanentDescription'
+          translationValues={{
+            count: String(bulkPermanentDeletingFiles.length),
+          }}
         />
       )}
 

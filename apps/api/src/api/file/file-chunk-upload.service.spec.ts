@@ -36,8 +36,9 @@ describe('FileChunkUploadService', () => {
 
   beforeEach(async () => {
     repository = {
-      create: jest.fn(),
-      save: jest.fn(),
+      create: jest.fn((val) => val),
+      save: jest.fn(async (val) => ({ id: '1', ...val })),
+      findOne: jest.fn(async () => null),
     };
     const sessions = new Map<string, any>();
     sessionRepository = {

@@ -1,3 +1,4 @@
+import { AutoIncrementID } from '../../common/types/common.type';
 import { StorageDisk } from '../../filesystem/config/storage-config.type';
 import {
   isMultipartCapable,
@@ -349,6 +350,8 @@ export class FileChunkUploadService {
     size,
     resourceType,
     metadataPath,
+    createdByAdminId,
+    updatedByAdminId,
   }: {
     publicId: string;
     folder: string | null;
@@ -360,6 +363,8 @@ export class FileChunkUploadService {
     size: number;
     resourceType: string;
     metadataPath?: string;
+    createdByAdminId?: AutoIncrementID | null;
+    updatedByAdminId?: AutoIncrementID | null;
   }): Promise<FileEntity> {
     let width: number | null = null;
     let height: number | null = null;
@@ -395,6 +400,8 @@ export class FileChunkUploadService {
       duration: null,
       resource_type: resourceType,
       status: 'active',
+      createdByAdminId,
+      updatedByAdminId,
     });
 
     return this.fileRepository.save(media);
@@ -537,7 +544,10 @@ export class FileChunkUploadService {
     };
   }
 
-  async completeUploadSession(sessionId: string): Promise<FileResDto> {
+  async completeUploadSession(
+    sessionId: string,
+    adminId?: AutoIncrementID,
+  ): Promise<FileResDto> {
     const session = await this.readUploadSession(sessionId);
 
     if (session.uploadedChunks.length !== session.totalChunks) {
@@ -585,6 +595,8 @@ export class FileChunkUploadService {
         duration: null,
         resource_type: resourceType,
         status: 'active',
+        createdByAdminId: adminId,
+        updatedByAdminId: adminId,
       });
 
       const saved = await this.fileRepository.save(media);
@@ -594,7 +606,12 @@ export class FileChunkUploadService {
       );
       await this.abortUploadSession(sessionId);
 
-      return this.toDto(saved);
+      const reloaded = await this.fileRepository.findOne({
+        where: { public_id: saved.public_id },
+        relations: ['createdByAdmin', 'updatedByAdmin'],
+      });
+
+      return this.toDto(reloaded ?? saved);
     }
 
     for (let index = 0; index < session.totalChunks; index++) {
@@ -654,6 +671,8 @@ export class FileChunkUploadService {
       size: fileStat.size,
       resourceType,
       metadataPath: mergedPath,
+      createdByAdminId: adminId,
+      updatedByAdminId: adminId,
     });
 
     await this.sessionRepository.update(
@@ -662,7 +681,12 @@ export class FileChunkUploadService {
     );
     await this.abortUploadSession(sessionId);
 
-    return this.toDto(media);
+    const reloaded = await this.fileRepository.findOne({
+      where: { public_id: media.public_id },
+      relations: ['createdByAdmin', 'updatedByAdmin'],
+    });
+
+    return this.toDto(reloaded ?? media);
   }
 
   async abortUploadSession(sessionId: string): Promise<{ message: string }> {

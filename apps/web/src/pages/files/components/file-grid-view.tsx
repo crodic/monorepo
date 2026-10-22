@@ -18,12 +18,14 @@ import {
   MoreVertical,
   MoveRight,
   Pencil,
+  RotateCcw,
   Star,
   Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -70,6 +72,8 @@ export interface FileGridViewProps {
   onCopyUrl: (file: FileSchema) => void
   onMoveFile: (file: FileSchema) => void
   onDeleteFile: (file: FileSchema) => void
+  onRestoreFile?: (file: FileSchema) => void
+  onPermanentDeleteFile?: (file: FileSchema) => void
   onRenameFile?: (file: FileSchema) => void
   onShareFile?: (file: FileSchema) => void
   isStarred?: (publicId?: string | null) => boolean
@@ -180,6 +184,8 @@ interface FileCardItemProps {
   onCopyUrl: (file: FileSchema) => void
   onMoveFile: (file: FileSchema) => void
   onDeleteFile: (file: FileSchema) => void
+  onRestoreFile?: (file: FileSchema) => void
+  onPermanentDeleteFile?: (file: FileSchema) => void
   onRenameFile?: (file: FileSchema) => void
   onShareFile?: (file: FileSchema) => void
   onToggleSelect?: () => void
@@ -198,6 +204,8 @@ const FileCardItem = memo(function FileCardItem({
   onCopyUrl,
   onMoveFile,
   onDeleteFile,
+  onRestoreFile,
+  onPermanentDeleteFile,
   onRenameFile,
   onShareFile,
   onToggleSelect,
@@ -345,35 +353,65 @@ const FileCardItem = memo(function FileCardItem({
                         {t('files.actions.share', 'Share link')}
                       </DropdownMenuItem>
                     )}
-                    {canUpdate && onRenameFile && (
-                      <DropdownMenuItem
-                        onClick={() => onRenameFile(file)}
-                        className='gap-2'
-                      >
-                        <Pencil className='size-4' />
-                        {t('files.actions.rename', 'Rename')}
-                      </DropdownMenuItem>
-                    )}
-                    {canUpdate && (
-                      <DropdownMenuItem
-                        onClick={() => onMoveFile(file)}
-                        className='gap-2'
-                      >
-                        <MoveRight className='size-4' />
-                        {t('files.actions.move')}
-                      </DropdownMenuItem>
-                    )}
-                    {canDelete && (
+                    {file.deletedAt ? (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          variant='destructive'
-                          onClick={() => onDeleteFile(file)}
-                          className='gap-2'
-                        >
-                          <Trash2 className='size-4' />
-                          {t('files.actions.delete')}
-                        </DropdownMenuItem>
+                        {canUpdate && onRestoreFile && (
+                          <DropdownMenuItem
+                            onClick={() => onRestoreFile(file)}
+                            className='text-primary gap-2'
+                          >
+                            <RotateCcw className='size-4' />
+                            {t('files.actions.restore', 'Restore')}
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && onPermanentDeleteFile && (
+                          <DropdownMenuItem
+                            variant='destructive'
+                            onClick={() => onPermanentDeleteFile(file)}
+                            className='gap-2'
+                          >
+                            <Trash2 className='size-4' />
+                            {t(
+                              'files.actions.permanentDelete',
+                              'Delete permanently'
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {canUpdate && onRenameFile && (
+                          <DropdownMenuItem
+                            onClick={() => onRenameFile(file)}
+                            className='gap-2'
+                          >
+                            <Pencil className='size-4' />
+                            {t('files.actions.rename', 'Rename')}
+                          </DropdownMenuItem>
+                        )}
+                        {canUpdate && (
+                          <DropdownMenuItem
+                            onClick={() => onMoveFile(file)}
+                            className='gap-2'
+                          >
+                            <MoveRight className='size-4' />
+                            {t('files.actions.move')}
+                          </DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              variant='destructive'
+                              onClick={() => onDeleteFile(file)}
+                              className='gap-2'
+                            >
+                              <Trash2 className='size-4' />
+                              {t('files.actions.delete')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </>
                     )}
                   </DropdownMenuContent>
@@ -418,17 +456,18 @@ const FileCardItem = memo(function FileCardItem({
           </div>
 
           {/* Content Details */}
-          <div className='flex flex-1 flex-col justify-between p-2.5'>
-            <p
-              title={file.original_name}
-              className='text-foreground group-hover:text-primary truncate text-xs font-semibold transition-colors'
-            >
-              {file.original_name}
-            </p>
+          <div className='flex flex-1 flex-col justify-between gap-2.5 p-3'>
+            <div>
+              <p
+                title={file.original_name}
+                className='text-foreground group-hover:text-primary truncate text-sm font-medium transition-colors'
+              >
+                {file.original_name}
+              </p>
 
-            <div className='text-muted-foreground mt-1.5 flex items-center justify-between gap-1 text-[11px]'>
-              <div className='flex min-w-0 items-center gap-1.5 truncate'>
-                <span className='shrink-0'>{formatBytes(file.size)}</span>
+              {/* Subtitle: Size & Disk / Visibility Badge */}
+              <div className='text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs'>
+                <span className='tabular-nums'>{formatBytes(file.size)}</span>
                 {(() => {
                   const isPrivate = isFilePrivate(file)
                   const diskLabel = getFileDiskLabel(file.disk, isPrivate)
@@ -439,7 +478,7 @@ const FileCardItem = memo(function FileCardItem({
                       <TooltipTrigger asChild>
                         <span
                           className={cn(
-                            'inline-flex shrink-0 cursor-default items-center gap-1 rounded-sm px-1 py-0.5 text-[10px] font-medium',
+                            'inline-flex shrink-0 cursor-default items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-medium',
                             isPrivate
                               ? 'border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400'
                               : 'bg-muted text-muted-foreground border-border/60 border'
@@ -461,7 +500,74 @@ const FileCardItem = memo(function FileCardItem({
                   )
                 })()}
               </div>
-              <span>{format(new Date(file.createdAt), 'MMM d')}</span>
+            </div>
+
+            {/* Footer Row: Uploaded by & Last activity */}
+            <div className='border-border/50 text-muted-foreground flex items-center justify-between gap-2 border-t pt-2 text-[11px]'>
+              {(() => {
+                const uploader = file.createdByAdmin
+                const uploaderName =
+                  uploader?.fullName ||
+                  uploader?.email ||
+                  t('files.table.system', 'System')
+                const initials = (uploaderName[0] || 'S').toUpperCase()
+
+                return (
+                  <div
+                    className='flex min-w-0 items-center gap-1.5'
+                    title={t(
+                      'files.grid.uploadedByTooltip',
+                      'Uploaded by {{name}}',
+                      { name: uploaderName }
+                    )}
+                  >
+                    <Avatar className='border-border/60 size-4.5 shrink-0 border'>
+                      {uploader?.avatar && (
+                        <AvatarImage src={uploader.avatar} alt={uploaderName} />
+                      )}
+                      <AvatarFallback className='bg-primary/10 text-primary text-[9px] font-semibold'>
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className='text-foreground/80 max-w-24 truncate font-medium'>
+                      {uploaderName}
+                    </span>
+                  </div>
+                )
+              })()}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className='text-muted-foreground shrink-0 cursor-default tabular-nums'>
+                    {format(
+                      new Date(file.updatedAt || file.createdAt),
+                      'dd/MM/yyyy'
+                    )}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side='top' className='text-xs'>
+                  {file.updatedByAdmin
+                    ? t(
+                        'files.grid.lastActivityWithUser',
+                        'Updated on {{date}} by {{user}}',
+                        {
+                          date: format(
+                            new Date(file.updatedAt || file.createdAt),
+                            'PPpp'
+                          ),
+                          user:
+                            file.updatedByAdmin.fullName ||
+                            file.updatedByAdmin.email,
+                        }
+                      )
+                    : t('files.grid.lastActivityDate', 'Updated on {{date}}', {
+                        date: format(
+                          new Date(file.updatedAt || file.createdAt),
+                          'PPpp'
+                        ),
+                      })}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -475,48 +581,81 @@ const FileCardItem = memo(function FileCardItem({
           <Download className='size-4' />
           {t('files.actions.download', 'Download')}
         </ContextMenuItem>
-        <ContextMenuItem
-          onClick={() => {
-            onCopyUrl(file)
-            toast.success(t('files.inspector.urlCopied'))
-          }}
-          className='gap-2'
-        >
-          <Copy className='size-4' />
-          {t('files.actions.copyUrl')}
-        </ContextMenuItem>
-        {isFilePrivate(file) && onShareFile && (
-          <ContextMenuItem
-            onClick={() => onShareFile(file)}
-            className='gap-2 text-amber-600 dark:text-amber-400'
-          >
-            <Link2 className='size-4' />
-            {t('files.actions.share', 'Share link')}
-          </ContextMenuItem>
-        )}
-        {canUpdate && onRenameFile && (
-          <ContextMenuItem onClick={() => onRenameFile(file)} className='gap-2'>
-            <Pencil className='size-4' />
-            {t('files.actions.rename', 'Rename')}
-          </ContextMenuItem>
-        )}
-        {canUpdate && (
-          <ContextMenuItem onClick={() => onMoveFile(file)} className='gap-2'>
-            <MoveRight className='size-4' />
-            {t('files.actions.move')}
-          </ContextMenuItem>
-        )}
-        {canDelete && (
+        {file.deletedAt ? (
           <>
             <ContextMenuSeparator />
+            {canUpdate && onRestoreFile && (
+              <ContextMenuItem
+                onClick={() => onRestoreFile(file)}
+                className='text-primary gap-2'
+              >
+                <RotateCcw className='size-4' />
+                {t('files.actions.restore', 'Restore')}
+              </ContextMenuItem>
+            )}
+            {canDelete && onPermanentDeleteFile && (
+              <ContextMenuItem
+                variant='destructive'
+                onClick={() => onPermanentDeleteFile(file)}
+                className='gap-2'
+              >
+                <Trash2 className='size-4' />
+                {t('files.actions.permanentDelete', 'Delete permanently')}
+              </ContextMenuItem>
+            )}
+          </>
+        ) : (
+          <>
             <ContextMenuItem
-              variant='destructive'
-              onClick={() => onDeleteFile(file)}
+              onClick={() => {
+                onCopyUrl(file)
+                toast.success(t('files.inspector.urlCopied'))
+              }}
               className='gap-2'
             >
-              <Trash2 className='size-4' />
-              {t('files.actions.delete')}
+              <Copy className='size-4' />
+              {t('files.actions.copyUrl')}
             </ContextMenuItem>
+            {isFilePrivate(file) && onShareFile && (
+              <ContextMenuItem
+                onClick={() => onShareFile(file)}
+                className='gap-2 text-amber-600 dark:text-amber-400'
+              >
+                <Link2 className='size-4' />
+                {t('files.actions.share', 'Share link')}
+              </ContextMenuItem>
+            )}
+            {canUpdate && onRenameFile && (
+              <ContextMenuItem
+                onClick={() => onRenameFile(file)}
+                className='gap-2'
+              >
+                <Pencil className='size-4' />
+                {t('files.actions.rename', 'Rename')}
+              </ContextMenuItem>
+            )}
+            {canUpdate && (
+              <ContextMenuItem
+                onClick={() => onMoveFile(file)}
+                className='gap-2'
+              >
+                <MoveRight className='size-4' />
+                {t('files.actions.move')}
+              </ContextMenuItem>
+            )}
+            {canDelete && (
+              <>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  variant='destructive'
+                  onClick={() => onDeleteFile(file)}
+                  className='gap-2'
+                >
+                  <Trash2 className='size-4' />
+                  {t('files.actions.delete')}
+                </ContextMenuItem>
+              </>
+            )}
           </>
         )}
       </ContextMenuContent>
@@ -534,6 +673,8 @@ export function FileGridView({
   onCopyUrl,
   onMoveFile,
   onDeleteFile,
+  onRestoreFile,
+  onPermanentDeleteFile,
   onRenameFile,
   onShareFile,
   isStarred,
@@ -568,7 +709,7 @@ export function FileGridView({
 
   if (isFetching && files.length === 0) {
     return (
-      <div className='grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
+      <div className='grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4'>
         {Array.from({ length: 12 }).map((_, idx) => (
           <div
             key={idx}
@@ -602,7 +743,7 @@ export function FileGridView({
   return (
     <div className='flex w-full flex-col'>
       {/* File Grid */}
-      <div className='grid auto-rows-fr grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
+      <div className='grid auto-rows-fr grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4'>
         {files.map((file) => {
           const row = table.getRow(file.public_id)
           const isSelected = row?.getIsSelected() ?? false
@@ -621,6 +762,8 @@ export function FileGridView({
               onCopyUrl={onCopyUrl}
               onMoveFile={onMoveFile}
               onDeleteFile={onDeleteFile}
+              onRestoreFile={onRestoreFile}
+              onPermanentDeleteFile={onPermanentDeleteFile}
               onRenameFile={onRenameFile}
               onShareFile={onShareFile}
               onToggleSelect={() => row?.toggleSelected()}

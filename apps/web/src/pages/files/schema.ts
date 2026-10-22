@@ -28,6 +28,17 @@ export const fileResourceTypeSchema = z.enum(['image', 'video', 'raw', 'file'])
 
 export const fileVisibilitySchema = z.enum(['public', 'private'])
 
+export const fileAdminUserSummarySchema = z.object({
+  id: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().nullable().optional(),
+  fullName: z.string(),
+  email: z.string(),
+  avatar: z.string().nullable().optional(),
+})
+
+export type FileAdminUserSummary = z.infer<typeof fileAdminUserSummarySchema>
+
 export const fileSchema = z.object({
   id: z.string(),
   public_id: z.string(),
@@ -48,6 +59,11 @@ export const fileSchema = z.object({
   url: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  createdByAdminId: optionalNullableString,
+  createdByAdmin: fileAdminUserSummarySchema.nullable().optional(),
+  updatedByAdminId: optionalNullableString,
+  updatedByAdmin: fileAdminUserSummarySchema.nullable().optional(),
+  deletedAt: optionalNullableString,
 })
 
 export const folderSchema = z.object({
@@ -94,5 +110,7 @@ export const ColumnKey = {
   size: 'size',
   dimensions: 'dimensions',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  uploadedBy: 'uploaded_by',
   actions: 'actions',
 }

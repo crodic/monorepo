@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { type Readable } from 'stream';
@@ -90,19 +91,19 @@ export class FileStreamService {
     });
 
     if (media.resource_type !== resourceType) {
-      throw new HttpException('Invalid resource type', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Invalid resource type');
     }
 
     const storageKey = this.toStorageKey(media.path);
     const disk = this.diskForFile(media);
     const actualExt = storageKey.split('.').pop();
     if (actualExt !== ext) {
-      throw new HttpException('Extension mismatch', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Extension mismatch');
     }
 
     const exists = await disk.exists(storageKey);
     if (!exists) {
-      throw new HttpException('File not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('File not found');
     }
 
     const fileSize = media.size;
@@ -173,14 +174,14 @@ export class FileStreamService {
     });
 
     if (media.resource_type !== resourceType) {
-      throw new HttpException('Invalid resource type', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Invalid resource type');
     }
 
     const storageKey = this.toStorageKey(media.path);
     const disk = this.diskForFile(media);
     const actualExt = storageKey.split('.').pop();
     if (actualExt !== ext) {
-      throw new HttpException('Extension mismatch', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Extension mismatch');
     }
 
     if (media.resource_type !== 'image') {
@@ -189,7 +190,7 @@ export class FileStreamService {
 
     const exists = await disk.exists(storageKey);
     if (!exists) {
-      throw new HttpException('File not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('File not found');
     }
 
     const normalizedExt = this.normalizeImageFormat(ext);
