@@ -261,7 +261,7 @@ export function FilesSubSidebar({
               const depth = folder.depth ?? folder.folder.split('/').length - 1
               const displayName =
                 folder.name ?? folder.folder.split('/').pop() ?? folder.folder
-              const color = getFolderColor(folder.folder, folder.color)
+              const color = getFolderColor(folder.color)
               const isSelected = activeFolder === folder.folder
 
               return (

@@ -28,10 +28,10 @@ import {
   fileQueryKeys,
   useDataFileFolders,
   useDataFileOverview,
+  useDataFileStarredCount,
   useInfiniteDataFileOverview,
 } from './queries'
 import { ColumnKey, type FileSchema, type FolderSchema } from './schema'
-import { useStarredFiles } from './use-starred-files'
 
 export const fileFilterParsers = {
   [ColumnKey.originalName]: parseAsString,
@@ -65,11 +65,7 @@ export function useFileManagerCore() {
   const [activeView, setActiveView] = useState<FileViewType>('all')
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-  const {
-    starredCount: localStarredCount,
-    isStarred: isLocalStarred,
-    toggleStar: toggleLocalStar,
-  } = useStarredFiles()
+  const { data: starredCount = 0 } = useDataFileStarredCount()
 
   useEffect(() => {
     const saved = window.localStorage.getItem('file-manager:view-mode')
@@ -225,28 +221,15 @@ export function useFileManagerCore() {
   )
 
   const currentFiles = useMemo(() => {
-    const rawFiles = isGridView ? allGridFiles : (pagedData?.data ?? [])
-    if (activeView === 'starred') {
-      return rawFiles.filter((f) => f.is_starred || isLocalStarred(f.public_id))
-    }
-    return rawFiles
-  }, [activeView, isGridView, allGridFiles, pagedData?.data, isLocalStarred])
+    return isGridView ? allGridFiles : (pagedData?.data ?? [])
+  }, [isGridView, allGridFiles, pagedData?.data])
 
   const isFetching = isGridView ? isInfiniteFetching : isPagedFetching
   const totalItems = useMemo(() => {
-    if (activeView === 'starred') {
-      return currentFiles.length
-    }
     return isGridView
       ? infiniteData?.pages[0]?.meta.totalItems
       : pagedData?.meta.totalItems
-  }, [
-    activeView,
-    currentFiles.length,
-    isGridView,
-    infiniteData?.pages,
-    pagedData?.meta.totalItems,
-  ])
+  }, [isGridView, infiniteData?.pages, pagedData?.meta.totalItems])
 
   const folders = useMemo(() => {
     const map = new Map<string, FolderSchema>()
@@ -266,46 +249,40 @@ export function useFileManagerCore() {
     ])
   }, [queryClient])
 
-  // --- Star Handlers ---
+  // --- Star Mutation & Handlers ---
+  const toggleStarMutation = useMutation({
+    mutationFn: (data: { publicId: string; is_starred: boolean }) =>
+      apiUpdateFile({
+        publicId: data.publicId,
+        data: { is_starred: data.is_starred },
+      }),
+    onSuccess: async () => {
+      await invalidateFiles()
+    },
+    onError: (error) => restApiErrorHandler(error as never),
+  })
+
   const isStarred = useCallback(
     (publicId?: string | null) => {
       if (!publicId) return false
-      const found = currentFiles.find((f) => f.public_id === publicId)
-      if (found?.is_starred !== undefined) {
-        return found.is_starred
-      }
-      return isLocalStarred(publicId)
+      return Boolean(
+        currentFiles.find((f) => f.public_id === publicId)?.is_starred
+      )
     },
-    [currentFiles, isLocalStarred]
+    [currentFiles]
   )
 
   const toggleStar = useCallback(
-    async (publicId: string) => {
+    (publicId: string) => {
       const found = currentFiles.find((f) => f.public_id === publicId)
-      const currentVal = found?.is_starred ?? isLocalStarred(publicId)
-      const nextVal = !currentVal
-
-      // Local update for instant optimistic UI
-      toggleLocalStar(publicId)
-
-      try {
-        await apiUpdateFile({
-          publicId,
-          data: { is_starred: nextVal },
-        })
-        await invalidateFiles()
-      } catch {
-        // Rollback if network fails
-        toggleLocalStar(publicId)
-      }
+      const currentVal = Boolean(found?.is_starred)
+      toggleStarMutation.mutate({
+        publicId,
+        is_starred: !currentVal,
+      })
     },
-    [currentFiles, isLocalStarred, toggleLocalStar, invalidateFiles]
+    [currentFiles, toggleStarMutation]
   )
-
-  const starredCount = useMemo(() => {
-    const dbStarredCount = currentFiles.filter((f) => f.is_starred).length
-    return Math.max(dbStarredCount, localStarredCount)
-  }, [currentFiles, localStarredCount])
 
   // --- Inspect Handler ---
   const handleInspectFile = useCallback((file: FileSchema) => {

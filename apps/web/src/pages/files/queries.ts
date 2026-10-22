@@ -43,6 +43,7 @@ export const fileQueryKeys = {
     'infinite',
     params,
   ],
+  starredCount: () => [...fileQueryKeys.all, 'starred-count'] as const,
   detail: (publicId: string) => [...fileQueryKeys.all, publicId],
   folders: ['file-folders'] as const,
   disks: ['file-disks'] as const,
@@ -304,4 +305,15 @@ export const useDataFileDisks = () =>
   useQuery({
     queryKey: fileQueryKeys.disks,
     queryFn: apiGetAvailableDisks,
+  })
+
+export const useDataFileStarredCount = () =>
+  useQuery({
+    queryKey: fileQueryKeys.starredCount(),
+    queryFn: () =>
+      apiGetFileListing({
+        filter: { is_starred: { $eq: true } },
+        limit: 1,
+      }),
+    select: (data) => data.meta.totalItems,
   })

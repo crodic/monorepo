@@ -224,32 +224,23 @@ export const FOLDER_COLOR_PALETTE = [
 ]
 
 /**
- * Returns a folder color object. If customColor is provided (from DB), matches it;
- * otherwise falls back to a deterministic color from the palette.
+ * Returns a folder color object from palette matching the color hex,
+ * or default first color from the palette.
  */
-export function getFolderColor(
-  folderName?: string | null,
-  customColor?: string | null
-) {
-  if (customColor) {
+export function getFolderColor(color?: string | null) {
+  if (color) {
     const matched = FOLDER_COLOR_PALETTE.find(
-      (c) => c.hex.toLowerCase() === customColor.toLowerCase()
+      (c) => c.hex.toLowerCase() === color.toLowerCase()
     )
     if (matched) return matched
     return {
-      hex: customColor,
+      hex: color,
       text: 'text-violet-500',
       bg: 'bg-violet-500/10 dark:bg-violet-500/20',
     }
   }
 
-  if (!folderName) return FOLDER_COLOR_PALETTE[0]
-  let hash = 0
-  for (let i = 0; i < folderName.length; i++) {
-    hash = folderName.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const index = Math.abs(hash) % FOLDER_COLOR_PALETTE.length
-  return FOLDER_COLOR_PALETTE[index]
+  return FOLDER_COLOR_PALETTE[0]
 }
 
 /**
