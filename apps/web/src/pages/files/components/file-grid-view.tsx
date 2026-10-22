@@ -278,7 +278,9 @@ const FileCardItem = memo(function FileCardItem({
                     onToggleStar(file.public_id)
                   }}
                   title={
-                    isStarred?.(file.public_id) ? 'Unstar file' : 'Star file'
+                    isStarred?.(file.public_id)
+                      ? t('files.actions.unstar', 'Unstar file')
+                      : t('files.actions.star', 'Star file')
                   }
                 >
                   <Star
@@ -304,7 +306,9 @@ const FileCardItem = memo(function FileCardItem({
                       className='bg-background/85 text-foreground hover:bg-background size-7 rounded-lg shadow-xs backdrop-blur-xs'
                     >
                       <MoreVertical className='size-3.5' />
-                      <span className='sr-only'>File actions</span>
+                      <span className='sr-only'>
+                        {t('files.table.actions', 'Actions')}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end' className='w-44'>

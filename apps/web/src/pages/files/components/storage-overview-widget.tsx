@@ -99,6 +99,8 @@ export function StorageOverviewWidget({
           if (catPercent <= 0) return null
 
           const meta = FILE_CATEGORY_CONFIG[catKey]
+          const catLabel = t(meta.i18nKey, meta.label)
+
           return (
             <div
               key={catKey}
@@ -107,7 +109,7 @@ export function StorageOverviewWidget({
                 width: `${Math.max(catPercent, 2)}%`,
                 backgroundColor: meta.color,
               }}
-              title={`${meta.label}: ${formatBytes(cat.bytes)} (${Math.round(catPercent)}%)`}
+              title={`${catLabel}: ${formatBytes(cat.bytes)} (${Math.round(catPercent)}%)`}
             />
           )
         })}
@@ -140,7 +142,7 @@ export function StorageOverviewWidget({
                   style={{ backgroundColor: meta.color }}
                 />
                 <span className='text-muted-foreground truncate text-[11px]'>
-                  {meta.label}
+                  {t(meta.i18nKey, meta.label)}
                 </span>
               </div>
               <span className='text-foreground/80 shrink-0 text-[11px] font-medium tabular-nums'>

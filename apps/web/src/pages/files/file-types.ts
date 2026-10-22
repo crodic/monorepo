@@ -15,6 +15,7 @@ export type FileCategoryType =
 
 export interface FileTypeMeta {
   type: FileCategoryType
+  i18nKey: string
   label: string
   icon: LucideIcon
   color: string // hex for charts/progress
@@ -26,7 +27,8 @@ export interface FileTypeMeta {
 export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   image: {
     type: 'image',
-    label: i18n.t('files.categories.image', 'Images'),
+    i18nKey: 'files.categories.images',
+    label: i18n.t('files.categories.images', 'Images'),
     icon: ImageIcon,
     color: '#8B5CF6',
     textColor: 'text-violet-500 dark:text-violet-400',
@@ -35,7 +37,8 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   video: {
     type: 'video',
-    label: i18n.t('files.categories.video', 'Videos'),
+    i18nKey: 'files.categories.videos',
+    label: i18n.t('files.categories.videos', 'Videos'),
     icon: Video,
     color: '#EC4899',
     textColor: 'text-pink-500 dark:text-pink-400',
@@ -44,7 +47,8 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   document: {
     type: 'document',
-    label: i18n.t('files.categories.document', 'Documents'),
+    i18nKey: 'files.categories.documents',
+    label: i18n.t('files.categories.documents', 'Documents'),
     icon: FileText,
     color: '#F59E0B',
     textColor: 'text-amber-500 dark:text-amber-400',
@@ -53,7 +57,8 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   archive: {
     type: 'archive',
-    label: i18n.t('files.categories.archive', 'Archives'),
+    i18nKey: 'files.categories.archives',
+    label: i18n.t('files.categories.archives', 'Archives'),
     icon: Archive,
     color: '#10B981',
     textColor: 'text-emerald-500 dark:text-emerald-400',
@@ -62,6 +67,7 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   audio: {
     type: 'audio',
+    i18nKey: 'files.categories.audio',
     label: i18n.t('files.categories.audio', 'Audio'),
     icon: Music,
     color: '#06B6D4',
@@ -71,6 +77,7 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   code: {
     type: 'code',
+    i18nKey: 'files.categories.code',
     label: i18n.t('files.categories.code', 'Code'),
     icon: Code2,
     color: '#6366F1',
@@ -80,6 +87,7 @@ export const FILE_CATEGORY_CONFIG: Record<FileCategoryType, FileTypeMeta> = {
   },
   other: {
     type: 'other',
+    i18nKey: 'files.categories.other',
     label: i18n.t('files.categories.other', 'Other'),
     icon: File,
     color: '#64748B',

@@ -116,7 +116,11 @@ export function getFilesTableColumns({
             e.stopPropagation()
             onToggleStar?.(file.public_id)
           }}
-          title={starred ? 'Unstar file' : 'Star file'}
+          title={
+            starred
+              ? i18n.t('files.actions.unstar', 'Unstar file')
+              : i18n.t('files.actions.star', 'Star file')
+          }
         >
           <Star
             className={cn(

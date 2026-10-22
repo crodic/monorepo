@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import {
   FILE_CATEGORY_CONFIG,
@@ -29,6 +30,8 @@ export function StorageCategoryCards({
   onSelectCategory,
   className,
 }: StorageCategoryCardsProps) {
+  const { t } = useTranslation()
+
   // Aggregate file count and total bytes per category
   const stats = useMemo(() => {
     const categoryTotals: Record<
@@ -108,13 +111,13 @@ export function StorageCategoryCards({
                 <Icon className='size-4.5' />
               </div>
               <span className='text-muted-foreground text-[11px] font-medium tabular-nums'>
-                {catStat.count} {catStat.count === 1 ? 'file' : 'files'}
+                {t('files.fileCount', { count: catStat.count })}
               </span>
             </div>
 
             <div className='mt-3 flex flex-col'>
               <span className='text-foreground text-xs font-semibold tracking-tight'>
-                {meta.label}
+                {t(meta.i18nKey, meta.label)}
               </span>
               <div className='text-muted-foreground mt-0.5 flex items-center justify-between text-[11px]'>
                 <span className='text-foreground/80 font-medium tabular-nums'>

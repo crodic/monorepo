@@ -357,22 +357,34 @@ export function FilesSubSidebar({
           <div
             className='h-full bg-violet-500 transition-all duration-500'
             style={{ width: `${Math.max(storagePercent * 0.4, 2)}%` }}
-            title='Images'
+            title={t(
+              FILE_CATEGORY_CONFIG.image.i18nKey,
+              FILE_CATEGORY_CONFIG.image.label
+            )}
           />
           <div
             className='h-full bg-pink-500 transition-all duration-500'
             style={{ width: `${Math.max(storagePercent * 0.25, 1)}%` }}
-            title='Videos'
+            title={t(
+              FILE_CATEGORY_CONFIG.video.i18nKey,
+              FILE_CATEGORY_CONFIG.video.label
+            )}
           />
           <div
             className='h-full bg-amber-500 transition-all duration-500'
             style={{ width: `${Math.max(storagePercent * 0.2, 1)}%` }}
-            title='Documents'
+            title={t(
+              FILE_CATEGORY_CONFIG.document.i18nKey,
+              FILE_CATEGORY_CONFIG.document.label
+            )}
           />
           <div
             className='h-full bg-emerald-500 transition-all duration-500'
             style={{ width: `${Math.max(storagePercent * 0.15, 1)}%` }}
-            title='Archives'
+            title={t(
+              FILE_CATEGORY_CONFIG.archive.i18nKey,
+              FILE_CATEGORY_CONFIG.archive.label
+            )}
           />
         </div>
 
@@ -380,15 +392,24 @@ export function FilesSubSidebar({
         <div className='text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10px]'>
           <span className='flex items-center gap-1'>
             <span className='size-1.5 rounded-full bg-violet-500' />
-            {FILE_CATEGORY_CONFIG.image.label}
+            {t(
+              FILE_CATEGORY_CONFIG.image.i18nKey,
+              FILE_CATEGORY_CONFIG.image.label
+            )}
           </span>
           <span className='flex items-center gap-1'>
             <span className='size-1.5 rounded-full bg-pink-500' />
-            {FILE_CATEGORY_CONFIG.video.label}
+            {t(
+              FILE_CATEGORY_CONFIG.video.i18nKey,
+              FILE_CATEGORY_CONFIG.video.label
+            )}
           </span>
           <span className='flex items-center gap-1'>
             <span className='size-1.5 rounded-full bg-amber-500' />
-            {FILE_CATEGORY_CONFIG.document.label}
+            {t(
+              FILE_CATEGORY_CONFIG.document.i18nKey,
+              FILE_CATEGORY_CONFIG.document.label
+            )}
           </span>
         </div>
       </div>

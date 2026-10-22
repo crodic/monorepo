@@ -4,6 +4,7 @@ import {
   FolderPlus,
   LayoutGrid,
   List,
+  MousePointer,
   PanelRight,
   Search,
   Star,
@@ -16,7 +17,6 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Kbd } from '@/components/ui/kbd'
 import { FileBreadcrumbs } from './file-breadcrumbs'
 import type { FileViewType } from './files-sub-sidebar'
 
@@ -30,6 +30,7 @@ export interface FilesHeaderProps {
   onViewModeChange: (mode: 'grid' | 'table') => void
   onUploadClick: () => void
   onCreateFolderClick: () => void
+  onOpenPicker?: () => void
   onToggleInspector?: () => void
   inspectorOpen?: boolean
   totalItems?: number
@@ -47,6 +48,7 @@ export function FilesHeader({
   onViewModeChange,
   onUploadClick,
   onCreateFolderClick,
+  onOpenPicker,
   onToggleInspector,
   inspectorOpen,
   totalItems,
@@ -167,11 +169,26 @@ export function FilesHeader({
               >
                 <Upload className='size-3.5' />
                 <span>{t('files.actions.upload', 'Upload')}</span>
-                <Kbd className='bg-primary-foreground/20 text-primary-foreground ml-0.5 hidden text-[10px] lg:inline'>
+                <kbd className='bg-primary-foreground/20 text-primary-foreground ml-1 hidden h-4 items-center rounded px-1 font-mono text-[10px] leading-none font-medium select-none lg:inline-flex'>
                   ⌘U
-                </Kbd>
+                </kbd>
               </Button>
             </div>
+          )}
+
+          {/* Demo File Picker Trigger */}
+          {onOpenPicker && (
+            <Button
+              variant='outline'
+              size='sm'
+              className='h-8 gap-1.5 px-2.5 text-xs font-medium'
+              onClick={onOpenPicker}
+            >
+              <MousePointer className='size-3.5' />
+              <span className='hidden sm:inline'>
+                {t('files.picker.demoButton')}
+              </span>
+            </Button>
           )}
 
           {/* View Mode Toggle (Grid ⊞ / List ☰) */}

@@ -131,6 +131,7 @@ export function PageFileOverview() {
             setUploadOpen(true)
           }}
           onCreateFolderClick={() => setFolderDialogOpen(true)}
+          onOpenPicker={() => setPickerOpen(true)}
           onToggleInspector={() => setInspectorOpen((prev) => !prev)}
           inspectorOpen={inspectorOpen}
           totalItems={totalItems}

@@ -97,7 +97,10 @@ export function FolderDialog({
               id='folder-name'
               value={folder}
               onChange={(event) => setFolder(event.target.value)}
-              placeholder='e.g. Design Assets'
+              placeholder={t(
+                'files.folders.namePlaceholder',
+                'e.g. Design Assets'
+              )}
               onKeyDown={(e) => {
                 if (
                   e.key === 'Enter' &&
