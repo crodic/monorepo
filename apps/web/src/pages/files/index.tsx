@@ -36,7 +36,7 @@ export function PageFileOverview() {
   const {
     // Navigation & View
     activeView,
-    setActiveView,
+    handleViewChange,
     activeFolder,
     viewMode,
     handleViewModeChange,
@@ -160,7 +160,7 @@ export function PageFileOverview() {
           {/* Left Sub-Sidebar (Square UI style) */}
           <FilesSubSidebar
             view={activeView}
-            onViewChange={setActiveView}
+            onViewChange={handleViewChange}
             folders={folders}
             activeFolder={activeFolder}
             totalFiles={totalItems ?? 0}

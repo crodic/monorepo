@@ -1,7 +1,6 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import type { Table } from '@tanstack/react-table'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import {
   Copy,
   Download,
@@ -231,7 +230,7 @@ const FileCardItem = memo(function FileCardItem({
             }
           }}
           className={cn(
-            'group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border text-left transition-all duration-200 select-none',
+            'group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-xl border text-left transition-all duration-200 select-none',
             'hover:border-primary/50 hover:-translate-y-0.5 hover:shadow-md',
             isSelected
               ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-2'
@@ -380,7 +379,7 @@ const FileCardItem = memo(function FileCardItem({
           </div>
 
           {/* Thumbnail Box */}
-          <div className='bg-muted/40 border-border/50 relative flex aspect-16/10 w-full items-center justify-center overflow-hidden border-b'>
+          <div className='bg-muted/40 border-border/50 relative flex aspect-16/10 w-full shrink-0 items-center justify-center overflow-hidden border-b'>
             {isMedia ? (
               <div className='size-full overflow-hidden transition-transform duration-300 group-hover:scale-105'>
                 <FilePreviewThumbnail
@@ -415,7 +414,7 @@ const FileCardItem = memo(function FileCardItem({
           </div>
 
           {/* Content Details */}
-          <div className='flex flex-col p-2.5'>
+          <div className='flex flex-1 flex-col justify-between p-2.5'>
             <p
               title={file.original_name}
               className='text-foreground group-hover:text-primary truncate text-xs font-semibold transition-colors'
@@ -423,9 +422,9 @@ const FileCardItem = memo(function FileCardItem({
               {file.original_name}
             </p>
 
-            <div className='text-muted-foreground mt-1.5 flex items-center justify-between text-[11px]'>
-              <div className='flex items-center gap-1.5'>
-                <span>{formatBytes(file.size)}</span>
+            <div className='text-muted-foreground mt-1.5 flex items-center justify-between gap-1 text-[11px]'>
+              <div className='flex min-w-0 items-center gap-1.5 truncate'>
+                <span className='shrink-0'>{formatBytes(file.size)}</span>
                 {(() => {
                   const isPrivate = isFilePrivate(file)
                   const diskLabel = getFileDiskLabel(file.disk, isPrivate)
@@ -543,72 +542,7 @@ export function FileGridView({
   totalItems,
 }: FileGridViewProps) {
   const { t } = useTranslation()
-  const containerRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const [columnsCount, setColumnsCount] = useState(4)
-  const [scrollMargin, setScrollMargin] = useState(0)
-
-  // Dynamically calculate column count based on available container width
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    const updateColumns = (width: number) => {
-      if (width < 500) {
-        setColumnsCount(2)
-      } else if (width < 720) {
-        setColumnsCount(3)
-      } else if (width < 1040) {
-        setColumnsCount(4)
-      } else if (width < 1360) {
-        setColumnsCount(5)
-      } else {
-        setColumnsCount(6)
-      }
-    }
-
-    updateColumns(el.clientWidth)
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        updateColumns(entry.contentRect.width)
-      }
-    })
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  // Calculate container top offset for window virtualizer
-  useEffect(() => {
-    const updateOffset = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
-        setScrollMargin(rect.top + window.scrollY)
-      }
-    }
-
-    updateOffset()
-    window.addEventListener('resize', updateOffset, { passive: true })
-    return () => window.removeEventListener('resize', updateOffset)
-  }, [])
-
-  // Group items into responsive rows
-  const rows = useMemo(() => {
-    const result: FileSchema[][] = []
-    for (let i = 0; i < files.length; i += columnsCount) {
-      result.push(files.slice(i, i + columnsCount))
-    }
-    return result
-  }, [files, columnsCount])
-
-  // TanStack Virtual window virtualizer
-  const virtualizer = useWindowVirtualizer({
-    count: rows.length,
-    estimateSize: () => 260,
-    overscan: 2,
-    scrollMargin,
-  })
 
   // IntersectionObserver for auto-fetching next page
   useEffect(() => {
@@ -663,62 +597,32 @@ export function FileGridView({
 
   return (
     <div className='flex w-full flex-col'>
-      {/* Virtual Container */}
-      <div
-        ref={containerRef}
-        className='relative w-full'
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-        }}
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const rowFiles = rows[virtualRow.index] ?? []
+      {/* File Grid */}
+      <div className='grid auto-rows-fr grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'>
+        {files.map((file) => {
+          const row = table.getRow(file.public_id)
+          const isSelected = row?.getIsSelected() ?? false
+          const isInspected = inspectedFile?.public_id === file.public_id
 
           return (
-            <div
-              key={virtualRow.key}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              className='absolute top-0 left-0 w-full'
-              style={{
-                transform: `translateY(${virtualRow.start - virtualizer.options.scrollMargin}px)`,
-              }}
-            >
-              <div
-                className='grid gap-3.5 pb-3.5'
-                style={{
-                  gridTemplateColumns: `repeat(${columnsCount}, minmax(0, 1fr))`,
-                }}
-              >
-                {rowFiles.map((file) => {
-                  const row = table.getRow(file.public_id)
-                  const isSelected = row?.getIsSelected() ?? false
-                  const isInspected =
-                    inspectedFile?.public_id === file.public_id
-
-                  return (
-                    <FileCardItem
-                      key={file.public_id}
-                      file={file}
-                      isSelected={isSelected}
-                      isInspected={isInspected}
-                      canUpdate={canUpdate}
-                      canDelete={canDelete}
-                      onInspectFile={onInspectFile}
-                      onPreviewFile={onPreviewFile}
-                      onCopyUrl={onCopyUrl}
-                      onMoveFile={onMoveFile}
-                      onDeleteFile={onDeleteFile}
-                      onRenameFile={onRenameFile}
-                      onShareFile={onShareFile}
-                      onToggleSelect={() => row?.toggleSelected()}
-                      isStarred={isStarred}
-                      onToggleStar={onToggleStar}
-                    />
-                  )
-                })}
-              </div>
-            </div>
+            <FileCardItem
+              key={file.public_id}
+              file={file}
+              isSelected={isSelected}
+              isInspected={isInspected}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              onInspectFile={onInspectFile}
+              onPreviewFile={onPreviewFile}
+              onCopyUrl={onCopyUrl}
+              onMoveFile={onMoveFile}
+              onDeleteFile={onDeleteFile}
+              onRenameFile={onRenameFile}
+              onShareFile={onShareFile}
+              onToggleSelect={() => row?.toggleSelected()}
+              isStarred={isStarred}
+              onToggleStar={onToggleStar}
+            />
           )
         })}
       </div>

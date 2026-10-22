@@ -131,10 +131,7 @@ export function FilesSubSidebar({
               activeFolder === null &&
               'text-primary font-semibold'
           )}
-          onClick={() => {
-            onViewChange('all')
-            onSelectFolder(null)
-          }}
+          onClick={() => onViewChange('all')}
         >
           <HardDrive className='size-4' />
           <span className='min-w-0 flex-1 truncate text-left'>
@@ -154,10 +151,7 @@ export function FilesSubSidebar({
             view === 'starred' &&
               'font-semibold text-amber-500 dark:text-amber-400'
           )}
-          onClick={() => {
-            onViewChange('starred')
-            onSelectFolder(null)
-          }}
+          onClick={() => onViewChange('starred')}
         >
           <Star
             className={cn(
@@ -186,10 +180,7 @@ export function FilesSubSidebar({
             'h-8.5 justify-start gap-2.5 px-2.5 text-xs font-medium',
             view === 'recent' && 'text-primary font-semibold'
           )}
-          onClick={() => {
-            onViewChange('recent')
-            onSelectFolder(null)
-          }}
+          onClick={() => onViewChange('recent')}
         >
           <Clock className='size-4' />
           <span className='min-w-0 flex-1 truncate text-left'>
@@ -205,10 +196,7 @@ export function FilesSubSidebar({
             'h-8.5 justify-start gap-2.5 px-2.5 text-xs font-medium',
             view === 'trash' && 'text-destructive font-semibold'
           )}
-          onClick={() => {
-            onViewChange('trash')
-            onSelectFolder(null)
-          }}
+          onClick={() => onViewChange('trash')}
         >
           <Trash2 className='size-4' />
           <span className='min-w-0 flex-1 truncate text-left'>

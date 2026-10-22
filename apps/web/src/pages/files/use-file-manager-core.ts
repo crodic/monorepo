@@ -145,12 +145,16 @@ export function useFileManagerCore() {
     // Handle view-specific filtering/sorting
     if (activeView === 'trash') {
       builder.eq('status', 'archived')
-    } else if (activeView === 'starred') {
-      builder.eq('is_starred', true)
-    } else if (filter.status) {
-      builder.eq('status', filter.status)
     } else {
-      builder.eq('status', 'active')
+      if (filter.status) {
+        builder.eq('status', filter.status)
+      } else {
+        builder.eq('status', 'active')
+      }
+
+      if (activeView === 'starred') {
+        builder.eq('is_starred', true)
+      }
     }
 
     if (activeView === 'recent') {
@@ -379,6 +383,25 @@ export function useFileManagerCore() {
   })
 
   // --- Selection & Navigation Handlers ---
+  const handleViewChange = useCallback(
+    (view: FileViewType) => {
+      setActiveView(view)
+      setActiveFolder(null)
+      table.setPageIndex(0)
+      table.resetRowSelection()
+      void setPageQuery(1)
+      void setFilterQuery({
+        [ColumnKey.originalName]: null,
+        [ColumnKey.folder]: null,
+        [ColumnKey.mime]: null,
+        [ColumnKey.resourceType]: null,
+        [ColumnKey.status]: view === 'trash' ? 'archived' : null,
+        [ColumnKey.createdAt]: null,
+      })
+    },
+    [setFilterQuery, setPageQuery, table]
+  )
+
   const handleFolderSelect = useCallback(
     (folder: string | null) => {
       setActiveView('all')
@@ -493,6 +516,7 @@ export function useFileManagerCore() {
     // Navigation & View
     activeView,
     setActiveView,
+    handleViewChange,
     activeFolder,
     setActiveFolder,
     viewMode,
