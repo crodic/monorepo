@@ -51,12 +51,15 @@ import {
   isPreviewableVideo,
 } from '../file-preview'
 import { apiUpdateFile, fileQueryKeys } from '../queries'
-import type { FileSchema } from '../schema'
+import type { FileSchema, FolderSchema } from '../schema'
+import { StorageOverviewWidget } from './storage-overview-widget'
 
 interface FileInspectorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   file: FileSchema | null
+  files?: FileSchema[]
+  folders?: FolderSchema[]
   onPreview: (file: FileSchema) => void
   onCopyUrl: (file: FileSchema) => void
   onMove: (file: FileSchema) => void
@@ -72,6 +75,8 @@ export function FileInspector({
   open,
   onOpenChange,
   file,
+  files = [],
+  folders = [],
   onPreview,
   onCopyUrl,
   onMove,
@@ -142,13 +147,16 @@ export function FileInspector({
         </SheetHeader>
 
         {!activeFile ? (
-          <div className='flex flex-1 flex-col items-center justify-center p-8 text-center'>
-            <div className='bg-muted text-muted-foreground mb-3 flex size-14 items-center justify-center rounded-2xl'>
-              <FileIcon className='size-7' />
+          <div className='flex flex-1 flex-col gap-4 overflow-y-auto p-5'>
+            <StorageOverviewWidget files={files} folders={folders} />
+            <div className='flex flex-1 flex-col items-center justify-center p-6 text-center'>
+              <div className='bg-muted text-muted-foreground mb-3 flex size-12 items-center justify-center rounded-2xl'>
+                <FileIcon className='size-6' />
+              </div>
+              <p className='text-muted-foreground text-xs font-medium'>
+                {t('files.inspector.empty', 'Select a file to inspect details')}
+              </p>
             </div>
-            <p className='text-foreground text-sm font-medium'>
-              {t('files.inspector.empty')}
-            </p>
           </div>
         ) : (
           <div className='min-h-0 flex-1 overflow-y-auto p-5'>

@@ -17,6 +17,7 @@ import { normalizeDate, sortParser } from '@/lib/utils'
 import { useDataTable } from '@/hooks/use-data-table'
 import useGetFilterParams from '@/hooks/use-get-filter-params'
 import { getFilesTableColumns } from './columns'
+import type { FileViewType } from './components/files-sub-sidebar'
 import {
   apiCreateFolder,
   apiDeleteFile,
@@ -30,6 +31,7 @@ import {
   useInfiniteDataFileOverview,
 } from './queries'
 import { ColumnKey, type FileSchema, type FolderSchema } from './schema'
+import { useStarredFiles } from './use-starred-files'
 
 export const fileFilterParsers = {
   [ColumnKey.originalName]: parseAsString,
@@ -60,8 +62,14 @@ export function useFileManagerCore() {
   const queryClient = useQueryClient()
 
   // --- View Mode & Navigation ---
+  const [activeView, setActiveView] = useState<FileViewType>('all')
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+  const {
+    starredCount: localStarredCount,
+    isStarred: isLocalStarred,
+    toggleStar: toggleLocalStar,
+  } = useStarredFiles()
 
   useEffect(() => {
     const saved = window.localStorage.getItem('file-manager:view-mode')
@@ -131,10 +139,25 @@ export function useFileManagerCore() {
       .ilike('folder', filter.folder)
       .ilike('mime', filter.mime)
       .eq('resource_type', filter.resource_type)
-      .eq('status', filter.status)
       .btw('createdAt', createdFrom, createdTo)
-      .applySorts(sortParser(sort))
       .search(search)
+
+    // Handle view-specific filtering/sorting
+    if (activeView === 'trash') {
+      builder.eq('status', 'archived')
+    } else if (activeView === 'starred') {
+      builder.eq('is_starred', true)
+    } else if (filter.status) {
+      builder.eq('status', filter.status)
+    } else {
+      builder.eq('status', 'active')
+    }
+
+    if (activeView === 'recent') {
+      builder.applySorts([{ sortBy: 'createdAt', sortDirection: 'DESC' }])
+    } else {
+      builder.applySorts(sortParser(sort))
+    }
 
     if (activeFolder) {
       builder.eq('folder', activeFolder)
@@ -154,6 +177,7 @@ export function useFileManagerCore() {
     sort,
     search,
     activeFolder,
+    activeView,
   ])
 
   // Derive activeCategory from URL params so it persists across page reloads
@@ -196,11 +220,29 @@ export function useFileManagerCore() {
     [infiniteData?.pages]
   )
 
-  const currentFiles = isGridView ? allGridFiles : (pagedData?.data ?? [])
+  const currentFiles = useMemo(() => {
+    const rawFiles = isGridView ? allGridFiles : (pagedData?.data ?? [])
+    if (activeView === 'starred') {
+      return rawFiles.filter((f) => f.is_starred || isLocalStarred(f.public_id))
+    }
+    return rawFiles
+  }, [activeView, isGridView, allGridFiles, pagedData?.data, isLocalStarred])
+
   const isFetching = isGridView ? isInfiniteFetching : isPagedFetching
-  const totalItems = isGridView
-    ? infiniteData?.pages[0]?.meta.totalItems
-    : pagedData?.meta.totalItems
+  const totalItems = useMemo(() => {
+    if (activeView === 'starred') {
+      return currentFiles.length
+    }
+    return isGridView
+      ? infiniteData?.pages[0]?.meta.totalItems
+      : pagedData?.meta.totalItems
+  }, [
+    activeView,
+    currentFiles.length,
+    isGridView,
+    infiniteData?.pages,
+    pagedData?.meta.totalItems,
+  ])
 
   const folders = useMemo(() => {
     const map = new Map<string, FolderSchema>()
@@ -220,6 +262,47 @@ export function useFileManagerCore() {
     ])
   }, [queryClient])
 
+  // --- Star Handlers ---
+  const isStarred = useCallback(
+    (publicId?: string | null) => {
+      if (!publicId) return false
+      const found = currentFiles.find((f) => f.public_id === publicId)
+      if (found?.is_starred !== undefined) {
+        return found.is_starred
+      }
+      return isLocalStarred(publicId)
+    },
+    [currentFiles, isLocalStarred]
+  )
+
+  const toggleStar = useCallback(
+    async (publicId: string) => {
+      const found = currentFiles.find((f) => f.public_id === publicId)
+      const currentVal = found?.is_starred ?? isLocalStarred(publicId)
+      const nextVal = !currentVal
+
+      // Local update for instant optimistic UI
+      toggleLocalStar(publicId)
+
+      try {
+        await apiUpdateFile({
+          publicId,
+          data: { is_starred: nextVal },
+        })
+        await invalidateFiles()
+      } catch {
+        // Rollback if network fails
+        toggleLocalStar(publicId)
+      }
+    },
+    [currentFiles, isLocalStarred, toggleLocalStar, invalidateFiles]
+  )
+
+  const starredCount = useMemo(() => {
+    const dbStarredCount = currentFiles.filter((f) => f.is_starred).length
+    return Math.max(dbStarredCount, localStarredCount)
+  }, [currentFiles, localStarredCount])
+
   // --- Inspect Handler ---
   const handleInspectFile = useCallback((file: FileSchema) => {
     setInspectedFile(file)
@@ -236,10 +319,12 @@ export function useFileManagerCore() {
         onDelete: setDeletingFile,
         onRename: setRenamingFile,
         onShare: setSharingFile,
+        isStarred,
+        onToggleStar: toggleStar,
         canUpdate: ability.can('update', 'FILE'),
         canDelete: ability.can('delete', 'FILE'),
       }),
-    [ability]
+    [ability, isStarred, toggleStar]
   )
 
   const { table } = useDataTable({
@@ -296,6 +381,7 @@ export function useFileManagerCore() {
   // --- Selection & Navigation Handlers ---
   const handleFolderSelect = useCallback(
     (folder: string | null) => {
+      setActiveView('all')
       if (folder === activeFolder) return
 
       setActiveFolder(folder)
@@ -361,8 +447,8 @@ export function useFileManagerCore() {
   }, [])
 
   const handleCreateFolder = useCallback(
-    async (folderName: string) => {
-      const created = await apiCreateFolder({ folder: folderName })
+    async (folderName: string, color?: string) => {
+      const created = await apiCreateFolder({ folder: folderName, color })
       setLocalFolders((current) => [
         ...current.filter((item) => item.folder !== created.folder),
         created,
@@ -373,12 +459,12 @@ export function useFileManagerCore() {
   )
 
   const handleRenameFolder = useCallback(
-    async (newFolderName: string) => {
+    async (newFolderName: string, color?: string) => {
       const target = folderToRename ?? activeFolder
       if (!target) return
       const renamed = await apiRenameFolder({
         folder: target,
-        data: { folder: newFolderName },
+        data: { folder: newFolderName, color },
       })
       handleFolderSelect(renamed.folder)
       setFolderToRename(null)
@@ -405,6 +491,8 @@ export function useFileManagerCore() {
 
   return {
     // Navigation & View
+    activeView,
+    setActiveView,
     activeFolder,
     setActiveFolder,
     viewMode,
@@ -413,6 +501,11 @@ export function useFileManagerCore() {
     handleFolderSelect,
     handleCategorySelect,
     handleDropFiles,
+    search: search || '',
+    setSearch: setSearchQuery,
+    starredCount,
+    isStarred,
+    toggleStar,
 
     // Data & Collections
     folders,

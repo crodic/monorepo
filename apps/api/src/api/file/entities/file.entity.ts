@@ -77,6 +77,9 @@ export class FileEntity {
   @Column()
   status: string;
 
+  @Column({ type: 'boolean', default: false })
+  is_starred: boolean;
+
   get url() {
     const ext = this.path.split('.').pop();
     return `${process.env.APP_URL}/storage/uploads/${this.resource_type}/${this.public_id}.${ext}`;

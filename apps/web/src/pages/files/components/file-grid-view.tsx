@@ -19,6 +19,7 @@ import {
   MoreVertical,
   MoveRight,
   Pencil,
+  Star,
   Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -72,6 +73,8 @@ export interface FileGridViewProps {
   onDeleteFile: (file: FileSchema) => void
   onRenameFile?: (file: FileSchema) => void
   onShareFile?: (file: FileSchema) => void
+  isStarred?: (publicId?: string | null) => boolean
+  onToggleStar?: (publicId: string) => void
   canUpdate?: boolean
   canDelete?: boolean
   hasNextPage?: boolean
@@ -181,6 +184,8 @@ interface FileCardItemProps {
   onRenameFile?: (file: FileSchema) => void
   onShareFile?: (file: FileSchema) => void
   onToggleSelect?: () => void
+  isStarred?: (publicId?: string | null) => boolean
+  onToggleStar?: (publicId: string) => void
 }
 
 const FileCardItem = memo(function FileCardItem({
@@ -197,6 +202,8 @@ const FileCardItem = memo(function FileCardItem({
   onRenameFile,
   onShareFile,
   onToggleSelect,
+  isStarred,
+  onToggleStar,
 }: FileCardItemProps) {
   const { t } = useTranslation()
   const isMedia = isPreviewableImage(file) || isPreviewableVideo(file)
@@ -255,89 +262,120 @@ const FileCardItem = memo(function FileCardItem({
               </div>
             )}
 
-            {/* Action Dropdown */}
-            <div
-              className='pointer-events-auto ml-auto opacity-0 transition-opacity group-hover:opacity-100'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='bg-background/85 text-foreground hover:bg-background size-7 rounded-lg shadow-xs backdrop-blur-xs'
-                  >
-                    <MoreVertical className='size-3.5' />
-                    <span className='sr-only'>File actions</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end' className='w-44'>
-                  <DropdownMenuItem
-                    onClick={() => onPreviewFile(file)}
-                    className='gap-2'
-                  >
-                    <Eye className='size-4' />
-                    {t('files.actions.preview')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => downloadFile(file)}
-                    className='gap-2'
-                  >
-                    <Download className='size-4' />
-                    {t('files.actions.download', 'Download')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      onCopyUrl(file)
-                      toast.success(t('files.inspector.urlCopied'))
-                    }}
-                    className='gap-2'
-                  >
-                    <Copy className='size-4' />
-                    {t('files.actions.copyUrl')}
-                  </DropdownMenuItem>
-                  {isFilePrivate(file) && onShareFile && (
-                    <DropdownMenuItem
-                      onClick={() => onShareFile(file)}
-                      className='gap-2 text-amber-600 dark:text-amber-400'
-                    >
-                      <Link2 className='size-4' />
-                      {t('files.actions.share', 'Share link')}
-                    </DropdownMenuItem>
+            {/* Action Dropdown & Star */}
+            <div className='pointer-events-auto ml-auto flex items-center gap-1'>
+              {onToggleStar && (
+                <Button
+                  variant='ghost'
+                  size='icon'
+                  className={cn(
+                    'bg-background/85 text-foreground hover:bg-background size-7 rounded-lg shadow-xs backdrop-blur-xs transition-opacity',
+                    isStarred?.(file.public_id)
+                      ? 'opacity-100'
+                      : 'opacity-0 group-hover:opacity-100'
                   )}
-                  {canUpdate && onRenameFile && (
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleStar(file.public_id)
+                  }}
+                  title={
+                    isStarred?.(file.public_id) ? 'Unstar file' : 'Star file'
+                  }
+                >
+                  <Star
+                    className={cn(
+                      'size-3.5 transition-colors',
+                      isStarred?.(file.public_id)
+                        ? 'fill-amber-400 text-amber-500'
+                        : 'text-muted-foreground/60 hover:text-amber-500'
+                    )}
+                  />
+                </Button>
+              )}
+
+              <div
+                className='opacity-0 transition-opacity group-hover:opacity-100'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='bg-background/85 text-foreground hover:bg-background size-7 rounded-lg shadow-xs backdrop-blur-xs'
+                    >
+                      <MoreVertical className='size-3.5' />
+                      <span className='sr-only'>File actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-44'>
                     <DropdownMenuItem
-                      onClick={() => onRenameFile(file)}
+                      onClick={() => onPreviewFile(file)}
                       className='gap-2'
                     >
-                      <Pencil className='size-4' />
-                      {t('files.actions.rename', 'Rename')}
+                      <Eye className='size-4' />
+                      {t('files.actions.preview')}
                     </DropdownMenuItem>
-                  )}
-                  {canUpdate && (
                     <DropdownMenuItem
-                      onClick={() => onMoveFile(file)}
+                      onClick={() => downloadFile(file)}
                       className='gap-2'
                     >
-                      <MoveRight className='size-4' />
-                      {t('files.actions.move')}
+                      <Download className='size-4' />
+                      {t('files.actions.download', 'Download')}
                     </DropdownMenuItem>
-                  )}
-                  {canDelete && (
-                    <>
-                      <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        onCopyUrl(file)
+                        toast.success(t('files.inspector.urlCopied'))
+                      }}
+                      className='gap-2'
+                    >
+                      <Copy className='size-4' />
+                      {t('files.actions.copyUrl')}
+                    </DropdownMenuItem>
+                    {isFilePrivate(file) && onShareFile && (
                       <DropdownMenuItem
-                        variant='destructive'
-                        onClick={() => onDeleteFile(file)}
+                        onClick={() => onShareFile(file)}
+                        className='gap-2 text-amber-600 dark:text-amber-400'
+                      >
+                        <Link2 className='size-4' />
+                        {t('files.actions.share', 'Share link')}
+                      </DropdownMenuItem>
+                    )}
+                    {canUpdate && onRenameFile && (
+                      <DropdownMenuItem
+                        onClick={() => onRenameFile(file)}
                         className='gap-2'
                       >
-                        <Trash2 className='size-4' />
-                        {t('files.actions.delete')}
+                        <Pencil className='size-4' />
+                        {t('files.actions.rename', 'Rename')}
                       </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                    {canUpdate && (
+                      <DropdownMenuItem
+                        onClick={() => onMoveFile(file)}
+                        className='gap-2'
+                      >
+                        <MoveRight className='size-4' />
+                        {t('files.actions.move')}
+                      </DropdownMenuItem>
+                    )}
+                    {canDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant='destructive'
+                          onClick={() => onDeleteFile(file)}
+                          className='gap-2'
+                        >
+                          <Trash2 className='size-4' />
+                          {t('files.actions.delete')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
 
@@ -495,6 +533,8 @@ export function FileGridView({
   onDeleteFile,
   onRenameFile,
   onShareFile,
+  isStarred,
+  onToggleStar,
   canUpdate,
   canDelete,
   hasNextPage,
@@ -672,6 +712,8 @@ export function FileGridView({
                       onRenameFile={onRenameFile}
                       onShareFile={onShareFile}
                       onToggleSelect={() => row?.toggleSelected()}
+                      isStarred={isStarred}
+                      onToggleStar={onToggleStar}
                     />
                   )
                 })}

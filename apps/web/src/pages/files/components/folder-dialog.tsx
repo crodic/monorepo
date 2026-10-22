@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { AxiosError } from 'axios'
 import { useMutation } from '@tanstack/react-query'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { restApiErrorHandler } from '@/lib/rest-api-handler'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FOLDER_COLOR_PALETTE } from '../file-types'
 import { isValidFolderName } from '../schema'
 
 export interface FolderDialogProps {
@@ -21,9 +24,10 @@ export interface FolderDialogProps {
   title: string
   submitLabel: string
   defaultValue?: string
+  defaultColor?: string
   existingFolders?: string[]
   onOpenChange: (open: boolean) => void
-  onSubmit: (folder: string) => Promise<void>
+  onSubmit: (folder: string, color?: string) => Promise<void>
 }
 
 export function FolderDialog({
@@ -31,12 +35,14 @@ export function FolderDialog({
   title,
   submitLabel,
   defaultValue = '',
+  defaultColor = '#8B5CF6',
   existingFolders,
   onOpenChange,
   onSubmit,
 }: FolderDialogProps) {
   const { t } = useTranslation()
   const [folder, setFolder] = useState(defaultValue)
+  const [selectedColor, setSelectedColor] = useState(defaultColor)
   const normalizedFolder = folder.trim()
 
   const isDuplicate =
@@ -57,9 +63,10 @@ export function FolderDialog({
         : null
 
   const mutation = useMutation({
-    mutationFn: () => onSubmit(normalizedFolder),
+    mutationFn: () => onSubmit(normalizedFolder, selectedColor),
     onSuccess: () => {
       setFolder('')
+      setSelectedColor(defaultColor)
       onOpenChange(false)
     },
     onError: (error) => {
@@ -74,46 +81,82 @@ export function FolderDialog({
 
   useEffect(() => {
     setFolder(defaultValue)
-  }, [defaultValue, open])
+    setSelectedColor(defaultColor)
+  }, [defaultValue, defaultColor, open])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className='grid gap-2'>
-          <Label htmlFor='folder-name'>{t('files.table.folder')}</Label>
-          <Input
-            id='folder-name'
-            value={folder}
-            onChange={(event) => setFolder(event.target.value)}
-            onKeyDown={(e) => {
-              if (
-                e.key === 'Enter' &&
-                normalizedFolder &&
-                !folderError &&
-                !mutation.isPending
-              ) {
-                e.preventDefault()
-                mutation.mutate()
-              }
-            }}
-          />
-          {folderError && (
-            <p className='text-destructive text-sm'>{folderError}</p>
-          )}
-          {mutation.error && (
-            <p className='text-destructive text-sm'>
-              {mutation.error instanceof AxiosError
-                ? (mutation.error.response?.data?.message ??
-                  mutation.error.message)
-                : mutation.error instanceof Error
-                  ? mutation.error.message
-                  : String(mutation.error)}
-            </p>
-          )}
+        <div className='flex flex-col gap-4 py-1'>
+          <div className='grid gap-2'>
+            <Label htmlFor='folder-name'>{t('files.table.folder')}</Label>
+            <Input
+              id='folder-name'
+              value={folder}
+              onChange={(event) => setFolder(event.target.value)}
+              placeholder='e.g. Design Assets'
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  normalizedFolder &&
+                  !folderError &&
+                  !mutation.isPending
+                ) {
+                  e.preventDefault()
+                  mutation.mutate()
+                }
+              }}
+            />
+            {folderError && (
+              <p className='text-destructive text-sm'>{folderError}</p>
+            )}
+            {mutation.error && (
+              <p className='text-destructive text-sm'>
+                {mutation.error instanceof AxiosError
+                  ? (mutation.error.response?.data?.message ??
+                    mutation.error.message)
+                  : mutation.error instanceof Error
+                    ? mutation.error.message
+                    : String(mutation.error)}
+              </p>
+            )}
+          </div>
+
+          {/* Folder Color Palette Selector */}
+          <div className='flex flex-col gap-2'>
+            <Label>{t('files.folders.color', 'Folder Color')}</Label>
+            <div className='flex flex-wrap items-center gap-2 pt-0.5'>
+              {FOLDER_COLOR_PALETTE.map((item) => {
+                const isSelected =
+                  selectedColor.toLowerCase() === item.hex.toLowerCase()
+
+                return (
+                  <button
+                    key={item.hex}
+                    type='button'
+                    onClick={() => setSelectedColor(item.hex)}
+                    className={cn(
+                      'flex size-7 cursor-pointer items-center justify-center rounded-full transition-all focus-visible:outline-hidden',
+                      isSelected
+                        ? 'ring-primary scale-110 shadow-xs ring-2 ring-offset-2'
+                        : 'opacity-85 hover:scale-105 hover:opacity-100'
+                    )}
+                    style={{ backgroundColor: item.hex }}
+                    title={item.hex}
+                  >
+                    {isSelected && (
+                      <Check className='size-3.5 stroke-[3] text-white drop-shadow-xs' />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
+
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)}>
             {t('buttons.cancel')}

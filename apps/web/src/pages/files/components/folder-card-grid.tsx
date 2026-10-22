@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { formatBytes } from '../columns'
+import { formatBytes, getFolderColor } from '../file-types'
 import type { FolderSchema } from '../schema'
 
 interface FolderCardGridProps {
@@ -25,6 +25,7 @@ interface FolderCardGridProps {
   onDeleteFolder?: (folder: string) => void
   canUpdate?: boolean
   canDelete?: boolean
+  className?: string
 }
 
 export function FolderCardGrid({
@@ -35,6 +36,7 @@ export function FolderCardGrid({
   onDeleteFolder,
   canUpdate,
   canDelete,
+  className,
 }: FolderCardGridProps) {
   const { t } = useTranslation()
 
@@ -43,16 +45,19 @@ export function FolderCardGrid({
   }
 
   return (
-    <div className='flex flex-col gap-2.5'>
+    <div className={cn('flex flex-col gap-2.5', className)}>
       <div className='flex items-center justify-between'>
         <h3 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
-          {t('files.quickFolders.title')} ({folders.length})
+          {t('files.quickFolders.title', 'Folders')} ({folders.length})
         </h3>
       </div>
 
-      <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6'>
+      <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5'>
         {folders.map((folder) => {
           const isActive = activeFolder === folder.folder
+          const color = getFolderColor(folder.folder, folder.color)
+          const displayName =
+            folder.name ?? folder.folder.split('/').pop() ?? folder.folder
 
           return (
             <ContextMenu key={folder.folder}>
@@ -69,14 +74,20 @@ export function FolderCardGrid({
                   }}
                   className={cn(
                     'group relative flex cursor-pointer flex-col justify-between rounded-xl border p-3.5 text-left transition-all duration-200 select-none',
-                    'hover:border-primary/50 hover:bg-accent/40 hover:shadow-sm',
+                    'hover:border-foreground/20 hover:bg-accent/40 hover:shadow-xs',
                     isActive
                       ? 'border-primary/60 bg-primary/5 ring-primary/30 shadow-xs ring-1'
-                      : 'border-border/70 bg-card/60'
+                      : 'border-border/70 bg-card/50'
                   )}
                 >
                   <div className='flex items-start justify-between gap-2'>
-                    <div className='flex size-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-400/15 dark:text-amber-400'>
+                    <div
+                      className={cn(
+                        'flex size-9 items-center justify-center rounded-lg transition-transform group-hover:scale-105',
+                        color.bg,
+                        color.text
+                      )}
+                    >
                       <Folder className='size-5 fill-current' />
                     </div>
 
@@ -100,9 +111,10 @@ export function FolderCardGrid({
                                 e.stopPropagation()
                                 onRenameFolder(folder.folder)
                               }}
+                              className='gap-2 text-xs'
                             >
-                              <Pencil className='mr-2 size-3.5' />
-                              {t('buttons.edit')}
+                              <Pencil className='size-3.5' />
+                              <span>{t('buttons.rename', 'Rename')}</span>
                             </DropdownMenuItem>
                           )}
                           {canDelete && onDeleteFolder && (
@@ -112,9 +124,10 @@ export function FolderCardGrid({
                                 e.stopPropagation()
                                 onDeleteFolder(folder.folder)
                               }}
+                              className='gap-2 text-xs'
                             >
-                              <Trash2 className='mr-2 size-3.5' />
-                              {t('buttons.delete')}
+                              <Trash2 className='size-3.5' />
+                              <span>{t('buttons.delete', 'Delete')}</span>
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -124,14 +137,12 @@ export function FolderCardGrid({
 
                   <div className='mt-3 min-w-0'>
                     <p
-                      className='text-foreground group-hover:text-primary truncate text-sm font-medium transition-colors'
+                      className='text-foreground group-hover:text-primary truncate text-sm font-semibold tracking-tight transition-colors'
                       title={folder.folder}
                     >
-                      {folder.name ??
-                        folder.folder.split('/').pop() ??
-                        folder.folder}
+                      {displayName}
                     </p>
-                    <p className='text-muted-foreground mt-0.5 text-xs'>
+                    <p className='text-muted-foreground mt-0.5 text-xs font-normal tabular-nums'>
                       {folder.count} files &bull; {formatBytes(folder.size)}
                     </p>
                   </div>
@@ -141,20 +152,20 @@ export function FolderCardGrid({
                 {canUpdate && onRenameFolder && (
                   <ContextMenuItem
                     onClick={() => onRenameFolder(folder.folder)}
-                    className='gap-2'
+                    className='gap-2 text-xs'
                   >
                     <Pencil className='size-3.5' />
-                    {t('buttons.edit')}
+                    <span>{t('buttons.rename', 'Rename')}</span>
                   </ContextMenuItem>
                 )}
                 {canDelete && onDeleteFolder && (
                   <ContextMenuItem
                     variant='destructive'
                     onClick={() => onDeleteFolder(folder.folder)}
-                    className='gap-2'
+                    className='gap-2 text-xs'
                   >
                     <Trash2 className='size-3.5' />
-                    {t('buttons.delete')}
+                    <span>{t('buttons.delete', 'Delete')}</span>
                   </ContextMenuItem>
                 )}
               </ContextMenuContent>

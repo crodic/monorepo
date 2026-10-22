@@ -1,14 +1,5 @@
-import {
-  FolderPlus,
-  LayoutGrid,
-  List,
-  MousePointer,
-  PanelRight,
-  PlusIcon,
-} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { DataTable } from '@/components/data-table/data-table'
@@ -17,19 +8,20 @@ import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { Main } from '@/components/layout/main'
 import {
   DeleteFolderDialog,
-  FileBreadcrumbs,
   FileDropzoneOverlay,
   FileGridToolbar,
   FileGridView,
+  FilesHeader,
   FileInspector,
+  FilesSubSidebar,
   FolderCardGrid,
   FolderDialog,
-  FolderPanel,
   MoveFileDialog,
   PreviewDialog,
   QuickFilterChips,
   RenameFileDialog,
   ShareUrlDialog,
+  StorageCategoryCards,
   UploadDialog,
 } from './components'
 import { bulkDownloadFiles } from './download-helper'
@@ -43,6 +35,8 @@ export function PageFileOverview() {
 
   const {
     // Navigation & View
+    activeView,
+    setActiveView,
     activeFolder,
     viewMode,
     handleViewModeChange,
@@ -50,6 +44,11 @@ export function PageFileOverview() {
     handleFolderSelect,
     handleCategorySelect,
     handleDropFiles,
+    search,
+    setSearch,
+    starredCount,
+    isStarred,
+    toggleStar,
 
     // Data & Collections
     folders,
@@ -117,120 +116,66 @@ export function PageFileOverview() {
         disabled={!ability.can('create', 'FILE')}
       />
 
-      <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        {/* Top Header & Action Controls */}
-        <div className='border-border/70 flex flex-wrap items-center justify-between gap-3 border-b pb-4'>
-          <div className='flex flex-col gap-1'>
-            <FileBreadcrumbs
-              activeFolder={activeFolder}
-              onSelectFolder={handleFolderSelect}
-              itemCount={totalItems}
-              isFetching={isFetching}
-            />
-            {pickedUrl && (
-              <p className='text-muted-foreground mt-0.5 max-w-[min(720px,80vw)] truncate text-xs'>
-                {t('files.picker.demoValue')}: {pickedUrl}
-              </p>
-            )}
-          </div>
+      <Main className='flex flex-1 flex-col gap-4 sm:gap-5'>
+        {/* Top Header with Breadcrumbs, Search, Quick Actions & View Toggle */}
+        <FilesHeader
+          view={activeView}
+          activeFolder={activeFolder}
+          onSelectFolder={handleFolderSelect}
+          search={search}
+          onSearchChange={setSearch}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          onUploadClick={() => {
+            setDroppedFiles([])
+            setUploadOpen(true)
+          }}
+          onCreateFolderClick={() => setFolderDialogOpen(true)}
+          onToggleInspector={() => setInspectorOpen((prev) => !prev)}
+          inspectorOpen={inspectorOpen}
+          totalItems={totalItems}
+          isFetching={isFetching}
+          canCreate={ability.can('create', 'FILE')}
+        />
 
-          <div className='flex items-center gap-2'>
-            {/* View Mode Toggle */}
-            <div className='border-border/80 bg-muted/40 flex items-center rounded-lg border p-0.5'>
-              <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                size='icon'
-                aria-label={t('files.view.grid', 'Grid view')}
-                className='size-7 rounded-md'
-                onClick={() => handleViewModeChange('grid')}
-                title={t('files.view.grid')}
-              >
-                <LayoutGrid className='size-3.5' aria-hidden='true' />
-              </Button>
-              <Button
-                variant={viewMode === 'table' ? 'secondary' : 'ghost'}
-                size='icon'
-                aria-label={t('files.view.table', 'Table view')}
-                className='size-7 rounded-md'
-                onClick={() => handleViewModeChange('table')}
-                title={t('files.view.table')}
-              >
-                <List className='size-3.5' aria-hidden='true' />
-              </Button>
-            </div>
-
-            {/* Inspector Toggle Button */}
+        {/* Demo Picker Result indicator (if used) */}
+        {pickedUrl && (
+          <div className='bg-muted/40 flex items-center justify-between rounded-lg border px-3 py-1.5 text-xs'>
+            <span className='text-muted-foreground truncate'>
+              {t('files.picker.demoValue')}: {pickedUrl}
+            </span>
             <Button
-              variant={inspectorOpen ? 'secondary' : 'outline'}
-              size='icon'
-              aria-label={t('files.inspector.title', 'File inspector')}
-              className={cn(
-                'size-8',
-                inspectorOpen && 'border-primary/50 text-primary'
-              )}
-              onClick={() => setInspectorOpen((prev) => !prev)}
-              title={t('files.inspector.title')}
-            >
-              <PanelRight className='size-4' aria-hidden='true' />
-            </Button>
-
-            <Button
-              variant='outline'
+              variant='ghost'
               size='sm'
-              className='h-8 gap-1.5 text-xs'
-              onClick={() => setPickerOpen(true)}
+              className='h-6 text-xs'
+              onClick={() => setPickedUrl(null)}
             >
-              <MousePointer className='size-3.5' />
-              <span className='hidden sm:inline'>
-                {t('files.picker.demoButton')}
-              </span>
+              Clear
             </Button>
-
-            {ability.can('create', 'FILE') && (
-              <>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={() => setFolderDialogOpen(true)}
-                >
-                  <FolderPlus className='size-3.5' />
-                  <span className='hidden sm:inline'>
-                    {t('files.actions.createFolder')}
-                  </span>
-                </Button>
-                <Button
-                  size='sm'
-                  className='h-8 gap-1.5 text-xs'
-                  onClick={() => {
-                    setDroppedFiles([])
-                    setUploadOpen(true)
-                  }}
-                >
-                  <PlusIcon className='size-3.5' />
-                  <span>{t('files.actions.upload')}</span>
-                </Button>
-              </>
-            )}
           </div>
-        </div>
+        )}
 
-        {/* Main Body Layout */}
+        {/* Main Body Layout: Left Sub-Sidebar + Workspace Content */}
         <div className='grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]'>
-          {/* Left Sidebar */}
-          <FolderPanel
+          {/* Left Sub-Sidebar (Square UI style) */}
+          <FilesSubSidebar
+            view={activeView}
+            onViewChange={setActiveView}
             folders={folders}
             activeFolder={activeFolder}
-            activeCategory={activeCategory}
             totalFiles={totalItems ?? 0}
-            onSelect={handleFolderSelect}
-            onSelectCategory={handleCategorySelect}
-            onCreateFolder={() => setFolderDialogOpen(true)}
-            onRename={() => {
-              setFolderToRename(activeFolder)
+            starredCount={starredCount}
+            onSelectFolder={handleFolderSelect}
+            onUploadClick={() => {
+              setDroppedFiles([])
+              setUploadOpen(true)
+            }}
+            onCreateFolderClick={() => setFolderDialogOpen(true)}
+            onRenameFolder={(folder) => {
+              setFolderToRename(folder)
               setRenameFolderOpen(true)
             }}
-            onDelete={() => setDeletingFolder(activeFolder)}
+            onDeleteFolder={(folder) => setDeletingFolder(folder)}
             canCreate={ability.can('create', 'FILE')}
             canUpdate={ability.can('update', 'FILE')}
             canDelete={ability.can('delete', 'FILE')}
@@ -238,30 +183,40 @@ export function PageFileOverview() {
 
           {/* Right Workspace Content */}
           <div className='flex min-w-0 flex-1 flex-col gap-5'>
-            {/* Quick Access Folders for current directory */}
-            {(() => {
-              const currentSubfolders = folders.filter((f) =>
-                activeFolder === null
-                  ? !f.parent || f.depth === 0
-                  : f.parent === activeFolder
-              )
-              if (currentSubfolders.length === 0) return null
+            {/* Storage Category Cards (Only in All Files root view) */}
+            {activeView === 'all' && activeFolder === null && (
+              <StorageCategoryCards
+                files={currentFiles}
+                activeCategory={activeCategory}
+                onSelectCategory={handleCategorySelect}
+              />
+            )}
 
-              return (
-                <FolderCardGrid
-                  folders={currentSubfolders}
-                  activeFolder={activeFolder}
-                  onSelectFolder={handleFolderSelect}
-                  onRenameFolder={(folder) => {
-                    setFolderToRename(folder)
-                    setRenameFolderOpen(true)
-                  }}
-                  onDeleteFolder={(folder) => setDeletingFolder(folder)}
-                  canUpdate={ability.can('update', 'FILE')}
-                  canDelete={ability.can('delete', 'FILE')}
-                />
-              )
-            })()}
+            {/* Quick Access Folders for current directory */}
+            {activeView === 'all' &&
+              (() => {
+                const currentSubfolders = folders.filter((f) =>
+                  activeFolder === null
+                    ? !f.parent || f.depth === 0
+                    : f.parent === activeFolder
+                )
+                if (currentSubfolders.length === 0) return null
+
+                return (
+                  <FolderCardGrid
+                    folders={currentSubfolders}
+                    activeFolder={activeFolder}
+                    onSelectFolder={handleFolderSelect}
+                    onRenameFolder={(folder) => {
+                      setFolderToRename(folder)
+                      setRenameFolderOpen(true)
+                    }}
+                    onDeleteFolder={(folder) => setDeletingFolder(folder)}
+                    canUpdate={ability.can('update', 'FILE')}
+                    canDelete={ability.can('delete', 'FILE')}
+                  />
+                )
+              })()}
 
             {/* Grid View Mode */}
             {viewMode === 'grid' ? (
@@ -284,6 +239,8 @@ export function PageFileOverview() {
                   onDeleteFile={setDeletingFile}
                   onRenameFile={setRenamingFile}
                   onShareFile={setSharingFile}
+                  isStarred={isStarred}
+                  onToggleStar={toggleStar}
                   canUpdate={ability.can('update', 'FILE')}
                   canDelete={ability.can('delete', 'FILE')}
                   hasNextPage={hasNextPage}
@@ -327,6 +284,8 @@ export function PageFileOverview() {
         open={inspectorOpen}
         onOpenChange={setInspectorOpen}
         file={inspectedFile}
+        files={currentFiles}
+        folders={folders}
         onPreview={setPreviewFile}
         onCopyUrl={copyFileUrl}
         onMove={setMovingFile}
@@ -370,6 +329,10 @@ export function PageFileOverview() {
         title={t('files.folders.renameTitle')}
         submitLabel={t('buttons.save')}
         defaultValue={folderToRename ?? activeFolder ?? ''}
+        defaultColor={
+          folders.find((f) => f.folder === (folderToRename ?? activeFolder))
+            ?.color ?? '#8B5CF6'
+        }
         existingFolders={folders.map((item) => item.folder)}
         onOpenChange={(open) => {
           setRenameFolderOpen(open)
@@ -386,12 +349,6 @@ export function PageFileOverview() {
         onMoved={handleMoveFile}
       />
 
-      {/* Preview Dialog */}
-      <PreviewDialog
-        file={previewFile}
-        onOpenChange={(open) => !open && setPreviewFile(null)}
-      />
-
       {/* Rename File Dialog */}
       <RenameFileDialog
         open={Boolean(renamingFile)}
@@ -404,20 +361,38 @@ export function PageFileOverview() {
         }}
       />
 
-      {/* Share / Presigned URL Dialog */}
+      {/* Share URL Dialog */}
       <ShareUrlDialog
         open={Boolean(sharingFile)}
         file={sharingFile}
         onOpenChange={(open) => !open && setSharingFile(null)}
       />
 
-      {/* Demo File Picker Dialog */}
-      <FilePickerDialog
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        mode='url'
-        value={pickedUrl}
-        onValueChange={(value) => setPickedUrl(value)}
+      {/* Preview Dialog */}
+      <PreviewDialog
+        file={previewFile}
+        onOpenChange={(open) => !open && setPreviewFile(null)}
+      />
+
+      {/* Delete Folder Dialog */}
+      <DeleteFolderDialog
+        folder={deletingFolder}
+        deleteFiles={deleteFolderFiles}
+        isLoading={deleteFolderMutation.isPending}
+        onDeleteFilesChange={setDeleteFolderFiles}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeletingFolder(null)
+            setDeleteFolderFiles(false)
+          }
+        }}
+        onConfirm={() => {
+          if (!deletingFolder) return
+          deleteFolderMutation.mutate({
+            folder: deletingFolder,
+            deleteFiles: deleteFolderFiles,
+          })
+        }}
       />
 
       {/* Delete Single File Alert */}
@@ -445,26 +420,15 @@ export function PageFileOverview() {
         />
       )}
 
-      {/* Delete Folder Alert */}
-      <DeleteFolderDialog
-        folder={deletingFolder}
-        deleteFiles={deleteFolderFiles}
-        isLoading={deleteFolderMutation.isPending}
-        onDeleteFilesChange={setDeleteFolderFiles}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeletingFolder(null)
-            setDeleteFolderFiles(false)
-          }
-        }}
-        onConfirm={() => {
-          if (!deletingFolder) return
-          deleteFolderMutation.mutate({
-            folder: deletingFolder,
-            deleteFiles: deleteFolderFiles,
-          })
-        }}
+      {/* File Picker Dialog (reusable demo) */}
+      <FilePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        mode='url'
+        value={pickedUrl}
+        onValueChange={(value) => setPickedUrl(value)}
       />
     </>
   )
 }
+export default PageFileOverview

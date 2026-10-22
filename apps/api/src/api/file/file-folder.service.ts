@@ -132,6 +132,7 @@ export class FileFolderService {
       {
         folder: folderName,
         name: entity?.title ?? title,
+        color: entity?.color ?? '#8B5CF6',
         parent,
         depth: entity?.depth ?? segments.length - 1,
         count: Number(row?.count ?? 0),
@@ -176,6 +177,7 @@ export class FileFolderService {
         return {
           folder: f.name,
           name: f.title ?? segments[segments.length - 1],
+          color: f.color ?? '#8B5CF6',
           parent,
           depth: f.depth,
           count: stat.count,
@@ -186,7 +188,10 @@ export class FileFolderService {
     );
   }
 
-  async createFolder(folder: string): Promise<FileFolderResDto> {
+  async createFolder(
+    folder: string,
+    color?: string,
+  ): Promise<FileFolderResDto> {
     const normalized = this.assertFolder(folder);
 
     const existing = await this.folderRepository.findOne({
@@ -197,16 +202,33 @@ export class FileFolderService {
       throw new BadRequestException('Folder already exists');
     }
 
-    await this.ensureFolder(normalized);
+    const created = await this.ensureFolder(normalized);
+    if (color && created) {
+      created.color = color;
+      await this.folderRepository.save(created);
+    }
 
     return this.getFolderSummary(normalized);
   }
 
-  async renameFolder(from: string, to: string): Promise<FileFolderResDto> {
+  async renameFolder(
+    from: string,
+    to: string,
+    color?: string,
+  ): Promise<FileFolderResDto> {
     const sourceFolder = this.assertFolder(from);
     const targetFolder = this.assertFolder(to);
 
     if (sourceFolder === targetFolder) {
+      if (color) {
+        const existing = await this.folderRepository.findOne({
+          where: { name: targetFolder },
+        });
+        if (existing) {
+          existing.color = color;
+          await this.folderRepository.save(existing);
+        }
+      }
       return this.getFolderSummary(targetFolder);
     }
 
@@ -231,7 +253,14 @@ export class FileFolderService {
     }
 
     // Ensure target folder structure exists
-    await this.ensureFolder(targetFolder);
+    const ensuredTarget = await this.ensureFolder(targetFolder);
+    if (color && ensuredTarget) {
+      ensuredTarget.color = color;
+      await this.folderRepository.save(ensuredTarget);
+    } else if (existingSource?.color && ensuredTarget) {
+      ensuredTarget.color = existingSource.color;
+      await this.folderRepository.save(ensuredTarget);
+    }
 
     // Update files directly in this folder
     await this.fileRepository

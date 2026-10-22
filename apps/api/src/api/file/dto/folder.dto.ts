@@ -38,6 +38,11 @@ export class FileFolderResDto {
   @Expose()
   @IsNumber()
   size: number;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  color?: string;
 }
 
 export class CreateFolderDto {
@@ -46,6 +51,11 @@ export class CreateFolderDto {
   @MaxLength(255)
   @Matches(FILE_FOLDER_NAME_PATTERN, { message: FILE_FOLDER_NAME_MESSAGE })
   folder: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  color?: string;
 }
 
 export class RenameFolderDto {
@@ -54,6 +64,11 @@ export class RenameFolderDto {
   @MaxLength(255)
   @Matches(FILE_FOLDER_NAME_PATTERN, { message: FILE_FOLDER_NAME_MESSAGE })
   folder: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  color?: string;
 }
 
 export class DeleteFolderDto {
