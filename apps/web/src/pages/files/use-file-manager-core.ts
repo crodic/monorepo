@@ -65,7 +65,11 @@ export function useFileManagerCore() {
   const [activeView, setActiveView] = useState<FileViewType>('all')
   const [activeFolder, setActiveFolder] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-  const { starredCount, isStarred, toggleStar } = useStarredFiles()
+  const {
+    starredCount: localStarredCount,
+    isStarred: isLocalStarred,
+    toggleStar: toggleLocalStar,
+  } = useStarredFiles()
 
   useEffect(() => {
     const saved = window.localStorage.getItem('file-manager:view-mode')
@@ -141,6 +145,8 @@ export function useFileManagerCore() {
     // Handle view-specific filtering/sorting
     if (activeView === 'trash') {
       builder.eq('status', 'archived')
+    } else if (activeView === 'starred') {
+      builder.eq('is_starred', true)
     } else if (filter.status) {
       builder.eq('status', filter.status)
     } else {
@@ -217,10 +223,10 @@ export function useFileManagerCore() {
   const currentFiles = useMemo(() => {
     const rawFiles = isGridView ? allGridFiles : (pagedData?.data ?? [])
     if (activeView === 'starred') {
-      return rawFiles.filter((f) => isStarred(f.public_id))
+      return rawFiles.filter((f) => f.is_starred || isLocalStarred(f.public_id))
     }
     return rawFiles
-  }, [activeView, isGridView, allGridFiles, pagedData?.data, isStarred])
+  }, [activeView, isGridView, allGridFiles, pagedData?.data, isLocalStarred])
 
   const isFetching = isGridView ? isInfiniteFetching : isPagedFetching
   const totalItems = useMemo(() => {
@@ -255,6 +261,47 @@ export function useFileManagerCore() {
       queryClient.invalidateQueries({ queryKey: fileQueryKeys.folders }),
     ])
   }, [queryClient])
+
+  // --- Star Handlers ---
+  const isStarred = useCallback(
+    (publicId?: string | null) => {
+      if (!publicId) return false
+      const found = currentFiles.find((f) => f.public_id === publicId)
+      if (found?.is_starred !== undefined) {
+        return found.is_starred
+      }
+      return isLocalStarred(publicId)
+    },
+    [currentFiles, isLocalStarred]
+  )
+
+  const toggleStar = useCallback(
+    async (publicId: string) => {
+      const found = currentFiles.find((f) => f.public_id === publicId)
+      const currentVal = found?.is_starred ?? isLocalStarred(publicId)
+      const nextVal = !currentVal
+
+      // Local update for instant optimistic UI
+      toggleLocalStar(publicId)
+
+      try {
+        await apiUpdateFile({
+          publicId,
+          data: { is_starred: nextVal },
+        })
+        await invalidateFiles()
+      } catch {
+        // Rollback if network fails
+        toggleLocalStar(publicId)
+      }
+    },
+    [currentFiles, isLocalStarred, toggleLocalStar, invalidateFiles]
+  )
+
+  const starredCount = useMemo(() => {
+    const dbStarredCount = currentFiles.filter((f) => f.is_starred).length
+    return Math.max(dbStarredCount, localStarredCount)
+  }, [currentFiles, localStarredCount])
 
   // --- Inspect Handler ---
   const handleInspectFile = useCallback((file: FileSchema) => {

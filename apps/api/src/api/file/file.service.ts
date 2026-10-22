@@ -161,6 +161,7 @@ export class FileService {
         'size',
         'resource_type',
         'status',
+        'is_starred',
         'createdAt',
         'updatedAt',
       ],
@@ -182,6 +183,7 @@ export class FileService {
         mime: [FilterOperator.ILIKE],
         resource_type: [FilterOperator.EQ, FilterOperator.IN],
         status: [FilterOperator.EQ, FilterOperator.IN],
+        is_starred: [FilterOperator.EQ],
         createdAt: [FilterOperator.GTE, FilterOperator.LTE, FilterOperator.BTW],
       },
     });
@@ -219,6 +221,10 @@ export class FileService {
 
     if (dto.status !== undefined) {
       file.status = dto.status;
+    }
+
+    if (dto.is_starred !== undefined) {
+      file.is_starred = dto.is_starred;
     }
 
     const targetVisibility = dto.visibility;

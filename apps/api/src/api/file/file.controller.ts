@@ -144,7 +144,7 @@ export class FileController {
     ability.can(AppActions.Create, AppSubjects.File),
   )
   createFolder(@Body() dto: CreateFolderDto): Promise<FileFolderResDto> {
-    return this.fileFolderService.createFolder(dto.folder);
+    return this.fileFolderService.createFolder(dto.folder, dto.color);
   }
 
   @Put('folders/:folder')
@@ -156,7 +156,7 @@ export class FileController {
     @Param('folder') folder: string,
     @Body() dto: RenameFolderDto,
   ): Promise<FileFolderResDto> {
-    return this.fileFolderService.renameFolder(folder, dto.folder);
+    return this.fileFolderService.renameFolder(folder, dto.folder, dto.color);
   }
 
   @Delete('folders/:folder')

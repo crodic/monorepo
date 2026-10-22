@@ -44,6 +44,7 @@ export const fileSchema = z.object({
   duration: nullableNumber,
   resource_type: z.string(),
   status: z.string(),
+  is_starred: z.boolean().default(false),
   url: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -52,6 +53,7 @@ export const fileSchema = z.object({
 export const folderSchema = z.object({
   folder: z.string(),
   name: z.string().optional(),
+  color: z.string().optional(),
   parent: nullableString.optional(),
   depth: z.number().default(0),
   count: z.number(),
@@ -64,6 +66,7 @@ export const updateFileSchema = z.object({
   status: fileStatusSchema.optional(),
   visibility: fileVisibilitySchema.optional(),
   disk: z.string().optional(),
+  is_starred: z.boolean().optional(),
 })
 
 export const createFolderSchema = z.object({

@@ -1,5 +1,5 @@
 import { Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString } from 'class-validator';
 
 export class FileResDto {
   @IsString()
@@ -61,6 +61,10 @@ export class FileResDto {
   @Expose()
   @IsString()
   status: string;
+
+  @Expose()
+  @IsBoolean()
+  is_starred: boolean;
 
   @Expose()
   @IsString()

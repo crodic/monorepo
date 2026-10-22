@@ -1,5 +1,6 @@
 import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsIn,
   IsOptional,
   IsString,
@@ -39,4 +40,8 @@ export class UpdateFileDto {
   @IsString()
   @IsIn(['public', 'local', 's3', 's3-private'])
   disk?: 'public' | 'local' | 's3' | 's3-private';
+
+  @IsOptional()
+  @IsBoolean()
+  is_starred?: boolean;
 }
