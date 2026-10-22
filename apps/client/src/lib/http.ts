@@ -6,8 +6,14 @@ export function getClientCookie(name: string): string | null {
   if (typeof document === "undefined") {
     return null;
   }
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-  return match && match[1] ? decodeURIComponent(match[1]) : null;
+  const cookies = document.cookie ? document.cookie.split("; ") : [];
+  for (const cookie of cookies) {
+    const [key, ...parts] = cookie.split("=");
+    if (key && key.trim() === name) {
+      return decodeURIComponent(parts.join("="));
+    }
+  }
+  return null;
 }
 
 export const http = xior.create({
@@ -35,13 +41,13 @@ http.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
 let refreshTokenPromise: Promise<string | null> | null = null;
 
 export async function refreshClientToken(
-  failedToken?: string,
+  failedToken?: string
 ): Promise<string | null> {
   if (refreshTokenPromise) {
     return refreshTokenPromise.catch(() => null);
@@ -65,7 +71,7 @@ export async function refreshClientToken(
       const res = await xior.post<{ accessToken?: string }>(
         "/api/auth/refresh",
         {},
-        { credentials: "same-origin" },
+        { credentials: "same-origin" }
       );
 
       const newAccessToken = res.data?.accessToken;
@@ -131,7 +137,7 @@ http.interceptors.response.use(
       const failedToken =
         originalRequest.headers?.Authorization?.toString().replace(
           /^Bearer\s+/i,
-          "",
+          ""
         );
 
       return refreshClientToken(failedToken).then((newAccessToken) => {
@@ -145,5 +151,5 @@ http.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );

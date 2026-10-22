@@ -24,7 +24,7 @@ export async function generateMetadata({
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const languages = Object.fromEntries(
-    routing.locales.map((loc) => [loc, `${baseUrl}/${loc}`]),
+    routing.locales.map((loc) => [loc, `${baseUrl}/${loc}`])
   );
 
   return {
@@ -61,9 +61,12 @@ export default async function RootPage({ params }: RootPageProps) {
 
   return (
     <Layout>
+      {/* nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
       />
       <Header />
       <main className="flex-1">

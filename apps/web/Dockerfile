@@ -29,6 +29,13 @@ FROM nginx:1.27-alpine AS production
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
+RUN apk add --no-cache libcap && \
+  setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx && \
+  touch /var/run/nginx.pid && \
+  chown -R nginx:nginx /var/run/nginx.pid /usr/share/nginx/html /var/cache/nginx /etc/nginx /var/log/nginx
+
+USER nginx
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]

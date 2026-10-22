@@ -148,7 +148,19 @@ export class FileChunkUploadService {
     return join(process.cwd(), 'storage', 'tmp', 'file-uploads');
   }
 
+  private assertSafeSessionId(sessionId: string): string {
+    if (
+      !sessionId ||
+      typeof sessionId !== 'string' ||
+      !/^[a-zA-Z0-9_-]{1,64}$/.test(sessionId)
+    ) {
+      throw new BadRequestException('Invalid upload session id');
+    }
+    return sessionId;
+  }
+
   private sessionPath(sessionId: string): string {
+    this.assertSafeSessionId(sessionId);
     return join(this.uploadSessionsRoot(), sessionId);
   }
 

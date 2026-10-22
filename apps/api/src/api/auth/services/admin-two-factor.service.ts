@@ -317,6 +317,7 @@ export class AdminTwoFactorService {
       'aes-256-gcm',
       this.getTwoFactorEncryptionKey(),
       Buffer.from(ivValue, 'base64url'),
+      { authTagLength: 16 },
     );
     decipher.setAuthTag(Buffer.from(tagValue, 'base64url'));
 

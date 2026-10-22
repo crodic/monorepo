@@ -3,6 +3,7 @@ import { CheckPolicies } from '../../decorators/policies.decorator';
 import { FilesystemService } from '../../filesystem/filesystem.service';
 import { AdminAuthGuard } from '../../guards/admin-auth.guard';
 import { PoliciesGuard } from '../../guards/policies.guard';
+import { ParseUploadSessionIdPipe } from '../../pipes/upload-session-id.pipe';
 import { AppAbility } from '../../shared/casl/ability.factory';
 import { AppActions, AppSubjects } from '../../utils/permissions.constant';
 import {
@@ -252,7 +253,7 @@ export class FileController {
     ability.can(AppActions.Create, AppSubjects.File),
   )
   uploadChunk(
-    @Param('sessionId') sessionId: string,
+    @Param('sessionId', ParseUploadSessionIdPipe) sessionId: string,
     @UploadedFile() chunk: Express.Multer.File,
     @Body('index', ParseIntPipe) index: number,
   ) {
@@ -264,7 +265,9 @@ export class FileController {
   @CheckPolicies((ability: AppAbility) =>
     ability.can(AppActions.Create, AppSubjects.File),
   )
-  completeUpload(@Param('sessionId') sessionId: string): Promise<FileResDto> {
+  completeUpload(
+    @Param('sessionId', ParseUploadSessionIdPipe) sessionId: string,
+  ): Promise<FileResDto> {
     return this.fileChunkUploadService.completeUploadSession(sessionId);
   }
 
@@ -273,7 +276,7 @@ export class FileController {
   @CheckPolicies((ability: AppAbility) =>
     ability.can(AppActions.Create, AppSubjects.File),
   )
-  abortUpload(@Param('sessionId') sessionId: string) {
+  abortUpload(@Param('sessionId', ParseUploadSessionIdPipe) sessionId: string) {
     return this.fileChunkUploadService.abortUploadSession(sessionId);
   }
 
