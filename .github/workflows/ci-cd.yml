@@ -284,8 +284,60 @@ jobs:
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
 
+      - name: Validate client production configuration
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
+        run: |
+          for name in NEXT_PUBLIC_API_URL NEXT_PUBLIC_APP_URL NEXT_PUBLIC_ADMIN_PORTAL_URL; do
+            if [ -z "${!name}" ]; then
+              echo "$name must be configured as a GitHub Repository Variable."
+              exit 1
+            fi
+          done
+
+      - name: Debug client public build variables
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
+          NEXT_PUBLIC_ALLOWED_LOCALE: ${{ vars.NEXT_PUBLIC_ALLOWED_LOCALE }}
+          NEXT_PUBLIC_APP_LOCALE: ${{ vars.NEXT_PUBLIC_APP_LOCALE }}
+          NEXT_PUBLIC_ENABLE_WHITE_LABEL: ${{ vars.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
+          NEXT_PUBLIC_USE_CASE: ${{ vars.NEXT_PUBLIC_USE_CASE }}
+          NEXT_PUBLIC_SENTRY_DNS_NEXTJS: ${{ vars.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
+        run: |
+          for name in \
+            NEXT_PUBLIC_API_URL \
+            NEXT_PUBLIC_APP_URL \
+            NEXT_PUBLIC_ADMIN_PORTAL_URL \
+            NEXT_PUBLIC_ALLOWED_LOCALE \
+            NEXT_PUBLIC_APP_LOCALE \
+            NEXT_PUBLIC_ENABLE_WHITE_LABEL \
+            NEXT_PUBLIC_USE_CASE \
+            NEXT_PUBLIC_SENTRY_DNS_NEXTJS \
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT; do
+            if [ -n "${!name}" ]; then
+              printf '%s=%s\n' "$name" "${!name}"
+            else
+              printf '%s=<empty>\n' "$name"
+            fi
+          done
+
       - name: Build and push client image
         uses: docker/build-push-action@v6
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
+          NEXT_PUBLIC_ALLOWED_LOCALE: ${{ vars.NEXT_PUBLIC_ALLOWED_LOCALE }}
+          NEXT_PUBLIC_APP_LOCALE: ${{ vars.NEXT_PUBLIC_APP_LOCALE }}
+          NEXT_PUBLIC_ENABLE_WHITE_LABEL: ${{ vars.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
+          NEXT_PUBLIC_USE_CASE: ${{ vars.NEXT_PUBLIC_USE_CASE }}
+          NEXT_PUBLIC_SENTRY_DNS_NEXTJS: ${{ vars.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
         with:
           context: .
           file: apps/client/Dockerfile
@@ -293,6 +345,16 @@ jobs:
           push: true
           tags: ${{ steps.client-meta.outputs.tags }}
           labels: ${{ steps.client-meta.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_ADMIN_PORTAL_URL=${{ env.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
+            NEXT_PUBLIC_ALLOWED_LOCALE=${{ env.NEXT_PUBLIC_ALLOWED_LOCALE }}
+            NEXT_PUBLIC_APP_LOCALE=${{ env.NEXT_PUBLIC_APP_LOCALE }}
+            NEXT_PUBLIC_ENABLE_WHITE_LABEL=${{ env.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
+            NEXT_PUBLIC_USE_CASE=${{ env.NEXT_PUBLIC_USE_CASE }}
+            NEXT_PUBLIC_SENTRY_DNS_NEXTJS=${{ env.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ env.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
           cache-from: type=gha,scope=client
           cache-to: type=gha,mode=max,scope=client
   ## demo ci/cd
