@@ -16,17 +16,10 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
-
-env:
-  REGISTRY: ghcr.io
-  API_IMAGE_NAME: ${{ github.repository }}-api
-  WEB_IMAGE_NAME: ${{ github.repository }}-web
-  CLIENT_IMAGE_NAME: ${{ github.repository }}-client
 
 jobs:
   api:
-    name: API quality and Docker build
+    name: API quality
     runs-on: ubuntu-latest
 
     services:
@@ -87,19 +80,8 @@ jobs:
       - name: E2E tests API
         run: pnpm --filter api test:e2e
 
-      - name: Build API
-        run: pnpm --filter api build
-
-      - name: Validate API Docker build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          target: production
-          push: false
-
   web:
-    name: Web quality and Docker build
+    name: Web quality
     runs-on: ubuntu-latest
 
     steps:
@@ -129,19 +111,6 @@ jobs:
       - name: Test web with coverage
         run: pnpm --filter web test:coverage
 
-      - name: Build web
-        run: pnpm --filter web build
-
-      - name: Verify web build output
-        run: test -d apps/web/dist && test -f apps/web/dist/index.html
-
-      - name: Upload web build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: apps/web/dist
-          if-no-files-found: error
-
       - name: Upload web coverage report
         uses: actions/upload-artifact@v4
         if: always()
@@ -150,16 +119,8 @@ jobs:
           path: apps/web/coverage
           if-no-files-found: ignore
 
-      - name: Validate web Docker build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          target: production
-          push: false
-
   client:
-    name: Client quality and Docker build
+    name: Client quality
     runs-on: ubuntu-latest
 
     steps:
@@ -189,182 +150,22 @@ jobs:
       - name: Test client
         run: pnpm --filter client test:ci
 
-      - name: Build client
-        run: pnpm --filter client build
-
-      - name: Validate client Docker build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/client/Dockerfile
-          target: production
-          push: false
-
-  docker:
-    name: Publish Docker images
-    runs-on: ubuntu-latest
+  deploy:
+    name: Build and Deploy on Dokku Server
+    runs-on: [self-hosted, linux, dokku]
     needs:
       - api
       - web
       - client
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Normalize image names
-        id: images
-        run: |
-          echo "api=${REGISTRY}/${API_IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
-          echo "web=${REGISTRY}/${WEB_IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
-          echo "client=${REGISTRY}/${CLIENT_IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
+          fetch-depth: 0
 
-      - name: Extract API Docker metadata
-        id: api-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.images.outputs.api }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha,format=long,prefix=sha-
-
-      - name: Extract web Docker metadata
-        id: web-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.images.outputs.web }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha,format=long,prefix=sha-
-
-      - name: Extract client Docker metadata
-        id: client-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.images.outputs.client }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=sha,format=long,prefix=sha-
-
-      - name: Build and push API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          target: production
-          push: true
-          tags: ${{ steps.api-meta.outputs.tags }}
-          labels: ${{ steps.api-meta.outputs.labels }}
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
-
-      - name: Build and push web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          target: production
-          push: true
-          tags: ${{ steps.web-meta.outputs.tags }}
-          labels: ${{ steps.web-meta.outputs.labels }}
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web
-
-      - name: Validate client production configuration
-        env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
-          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
-        run: |
-          for name in NEXT_PUBLIC_API_URL NEXT_PUBLIC_APP_URL NEXT_PUBLIC_ADMIN_PORTAL_URL; do
-            if [ -z "${!name}" ]; then
-              echo "$name must be configured as a GitHub Repository Variable."
-              exit 1
-            fi
-          done
-
-      - name: Debug client public build variables
-        env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
-          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
-          NEXT_PUBLIC_ALLOWED_LOCALE: ${{ vars.NEXT_PUBLIC_ALLOWED_LOCALE }}
-          NEXT_PUBLIC_APP_LOCALE: ${{ vars.NEXT_PUBLIC_APP_LOCALE }}
-          NEXT_PUBLIC_ENABLE_WHITE_LABEL: ${{ vars.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
-          NEXT_PUBLIC_USE_CASE: ${{ vars.NEXT_PUBLIC_USE_CASE }}
-          NEXT_PUBLIC_SENTRY_DNS_NEXTJS: ${{ vars.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
-          NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
-        run: |
-          for name in \
-            NEXT_PUBLIC_API_URL \
-            NEXT_PUBLIC_APP_URL \
-            NEXT_PUBLIC_ADMIN_PORTAL_URL \
-            NEXT_PUBLIC_ALLOWED_LOCALE \
-            NEXT_PUBLIC_APP_LOCALE \
-            NEXT_PUBLIC_ENABLE_WHITE_LABEL \
-            NEXT_PUBLIC_USE_CASE \
-            NEXT_PUBLIC_SENTRY_DNS_NEXTJS \
-            NEXT_PUBLIC_SENTRY_ENVIRONMENT; do
-            if [ -n "${!name}" ]; then
-              printf '%s=%s\n' "$name" "${!name}"
-            else
-              printf '%s=<empty>\n' "$name"
-            fi
-          done
-
-      - name: Build and push client image
-        uses: docker/build-push-action@v6
-        env:
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
-          NEXT_PUBLIC_ADMIN_PORTAL_URL: ${{ vars.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
-          NEXT_PUBLIC_ALLOWED_LOCALE: ${{ vars.NEXT_PUBLIC_ALLOWED_LOCALE }}
-          NEXT_PUBLIC_APP_LOCALE: ${{ vars.NEXT_PUBLIC_APP_LOCALE }}
-          NEXT_PUBLIC_ENABLE_WHITE_LABEL: ${{ vars.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
-          NEXT_PUBLIC_USE_CASE: ${{ vars.NEXT_PUBLIC_USE_CASE }}
-          NEXT_PUBLIC_SENTRY_DNS_NEXTJS: ${{ vars.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
-          NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
-        with:
-          context: .
-          file: apps/client/Dockerfile
-          target: production
-          push: true
-          tags: ${{ steps.client-meta.outputs.tags }}
-          labels: ${{ steps.client-meta.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_API_URL=${{ env.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_APP_URL=${{ env.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_ADMIN_PORTAL_URL=${{ env.NEXT_PUBLIC_ADMIN_PORTAL_URL }}
-            NEXT_PUBLIC_ALLOWED_LOCALE=${{ env.NEXT_PUBLIC_ALLOWED_LOCALE }}
-            NEXT_PUBLIC_APP_LOCALE=${{ env.NEXT_PUBLIC_APP_LOCALE }}
-            NEXT_PUBLIC_ENABLE_WHITE_LABEL=${{ env.NEXT_PUBLIC_ENABLE_WHITE_LABEL }}
-            NEXT_PUBLIC_USE_CASE=${{ env.NEXT_PUBLIC_USE_CASE }}
-            NEXT_PUBLIC_SENTRY_DNS_NEXTJS=${{ env.NEXT_PUBLIC_SENTRY_DNS_NEXTJS }}
-            NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ env.NEXT_PUBLIC_SENTRY_ENVIRONMENT }}
-          cache-from: type=gha,scope=client
-          cache-to: type=gha,mode=max,scope=client
-  ## demo ci/cd
-  deploy:
-    name: Deploy to Dokku
-    runs-on: [self-hosted, linux, dokku]
-    needs: [docker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
       - name: Configure Dokku SSH key
         env:
           DOKKU_SSH_PRIVATE_KEY: ${{ secrets.DOKKU_SSH_PRIVATE_KEY }}
@@ -374,7 +175,79 @@ jobs:
           chmod 600 ~/.ssh/dokku_deploy
           ssh-keyscan -H 127.0.0.1 >> ~/.ssh/known_hosts
 
-      - name: Deploy apps to Dokku
+      - name: Load client build environment from Dokku
+        run: |
+          get_dokku_config() {
+            ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1 \
+              config:get crodic-client "$1" 2>/dev/null || true
+          }
+
+          while IFS= read -r name; do
+            value=$(get_dokku_config "$name")
+            printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV"
+            if [ -n "$value" ]; then
+              echo "$name is configured in Dokku."
+            else
+              echo "$name is empty in Dokku."
+            fi
+          done <<'BUILD_VARS'
+          NEXT_PUBLIC_API_URL
+          NEXT_PUBLIC_APP_URL
+          NEXT_PUBLIC_ADMIN_PORTAL_URL
+          NEXT_PUBLIC_ALLOWED_LOCALE
+          NEXT_PUBLIC_APP_LOCALE
+          NEXT_PUBLIC_ENABLE_WHITE_LABEL
+          NEXT_PUBLIC_USE_CASE
+          NEXT_PUBLIC_SENTRY_DNS_NEXTJS
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT
+          BUILD_VARS
+
+      - name: Validate production build environment
+        run: |
+          for name in \
+            NEXT_PUBLIC_API_URL \
+            NEXT_PUBLIC_APP_URL \
+            NEXT_PUBLIC_ADMIN_PORTAL_URL; do
+            if [ -z "${!name}" ]; then
+              echo "ERROR: $name is missing from Dokku crodic-client config."
+              exit 1
+            fi
+          done
+
+      - name: Build API image on server
+        run: |
+          docker build \
+            -f apps/api/Dockerfile \
+            --target production \
+            -t "crodic-api-local:${GITHUB_SHA}" \
+            .
+
+      - name: Build Admin image on server
+        run: |
+          docker build \
+            -f apps/web/Dockerfile \
+            --target production \
+            -t "crodic-admin-local:${GITHUB_SHA}" \
+            .
+
+      - name: Build Client image on server
+        run: |
+          docker build \
+            -f apps/client/Dockerfile \
+            --target production \
+            --build-arg "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" \
+            --build-arg "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" \
+            --build-arg "NEXT_PUBLIC_ADMIN_PORTAL_URL=$NEXT_PUBLIC_ADMIN_PORTAL_URL" \
+            --build-arg "NEXT_PUBLIC_ALLOWED_LOCALE=$NEXT_PUBLIC_ALLOWED_LOCALE" \
+            --build-arg "NEXT_PUBLIC_APP_LOCALE=$NEXT_PUBLIC_APP_LOCALE" \
+            --build-arg "NEXT_PUBLIC_ENABLE_WHITE_LABEL=$NEXT_PUBLIC_ENABLE_WHITE_LABEL" \
+            --build-arg "NEXT_PUBLIC_USE_CASE=$NEXT_PUBLIC_USE_CASE" \
+            --build-arg "NEXT_PUBLIC_SENTRY_DNS_NEXTJS=$NEXT_PUBLIC_SENTRY_DNS_NEXTJS" \
+            --build-arg "NEXT_PUBLIC_SENTRY_ENVIRONMENT=$NEXT_PUBLIC_SENTRY_ENVIRONMENT" \
+            -t "crodic-client-local:${GITHUB_SHA}" \
+            .
+
+      - name: Deploy images to Dokku
         run: |
           deploy_app() {
             local app="$1"
@@ -382,7 +255,7 @@ jobs:
             local output
             local status
 
-            echo "Deploying $app from $image"
+            echo "Deploying $app from local image $image"
 
             set +e
             output=$(ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1 \
@@ -398,7 +271,7 @@ jobs:
             fi
 
             if echo "$output" | grep -Fq "No changes detected"; then
-              echo "$app already uses this image; rebuilding the app."
+              echo "$app already references this image; rebuilding the app."
               ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1 ps:rebuild "$app"
               return $?
             fi
@@ -407,9 +280,10 @@ jobs:
             return "$status"
           }
 
-          deploy_app crodic-api \
-            "ghcr.io/crodic/monorepo-api:sha-${GITHUB_SHA}"
-          deploy_app crodic-admin \
-            "ghcr.io/crodic/monorepo-web:sha-${GITHUB_SHA}"
-          deploy_app crodic-client \
-            "ghcr.io/crodic/monorepo-client:sha-${GITHUB_SHA}"
+          deploy_app crodic-api "crodic-api-local:${GITHUB_SHA}"
+          deploy_app crodic-admin "crodic-admin-local:${GITHUB_SHA}"
+          deploy_app crodic-client "crodic-client-local:${GITHUB_SHA}"
+
+      - name: Cleanup dangling build images
+        if: always()
+        run: docker image prune -f
