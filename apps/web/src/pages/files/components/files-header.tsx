@@ -144,6 +144,7 @@ export function FilesHeader({
                 type='button'
                 onClick={() => onSearchChange('')}
                 className='text-muted-foreground hover:text-foreground absolute top-2 right-2'
+                aria-label={t('dataTable.filter.clear', 'Clear search')}
               >
                 <X className='size-3.5' />
               </button>
@@ -202,6 +203,7 @@ export function FilesHeader({
               )}
               onClick={() => onViewModeChange('grid')}
               title={t('files.views.grid', 'Grid View')}
+              aria-label={t('files.views.grid', 'Grid View')}
             >
               <LayoutGrid className='size-3.5' />
             </Button>
@@ -214,6 +216,7 @@ export function FilesHeader({
               )}
               onClick={() => onViewModeChange('table')}
               title={t('files.views.list', 'List View')}
+              aria-label={t('files.views.list', 'List View')}
             >
               <List className='size-3.5' />
             </Button>
@@ -227,6 +230,7 @@ export function FilesHeader({
               className='size-8'
               onClick={onToggleInspector}
               title={t('files.inspector.title', 'Details Panel')}
+              aria-label={t('files.inspector.title', 'Details Panel')}
             >
               <PanelRight className='size-3.5' />
             </Button>

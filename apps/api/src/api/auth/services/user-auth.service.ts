@@ -21,13 +21,14 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import assert from 'assert';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ChangePasswordReqDto } from '../dto/change-password.req.dto';
 import { RegisterResDto } from '../dto/register.res.dto';
 import { SetupInitialPasswordReqDto } from '../dto/users/setup-initial-password.req.dto';
@@ -72,6 +73,8 @@ export class UserAuthService extends AuthService<
     private readonly userAccountRepository: Repository<UserAccountEntity>,
     @Inject(CACHE_MANAGER)
     cacheManager: Cache,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {
     super(
       userRepository,
@@ -176,19 +179,37 @@ export class UserAuthService extends AuthService<
       lastName: dto.lastName || '',
       email: dto.email,
     });
-    const user = await this.userRepository.save(newUser);
 
-    // Create local credentials account
-    await this.userAccountRepository.save(
-      new UserAccountEntity({
-        userId: user.id,
-        provider: EAccountProvider.LOCAL,
-        providerAccountId: user.email,
-        password: dto.password,
-        email: user.email,
-        displayName: `${user.firstName} ${user.lastName || ''}`.trim(),
-      }),
-    );
+    const persistUser = async (
+      userRepo: Repository<UserEntity>,
+      accountRepo: Repository<UserAccountEntity>,
+    ) => {
+      const savedUser = await userRepo.save(newUser);
+
+      // Create local credentials account
+      await accountRepo.save(
+        new UserAccountEntity({
+          userId: savedUser.id,
+          provider: EAccountProvider.LOCAL,
+          providerAccountId: savedUser.email,
+          password: dto.password,
+          email: savedUser.email,
+          displayName:
+            `${savedUser.firstName} ${savedUser.lastName || ''}`.trim(),
+        }),
+      );
+
+      return savedUser;
+    };
+
+    const user = this.dataSource?.transaction
+      ? await this.dataSource.transaction((manager) =>
+          persistUser(
+            manager.getRepository(UserEntity),
+            manager.getRepository(UserAccountEntity),
+          ),
+        )
+      : await persistUser(this.userRepository, this.userAccountRepository);
 
     // Send email verification
     await this.userAccountRecoveryService.sendVerificationEmail(user);
@@ -455,29 +476,47 @@ export class UserAuthService extends AuthService<
       where: { email: profile.email },
     });
 
-    if (!user) {
-      user = await this.userRepository.save({
-        firstName: profile.firstName || profile.displayName || 'User',
-        lastName: profile.lastName || '',
-        email: profile.email,
-        avatar: profile.avatarUrl,
-        verifiedAt: new Date(),
-      });
-    } else if (!user.verifiedAt) {
-      // SECURITY: If an unverified local account was registered previously with this email,
-      // invalidate unconfirmed local password credentials so an attacker who registered
-      // the victim's email cannot retain access once the legitimate owner signs in with Google.
-      await this.userAccountRepository.delete({
-        userId: user.id,
-        provider: EAccountProvider.LOCAL,
-      });
-      user.verifiedAt = new Date();
-      await this.userRepository.save(user);
-    }
+    const persistSocialUser = async (
+      userRepo: Repository<UserEntity>,
+      accountRepo: Repository<UserAccountEntity>,
+    ) => {
+      if (!user) {
+        user = await userRepo.save({
+          firstName: profile.firstName || profile.displayName || 'User',
+          lastName: profile.lastName || '',
+          email: profile.email,
+          avatar: profile.avatarUrl,
+          verifiedAt: new Date(),
+        });
+      } else if (!user.verifiedAt) {
+        // SECURITY: If an unverified local account was registered previously with this email,
+        // invalidate unconfirmed local password credentials so an attacker who registered
+        // the victim's email cannot retain access once the legitimate owner signs in with Google.
+        await accountRepo.delete({
+          userId: user.id,
+          provider: EAccountProvider.LOCAL,
+        });
+        user.verifiedAt = new Date();
+        await userRepo.save(user);
+      }
 
-    await this.createSocialAccount(user.id, profile);
+      await this.createSocialAccount(user.id, profile, accountRepo);
+      return user;
+    };
 
-    return this.createLoginResponse(user, requestInfo);
+    const resolvedUser = this.dataSource?.transaction
+      ? await this.dataSource.transaction((manager) =>
+          persistSocialUser(
+            manager.getRepository(UserEntity),
+            manager.getRepository(UserAccountEntity),
+          ),
+        )
+      : await persistSocialUser(
+          this.userRepository,
+          this.userAccountRepository,
+        );
+
+    return this.createLoginResponse(resolvedUser, requestInfo);
   }
 
   private async linkSocialAccount(
@@ -541,8 +580,9 @@ export class UserAuthService extends AuthService<
   private async createSocialAccount(
     userId: AutoIncrementID | string,
     profile: OAuthProviderProfile,
+    accountRepo: Repository<UserAccountEntity> = this.userAccountRepository,
   ) {
-    return this.userAccountRepository.save(
+    return accountRepo.save(
       new UserAccountEntity({
         userId: userId as AutoIncrementID,
         provider:

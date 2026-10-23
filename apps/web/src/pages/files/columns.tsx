@@ -127,6 +127,11 @@ export function getFilesTableColumns({
               ? i18n.t('files.actions.unstar', 'Unstar file')
               : i18n.t('files.actions.star', 'Star file')
           }
+          aria-label={
+            starred
+              ? i18n.t('files.actions.unstar', 'Unstar file')
+              : i18n.t('files.actions.star', 'Star file')
+          }
         >
           <Star
             className={cn(

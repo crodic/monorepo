@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import DataLoader from '@/components/layout/data-loader'
 import { Main } from '@/components/layout/main'
 import { NotFoundError } from '@/pages/errors/not-found-error'
@@ -22,12 +23,7 @@ export function PageCmsPageEdit() {
       )
       navigate(`/cms-pages/${page.id}/show`)
     },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ||
-        t('cmsPages.message.updateError', 'Could not update page')
-      toast.error(Array.isArray(message) ? message.join(', ') : message)
-    },
+    onError: restApiErrorHandler,
   })
 
   if (isFetching) return <DataLoader />

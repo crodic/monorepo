@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { AxiosError } from 'axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Edit2Icon, Trash2Icon } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
@@ -29,11 +29,7 @@ export default function ComponentTableRowActions({
       toast.success('Admin deleted successfully')
       setIsShowDeleteDialog(false)
     },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message)
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = (id: string) => {

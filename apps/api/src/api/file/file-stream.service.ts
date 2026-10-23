@@ -1,7 +1,7 @@
 import { StorageDisk } from '../../filesystem/config/storage-config.type';
 import { StorageDriver } from '../../filesystem/drivers/storage-driver.interface';
 import { FilesystemService } from '../../filesystem/filesystem.service';
-import { removeDiskPath } from '../../utils/filesystem';
+import { resolveStoragePath } from '../../utils/filesystem';
 import { ImageTransformer } from '../../utils/transformers/image.transformer';
 import {
   BadRequestException,
@@ -46,19 +46,7 @@ export class FileStreamService {
   }
 
   private toStorageKey(path: string): string {
-    const normalized = path.replace(/\\/g, '/');
-    const legacyPrefixes = ['storage/public/', 'storage/private/'];
-    const legacyPrefix = legacyPrefixes.find((prefix) =>
-      normalized.includes(prefix),
-    );
-
-    if (legacyPrefix) {
-      return normalized.slice(
-        normalized.indexOf(legacyPrefix) + legacyPrefix.length,
-      );
-    }
-
-    return removeDiskPath(normalized).replace(/^\/+/, '');
+    return resolveStoragePath(path);
   }
 
   private getImageMime(format: string): string {

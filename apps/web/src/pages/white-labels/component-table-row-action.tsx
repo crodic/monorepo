@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import {
   applyRuntimeTheme,
   clearRuntimeThemeStyles,
@@ -38,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import {
   apiActivateWhiteLabel,
   apiDeactivateWhiteLabel,
@@ -65,6 +67,7 @@ export default function ComponentTableRowActions({
   const [activationTarget, setActivationTarget] = useState<
     'activate' | 'deactivate' | null
   >(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const duplicateMutation = useMutation({
     mutationFn: apiDuplicateWhiteLabel,
@@ -76,6 +79,7 @@ export default function ComponentTableRowActions({
         })
       )
     },
+    onError: restApiErrorHandler,
   })
 
   const deleteMutation = useMutation({
@@ -87,7 +91,9 @@ export default function ComponentTableRowActions({
           defaultValue: 'White-label profile deleted successfully',
         })
       )
+      setIsDeleteOpen(false)
     },
+    onError: restApiErrorHandler,
   })
 
   const activateMutation = useMutation({
@@ -128,6 +134,7 @@ export default function ComponentTableRowActions({
       toast.success(`"${updated.name}" is now active for ${updated.target}`)
       setActivationTarget(null)
     },
+    onError: restApiErrorHandler,
   })
 
   const deactivateMutation = useMutation({
@@ -151,11 +158,10 @@ export default function ComponentTableRowActions({
       toast.success(`"${updated.name}" is deactivated`)
       setActivationTarget(null)
     },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = () => {
-    if (!window.confirm(`${t('whiteLabels.actions.delete')} "${item.name}"?`))
-      return
     deleteMutation.mutate(item.id)
   }
 
@@ -245,7 +251,7 @@ export default function ComponentTableRowActions({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className='text-destructive focus:text-destructive'
-                onClick={handleDelete}
+                onClick={() => setIsDeleteOpen(true)}
                 disabled={isPending}
               >
                 <Trash2Icon className='size-4' />
@@ -255,6 +261,13 @@ export default function ComponentTableRowActions({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <DeleteAlertDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        handleDelete={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
 
       <AlertDialog
         open={!!activationTarget}

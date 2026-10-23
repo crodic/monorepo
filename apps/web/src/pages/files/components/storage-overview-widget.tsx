@@ -25,6 +25,12 @@ const CATEGORY_KEYS: FileCategoryType[] = [
   'other',
 ]
 
+function resolveDisplayCategory(cat: FileCategoryType): FileCategoryType {
+  if (cat === 'code') return 'document'
+  if (cat === 'audio') return 'other'
+  return cat
+}
+
 export function StorageOverviewWidget({
   files = [],
   folders = [],
@@ -50,8 +56,7 @@ export function StorageOverviewWidget({
     let filesBytes = 0
     for (const f of files) {
       const cat = getFileCategory(f.mime, f.resource_type, f.original_name)
-      const targetCat: FileCategoryType =
-        cat === 'code' ? 'document' : cat === 'audio' ? 'other' : cat
+      const targetCat = resolveDisplayCategory(cat)
 
       categoryTotals[targetCat].count += 1
       categoryTotals[targetCat].bytes += f.size || 0

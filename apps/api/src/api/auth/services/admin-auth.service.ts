@@ -28,6 +28,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -35,7 +36,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import assert from 'assert';
 import { plainToInstance } from 'class-transformer';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { AdminUserLoginReqDto } from '../dto/admin-users/admin-user-login.req.dto';
 import { AdminUserLoginResDto } from '../dto/admin-users/admin-user-login.res.dto';
 import { AdminUserRegisterReqDto } from '../dto/admin-users/admin-user-register.req.dto';
@@ -94,6 +95,8 @@ export class AdminAuthService extends AuthService<
     authSessionService: AuthSessionService,
     private readonly adminTwoFactorService: AdminTwoFactorService,
     private readonly adminAccountRecoveryService: AdminAccountRecoveryService,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {
     super(
       adminUserRepository,
@@ -306,16 +309,32 @@ export class AdminAuthService extends AuthService<
       roles,
     });
 
-    await this.adminUserRepository.save(user);
+    const persistAdmin = async (
+      userRepo: Repository<AdminUserEntity>,
+      accountRepo: Repository<AdminAccountEntity>,
+    ) => {
+      await userRepo.save(user);
 
-    await this.adminAccountRepository.save(
-      new AdminAccountEntity({
-        adminUserId: user.id,
-        provider: EAccountProvider.LOCAL,
-        providerAccountId: user.email,
-        password: dto.password,
-      }),
-    );
+      await accountRepo.save(
+        new AdminAccountEntity({
+          adminUserId: user.id,
+          provider: EAccountProvider.LOCAL,
+          providerAccountId: user.email,
+          password: dto.password,
+        }),
+      );
+    };
+
+    if (this.dataSource?.transaction) {
+      await this.dataSource.transaction((manager) =>
+        persistAdmin(
+          manager.getRepository(AdminUserEntity),
+          manager.getRepository(AdminAccountEntity),
+        ),
+      );
+    } else {
+      await persistAdmin(this.adminUserRepository, this.adminAccountRepository);
+    }
 
     await this.adminAccountRecoveryService.sendVerificationEmail(user);
 

@@ -47,6 +47,25 @@ function parseValuesAsNumbers(value: unknown): RangeValue | undefined {
   return undefined
 }
 
+function calculateSliderStep(rangeSize: number): number {
+  if (rangeSize <= 20) return 1
+  if (rangeSize <= 100) return Math.ceil(rangeSize / 20)
+  return Math.ceil(rangeSize / 50)
+}
+
+function resolveMinMaxBounds(
+  defaultRange: unknown,
+  facetedValues: [number, number] | undefined
+): Range {
+  if (defaultRange && getIsValidRange(defaultRange)) {
+    return { min: defaultRange[0], max: defaultRange[1] }
+  }
+  if (getIsValidRange(facetedValues)) {
+    return { min: facetedValues[0], max: facetedValues[1] }
+  }
+  return { min: 0, max: 100 }
+}
+
 interface DataTableSliderFilterProps<TData> {
   column: Column<TData, unknown>
   title?: string
@@ -65,32 +84,12 @@ export function DataTableSliderFilter<TData>({
   const unit = column.columnDef.meta?.unit
 
   const { min, max, step } = React.useMemo<Range & { step: number }>(() => {
-    let minValue = 0
-    let maxValue = 100
-
-    if (defaultRange && getIsValidRange(defaultRange)) {
-      ;[minValue, maxValue] = defaultRange
-    } else {
-      const values = column.getFacetedMinMaxValues()
-      if (values && Array.isArray(values) && values.length === 2) {
-        const [facetMinValue, facetMaxValue] = values
-        if (
-          typeof facetMinValue === 'number' &&
-          typeof facetMaxValue === 'number'
-        ) {
-          minValue = facetMinValue
-          maxValue = facetMaxValue
-        }
-      }
-    }
-
+    const { min: minValue, max: maxValue } = resolveMinMaxBounds(
+      defaultRange,
+      column.getFacetedMinMaxValues()
+    )
     const rangeSize = maxValue - minValue
-    const step =
-      rangeSize <= 20
-        ? 1
-        : rangeSize <= 100
-          ? Math.ceil(rangeSize / 20)
-          : Math.ceil(rangeSize / 50)
+    const step = calculateSliderStep(rangeSize)
 
     return { min: minValue, max: maxValue, step }
   }, [column, defaultRange])

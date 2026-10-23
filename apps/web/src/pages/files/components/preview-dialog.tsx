@@ -163,23 +163,36 @@ export function PreviewDialog({ file, onOpenChange }: PreviewDialogProps) {
   const isVideo = file ? isPreviewableVideo(file) : false
   const isAudio = file ? isPreviewableAudio(file) : false
 
-  const fileTypeIcon = isVideo ? (
-    <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-500'>
-      <Film className='size-5' />
-    </div>
-  ) : isImage ? (
-    <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-500'>
-      <ImageIcon className='size-5' />
-    </div>
-  ) : isAudio ? (
-    <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500'>
-      <Music className='size-5' />
-    </div>
-  ) : (
-    <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500'>
-      <Tag className='size-5' />
-    </div>
-  )
+  const getFileTypeIcon = () => {
+    if (isVideo) {
+      return (
+        <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-500'>
+          <Film className='size-5' />
+        </div>
+      )
+    }
+    if (isImage) {
+      return (
+        <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-500'>
+          <ImageIcon className='size-5' />
+        </div>
+      )
+    }
+    if (isAudio) {
+      return (
+        <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-500'>
+          <Music className='size-5' />
+        </div>
+      )
+    }
+    return (
+      <div className='flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500'>
+        <Tag className='size-5' />
+      </div>
+    )
+  }
+
+  const fileTypeIcon = getFileTypeIcon()
 
   return (
     <Dialog open={Boolean(file)} onOpenChange={onOpenChange}>
@@ -280,6 +293,7 @@ export function PreviewDialog({ file, onOpenChange }: PreviewDialogProps) {
                 className='text-muted-foreground hover:text-foreground size-8 rounded-lg'
                 asChild
                 title={t('files.actions.open')}
+                aria-label={t('files.actions.open')}
               >
                 <a href={previewOpenUrl} target='_blank' rel='noreferrer'>
                   <ExternalLink className='size-4' />

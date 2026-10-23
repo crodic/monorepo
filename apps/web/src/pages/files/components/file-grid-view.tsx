@@ -217,6 +217,13 @@ const FileCardItem = memo(function FileCardItem({
   const docBadge = getFileIconAndBadge(file)
   const DocIcon = docBadge.icon
 
+  const cardBorderClass = isSelected
+    ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-2'
+    : cn(
+        'border-border/70 bg-card',
+        isInspected && 'border-primary/80 bg-accent/30 ring-primary/30 ring-1'
+      )
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -240,11 +247,7 @@ const FileCardItem = memo(function FileCardItem({
           className={cn(
             'group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-xl border text-left transition-all duration-200 select-none',
             'hover:border-primary/50 hover:-translate-y-0.5 hover:shadow-md',
-            isSelected
-              ? 'border-primary bg-primary/5 ring-primary/40 shadow-sm ring-2'
-              : isInspected
-                ? 'border-primary/80 bg-accent/30 ring-primary/30 ring-1'
-                : 'border-border/70 bg-card'
+            cardBorderClass
           )}
         >
           {/* Top Toolbar Overlay */}
@@ -286,6 +289,11 @@ const FileCardItem = memo(function FileCardItem({
                     onToggleStar(file.public_id)
                   }}
                   title={
+                    isStarred?.(file.public_id)
+                      ? t('files.actions.unstar', 'Unstar file')
+                      : t('files.actions.star', 'Star file')
+                  }
+                  aria-label={
                     isStarred?.(file.public_id)
                       ? t('files.actions.unstar', 'Unstar file')
                       : t('files.actions.star', 'Star file')

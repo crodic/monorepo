@@ -17,7 +17,7 @@ export function ServerOffline({
 
   return (
     <div className='h-svh'>
-      <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2 p-4 text-center'>
+      <div className='m-auto flex size-full flex-col items-center justify-center gap-2 p-4 text-center'>
         <div className='bg-destructive/10 text-destructive mb-2 flex size-16 items-center justify-center rounded-full'>
           <WifiOff className='size-8' />
         </div>

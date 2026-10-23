@@ -194,16 +194,9 @@ export function PageSystemSetup() {
                 {/* Progress bar line */}
                 <div className='bg-muted h-1.5 w-full'>
                   <div
-                    className='bg-primary h-full transition-all duration-300'
+                    className='bg-primary h-full transition-[width] duration-200 ease-out'
                     style={{
-                      width:
-                        step === 1
-                          ? '25%'
-                          : step === 2
-                            ? '50%'
-                            : step === 3
-                              ? '75%'
-                              : '100%',
+                      width: `${step * 25}%`,
                     }}
                   />
                 </div>

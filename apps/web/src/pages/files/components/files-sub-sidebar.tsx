@@ -237,6 +237,7 @@ export function FilesSubSidebar({
                 className='text-muted-foreground hover:text-foreground size-5.5'
                 onClick={onCreateFolderClick}
                 title={t('files.actions.createFolder', 'Create folder')}
+                aria-label={t('files.actions.createFolder', 'Create folder')}
               >
                 <Plus className='size-3.5' />
               </Button>
@@ -315,6 +316,10 @@ export function FilesSubSidebar({
                             variant='ghost'
                             size='icon'
                             className='size-5 opacity-0 transition-opacity group-hover/item:opacity-100'
+                            aria-label={t(
+                              'files.folders.actions',
+                              'Folder actions'
+                            )}
                           >
                             <MoreVertical className='size-3' />
                           </Button>
@@ -365,7 +370,7 @@ export function FilesSubSidebar({
         {/* Multi-category colored bar representation */}
         <div className='bg-muted/80 flex h-2 w-full overflow-hidden rounded-full'>
           <div
-            className='h-full bg-violet-500 transition-all duration-500'
+            className='h-full bg-violet-500 transition-[width] duration-200 ease-out'
             style={{ width: `${Math.max(storagePercent * 0.4, 2)}%` }}
             title={t(
               FILE_CATEGORY_CONFIG.image.i18nKey,
@@ -373,7 +378,7 @@ export function FilesSubSidebar({
             )}
           />
           <div
-            className='h-full bg-pink-500 transition-all duration-500'
+            className='h-full bg-pink-500 transition-[width] duration-200 ease-out'
             style={{ width: `${Math.max(storagePercent * 0.25, 1)}%` }}
             title={t(
               FILE_CATEGORY_CONFIG.video.i18nKey,
@@ -381,7 +386,7 @@ export function FilesSubSidebar({
             )}
           />
           <div
-            className='h-full bg-amber-500 transition-all duration-500'
+            className='h-full bg-amber-500 transition-[width] duration-200 ease-out'
             style={{ width: `${Math.max(storagePercent * 0.2, 1)}%` }}
             title={t(
               FILE_CATEGORY_CONFIG.document.i18nKey,
@@ -389,7 +394,7 @@ export function FilesSubSidebar({
             )}
           />
           <div
-            className='h-full bg-emerald-500 transition-all duration-500'
+            className='h-full bg-emerald-500 transition-[width] duration-200 ease-out'
             style={{ width: `${Math.max(storagePercent * 0.15, 1)}%` }}
             title={t(
               FILE_CATEGORY_CONFIG.archive.i18nKey,

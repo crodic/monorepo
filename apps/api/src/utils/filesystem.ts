@@ -17,6 +17,25 @@ export function removeDiskPath(path: string): string {
 }
 
 /**
+ * Resolves a stored file path into a normalized storage key, stripping any legacy disk prefixes.
+ */
+export function resolveStoragePath(path: string): string {
+  const normalized = path.replace(/\\/g, '/');
+  const legacyPrefixes = ['storage/public/', 'storage/private/'];
+  const legacyPrefix = legacyPrefixes.find((prefix) =>
+    normalized.includes(prefix),
+  );
+
+  if (legacyPrefix) {
+    return normalized.slice(
+      normalized.indexOf(legacyPrefix) + legacyPrefix.length,
+    );
+  }
+
+  return removeDiskPath(normalized).replace(/^\/+/, '');
+}
+
+/**
  * Extracts the image format from a given MIME type.
  * @param {string} mime - The MIME type to extract the format from.
  * @returns {ImageFormat} The extracted image format.

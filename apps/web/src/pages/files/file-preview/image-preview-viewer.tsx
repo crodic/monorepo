@@ -90,6 +90,7 @@ export function ImagePreviewViewer({
           onClick={handleZoomOut}
           disabled={scale <= 0.25}
           title='Zoom out'
+          aria-label='Zoom out'
         >
           <ZoomOut className='size-3.5' />
         </Button>
@@ -98,6 +99,7 @@ export function ImagePreviewViewer({
           onClick={handleReset}
           className='min-w-12 px-1.5 text-center text-xs font-semibold text-white/90 tabular-nums transition-colors hover:text-white'
           title='Reset zoom'
+          aria-label='Reset zoom'
         >
           {Math.round(scale * 100)}%
         </button>
@@ -109,6 +111,7 @@ export function ImagePreviewViewer({
           onClick={handleZoomIn}
           disabled={scale >= 4}
           title='Zoom in'
+          aria-label='Zoom in'
         >
           <ZoomIn className='size-3.5' />
         </Button>
@@ -120,6 +123,7 @@ export function ImagePreviewViewer({
           className='size-7 rounded-full text-white/80 hover:bg-white/20 hover:text-white'
           onClick={handleRotate}
           title='Rotate 90°'
+          aria-label='Rotate 90°'
         >
           <RotateCw className='size-3.5' />
         </Button>
@@ -133,6 +137,7 @@ export function ImagePreviewViewer({
           )}
           onClick={() => setIsCheckerboard((c) => !c)}
           title='Toggle transparency pattern'
+          aria-label='Toggle transparency pattern'
         >
           <Grid className='size-3.5' />
         </Button>

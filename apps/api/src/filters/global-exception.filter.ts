@@ -65,7 +65,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (this.debug) {
       error.stack = exception?.stack;
-      error.trace = exception;
+      error.trace = exception instanceof Error ? exception.stack : undefined;
 
       this.logger.debug(error);
     }
@@ -178,6 +178,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return errorRes;
   }
 
+  private resolveUniqueConstraintMessage(constraint?: string): string {
+    if (constraint && constraintErrors[constraint]) {
+      return this.translate(constraintErrors[constraint], constraint);
+    }
+    if (constraint && constraint.toLowerCase().includes('email')) {
+      return this.translate('user.unique.email', 'Unique constraint violation');
+    }
+    return this.translate(
+      'common.error.unique_constraint',
+      'Unique constraint violation',
+    );
+  }
+
   /**
    * Handles QueryFailedError without leaking SQL details
    */
@@ -191,24 +204,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const isUniqueConstraint =
       r.code === '23505' || (r.constraint && r.constraint.startsWith('UQ'));
 
-    const { status, message } = isUniqueConstraint
-      ? {
-          status: HttpStatus.CONFLICT,
-          message:
-            r.constraint && constraintErrors[r.constraint]
-              ? this.translate(constraintErrors[r.constraint], r.constraint)
-              : this.translate(
-                  'user.unique.email',
-                  'Unique constraint violation',
-                ),
-        }
-      : {
-          status: HttpStatus.INTERNAL_SERVER_ERROR,
-          message: this.translate(
-            'common.error.internal_server_error',
-            'Has occurred an internal server error',
-          ),
-        };
+    const status = isUniqueConstraint
+      ? HttpStatus.CONFLICT
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message = isUniqueConstraint
+      ? this.resolveUniqueConstraintMessage(r.constraint)
+      : this.translate(
+          'common.error.internal_server_error',
+          'Has occurred an internal server error',
+        );
 
     const errorRes: ErrorDto = {
       timestamp: new Date().toISOString(),

@@ -344,14 +344,19 @@ export const useFileUpload = (
         return
       }
 
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        // In single file mode, only use the first file
-        if (!multiple) {
-          const file = e.dataTransfer.files[0]
-          addFiles([file])
-        } else {
-          addFiles(e.dataTransfer.files)
-        }
+      if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) {
+        return
+      }
+
+      if (multiple) {
+        addFiles(e.dataTransfer.files)
+        return
+      }
+
+      // In single file mode, only use the first file
+      const file = e.dataTransfer.files[0]
+      if (file) {
+        addFiles([file])
       }
     },
     [addFiles, multiple]

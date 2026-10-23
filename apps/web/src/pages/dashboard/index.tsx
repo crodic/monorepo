@@ -150,6 +150,32 @@ function SystemHealthSection({
   const overall = getHealthOverall(health, isError)
   const indicators = getHealthIndicators(health)
 
+  const renderIndicatorsContent = () => {
+    if (isError) {
+      return (
+        <div className='border-destructive/30 bg-destructive/5 text-destructive rounded-md border p-4 text-sm'>
+          {t('dashboard.systemHealth.unreachable')}
+        </div>
+      )
+    }
+
+    if (indicators.length === 0) {
+      return (
+        <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
+          {isLoading ? 'Checking system health...' : 'No health details found.'}
+        </div>
+      )
+    }
+
+    return (
+      <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
+        {indicators.map((indicator) => (
+          <HealthIndicatorCard key={indicator.name} indicator={indicator} />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <Card>
       <CardHeader className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -204,23 +230,7 @@ function SystemHealthSection({
           />
         </div>
 
-        {isError ? (
-          <div className='border-destructive/30 bg-destructive/5 text-destructive rounded-md border p-4 text-sm'>
-            {t('dashboard.systemHealth.unreachable')}
-          </div>
-        ) : indicators.length === 0 ? (
-          <div className='text-muted-foreground rounded-md border border-dashed p-4 text-sm'>
-            {isLoading
-              ? 'Checking system health...'
-              : 'No health details found.'}
-          </div>
-        ) : (
-          <div className='grid gap-3 md:grid-cols-2 xl:grid-cols-3'>
-            {indicators.map((indicator) => (
-              <HealthIndicatorCard key={indicator.name} indicator={indicator} />
-            ))}
-          </div>
-        )}
+        {renderIndicatorsContent()}
       </CardContent>
     </Card>
   )
@@ -372,6 +382,16 @@ function QueueMonitoringSection({
               }
               const queueHasError = (counts.failed ?? 0) > 0
 
+              const getQueueStatusText = () => {
+                if (counts.active > 0) {
+                  return `${counts.active} ${t('dashboard.queues.active')}`
+                }
+                if (queueHasError) {
+                  return `${counts.failed} ${t('dashboard.queues.failed')}`
+                }
+                return 'Idle'
+              }
+
               return (
                 <div
                   key={queue.name}
@@ -388,11 +408,7 @@ function QueueMonitoringSection({
                       variant={queueHasError ? 'destructive' : 'outline'}
                       className='text-xs'
                     >
-                      {counts.active > 0
-                        ? `${counts.active} ${t('dashboard.queues.active')}`
-                        : queueHasError
-                          ? `${counts.failed} ${t('dashboard.queues.failed')}`
-                          : 'Idle'}
+                      {getQueueStatusText()}
                     </Badge>
                   </div>
                   <div className='grid grid-cols-4 gap-2 text-center text-xs'>

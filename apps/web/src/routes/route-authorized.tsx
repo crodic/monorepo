@@ -14,6 +14,33 @@ interface RouteAuthorizeProps {
   requireSuperAdmin?: boolean
 }
 
+function checkRoutePermission({
+  requireSuperAdmin,
+  isAnyPermission,
+  action,
+  subject,
+  permissions,
+  can,
+}: {
+  requireSuperAdmin: boolean
+  isAnyPermission: boolean
+  action?: Actions
+  subject?: Subjects
+  permissions: string[]
+  can: (action: Actions, subject: Subjects) => boolean
+}): boolean {
+  if (requireSuperAdmin) {
+    return permissions.includes('manage:all')
+  }
+  if (isAnyPermission) {
+    return permissions.length > 0
+  }
+  if (action && subject) {
+    return can(action, subject)
+  }
+  return true
+}
+
 export const RouteAuthorize: React.FC<RouteAuthorizeProps> = ({
   children,
   action,
@@ -25,17 +52,14 @@ export const RouteAuthorize: React.FC<RouteAuthorizeProps> = ({
 }) => {
   const { ability, permissions } = useAuthStore()
 
-  let isAllowed = false
-
-  if (requireSuperAdmin) {
-    isAllowed = permissions.includes('manage:all')
-  } else if (isAnyPermission) {
-    isAllowed = permissions.length > 0
-  } else if (action && subject) {
-    isAllowed = ability.can(action, subject)
-  } else {
-    isAllowed = true
-  }
+  const isAllowed = checkRoutePermission({
+    requireSuperAdmin,
+    isAnyPermission,
+    action,
+    subject,
+    permissions,
+    can: (act, subj) => ability.can(act, subj),
+  })
 
   if (!isAllowed) {
     if (fallback) return <>{fallback}</>

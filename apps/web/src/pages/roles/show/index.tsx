@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { AxiosError } from 'axios'
 import { format } from 'date-fns'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,11 +55,7 @@ export default function PageRoleShow() {
       setIsShowDeleteDialog(false)
       navigate('/roles')
     },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message)
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = () => {

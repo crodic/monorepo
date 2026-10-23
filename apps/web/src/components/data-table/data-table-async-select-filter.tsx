@@ -54,10 +54,19 @@ export function DataTableAsyncSelectFilter<TData, TValue>({
 
   const columnFilterValue = column?.getFilterValue()
 
-  const selectedValues = React.useMemo(
-    () => new Set(Array.isArray(columnFilterValue) ? columnFilterValue : []),
-    [columnFilterValue]
-  )
+  const selectedValues = React.useMemo(() => {
+    if (Array.isArray(columnFilterValue)) {
+      return new Set(columnFilterValue.map(String))
+    }
+    if (
+      columnFilterValue !== undefined &&
+      columnFilterValue !== null &&
+      columnFilterValue !== ''
+    ) {
+      return new Set([String(columnFilterValue)])
+    }
+    return new Set<string>()
+  }, [columnFilterValue])
 
   const onReset = React.useCallback(
     (event?: React.MouseEvent) => {
@@ -240,7 +249,7 @@ function DataTableAsyncSelectContent<TData, TValue>({
         const values = Array.from(newValues)
         column.setFilterValue(values.length ? values : undefined)
       } else {
-        column.setFilterValue(isSelected ? undefined : [option.value])
+        column.setFilterValue(isSelected ? undefined : option.value)
         onClose()
       }
     },
@@ -259,7 +268,7 @@ function DataTableAsyncSelectContent<TData, TValue>({
         <CommandEmpty>
           {isLoading || isFetching ? (
             <div className='flex flex-col items-center gap-2 p-2 text-sm'>
-              <Loader2 className='h-4 w-4 animate-spin' />
+              <Loader2 className='size-4 animate-spin' />
               {t('dataTable.filter.searching')}
             </div>
           ) : (
@@ -300,7 +309,7 @@ function DataTableAsyncSelectContent<TData, TValue>({
                       isSelected ? 'bg-primary' : 'opacity-50 [&_svg]:invisible'
                     )}
                   >
-                    <Check className='h-3 w-3 text-white' />
+                    <Check className='size-3 text-white' />
                   </div>
 
                   {option.icon && <option.icon />}
@@ -313,7 +322,7 @@ function DataTableAsyncSelectContent<TData, TValue>({
 
           {isFetchingNextPage && (
             <div className='flex justify-center p-2'>
-              <Loader2 className='h-4 w-4 animate-spin' />
+              <Loader2 className='size-4 animate-spin' />
             </div>
           )}
         </CommandGroup>

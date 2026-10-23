@@ -6,7 +6,7 @@ export function MaintenanceError() {
 
   return (
     <div className='min-h-dvh'>
-      <div className='m-auto flex h-full w-full flex-col items-center justify-center gap-2'>
+      <div className='m-auto flex size-full flex-col items-center justify-center gap-2'>
         <h1 className='text-[7rem] leading-tight font-bold tabular-nums'>
           503
         </h1>

@@ -124,7 +124,7 @@ export function getAdminsTableColumns({
       ),
       enableHiding: false,
       enableSorting: false,
-      enableColumnFilter: true,
+      enableColumnFilter: false,
     },
     {
       id: 'actions',
@@ -137,7 +137,7 @@ export function getAdminsTableColumns({
       ),
       cell: ({ row }) => <ComponentTableRowActions row={row} />,
       size: 40,
-      enableColumnFilter: true,
+      enableColumnFilter: false,
       enableHiding: false,
       enableSorting: false,
     },

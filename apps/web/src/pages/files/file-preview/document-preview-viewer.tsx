@@ -102,13 +102,13 @@ export function DocumentPreviewViewer({
           <p className='mb-1 font-semibold'>
             {t(
               'files.preview.docNotSupportedTitle',
-              'Định dạng Word cũ (.doc) không hỗ trợ xem trước trực tiếp'
+              'Legacy Word format (.doc) does not support direct preview'
             )}
           </p>
           <p className='text-muted-foreground dark:text-amber-200/80'>
             {t(
               'files.preview.docNotSupportedDesc',
-              'Trình xem trước trên trình duyệt chỉ hỗ trợ định dạng Word hiện đại (.docx). Vui lòng tải về để mở trong Microsoft Word hoặc lưu lại sang định dạng .docx.'
+              'Browser preview only supports modern Word format (.docx). Please download the file to view it on your device.'
             )}
           </p>
         </div>

@@ -49,6 +49,9 @@ export class AdminRoleController {
       },
     },
   })
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Read, AppSubjects.Role),
+  )
   findAll(
     @Paginate() query: PaginateQuery,
   ): Promise<Paginated<AdminRoleResDto>> {

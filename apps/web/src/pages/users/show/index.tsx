@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { AxiosError } from 'axios'
 import { format } from 'date-fns'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeftIcon, EditIcon, TrashIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,11 +35,7 @@ export function PageUserShow() {
       setIsShowDeleteDialog(false)
       navigate('/users')
     },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message)
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = () => {

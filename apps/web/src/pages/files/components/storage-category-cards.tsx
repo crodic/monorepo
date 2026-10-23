@@ -24,6 +24,12 @@ const DISPLAY_CATEGORIES: FileCategoryType[] = [
   'other',
 ]
 
+function resolveDisplayCategory(cat: FileCategoryType): FileCategoryType {
+  if (cat === 'code') return 'document'
+  if (cat === 'audio') return 'other'
+  return cat
+}
+
 export function StorageCategoryCards({
   files,
   activeCategory,
@@ -55,8 +61,7 @@ export function StorageCategoryCards({
         file.resource_type,
         file.original_name
       )
-      const targetCat: FileCategoryType =
-        cat === 'code' ? 'document' : cat === 'audio' ? 'other' : cat
+      const targetCat = resolveDisplayCategory(cat)
 
       categoryTotals[targetCat].count += 1
       categoryTotals[targetCat].bytes += file.size || 0

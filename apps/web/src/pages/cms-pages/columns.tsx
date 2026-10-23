@@ -27,6 +27,11 @@ export function getCmsPagesTableColumns(): ColumnDef<CmsPageSchema>[] {
         )
       },
       enableColumnFilter: true,
+      meta: {
+        label: 'Title',
+        placeholder: 'Search title...',
+        variant: 'text',
+      },
     },
     {
       id: ColumnKey.status,
@@ -36,12 +41,22 @@ export function getCmsPagesTableColumns(): ColumnDef<CmsPageSchema>[] {
       ),
       cell: ({ row }) => (
         <Badge
-          variant={row.original.status === 'published' ? 'default' : 'outline'}
+          variant={
+            row.original.status === 'published' ? 'default' : 'secondary'
+          }
         >
           {row.original.status}
         </Badge>
       ),
       enableColumnFilter: true,
+      meta: {
+        label: 'Status',
+        variant: 'select',
+        options: [
+          { label: 'Draft', value: 'draft' },
+          { label: 'Published', value: 'published' },
+        ],
+      },
     },
     {
       id: 'locales',

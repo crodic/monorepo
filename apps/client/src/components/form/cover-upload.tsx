@@ -161,7 +161,7 @@ export default function CoverUpload({
       onChange?.(nextFile);
       simulateUpload();
     },
-    [disabled, onChange, setPreviewFromFile, simulateUpload, updatePosition],
+    [disabled, onChange, setPreviewFromFile, simulateUpload, updatePosition]
   );
 
   const [
@@ -241,7 +241,7 @@ export default function CoverUpload({
       };
       setIsRepositioning(true);
     },
-    [disabled, hasImage],
+    [disabled, hasImage]
   );
 
   const handlePointerMove = useCallback(
@@ -259,7 +259,7 @@ export default function CoverUpload({
           ((event.clientY - dragState.startY) / rect.height) * 100,
       });
     },
-    [updatePosition],
+    [updatePosition]
   );
 
   const stopRepositioning = useCallback(
@@ -271,12 +271,22 @@ export default function CoverUpload({
       setIsRepositioning(false);
       commitCrop();
     },
-    [commitCrop],
+    [commitCrop]
   );
 
   const displaySize = useMemo(() => {
     return `${(maxSize / 1024 / 1024).toFixed(0)}MB`;
   }, [maxSize]);
+
+  const dropzoneStateClassName = useMemo(() => {
+    if (isDragging && !disabled) {
+      return "border-primary bg-primary/5 border-dashed";
+    }
+    if (hasImage) {
+      return "border-border bg-background hover:border-primary/50";
+    }
+    return "border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5 border-dashed";
+  }, [disabled, hasImage, isDragging]);
 
   return (
     <div className={cn("w-full space-y-4", className)}>
@@ -284,12 +294,8 @@ export default function CoverUpload({
         className={cn(
           "group border-border relative overflow-hidden rounded-xl border transition-all duration-200",
           disabled && "cursor-not-allowed opacity-50",
-          isDragging && !disabled
-            ? "border-primary bg-primary/5 border-dashed"
-            : hasImage
-              ? "border-border bg-background hover:border-primary/50"
-              : "border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5 border-dashed",
-          disabled && "hover:border-muted-foreground/25 hover:bg-muted/30",
+          dropzoneStateClassName,
+          disabled && "hover:border-muted-foreground/25 hover:bg-muted/30"
         )}
         onDragEnter={disabled ? undefined : handleDragEnter}
         onDragLeave={disabled ? undefined : handleDragLeave}
@@ -303,7 +309,7 @@ export default function CoverUpload({
             className={cn(
               "relative aspect-21/9 w-full touch-none overflow-hidden",
               !disabled && canReposition && "cursor-move",
-              isRepositioning && "cursor-grabbing",
+              isRepositioning && "cursor-grabbing"
             )}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -323,8 +329,8 @@ export default function CoverUpload({
               src={previewUrl || "/placeholder.svg"}
               alt="Cover"
               className={cn(
-                "h-full w-full object-cover transition-opacity duration-300 select-none",
-                imageLoading ? "opacity-0" : "opacity-100",
+                "size-full object-cover transition-opacity duration-300 select-none",
+                imageLoading ? "opacity-0" : "opacity-100"
               )}
               draggable={false}
               style={{
@@ -388,7 +394,7 @@ export default function CoverUpload({
             className={cn(
               "flex aspect-21/9 w-full flex-col items-center justify-center gap-4 p-8 text-center",
               !disabled && "cursor-pointer",
-              disabled && "cursor-not-allowed",
+              disabled && "cursor-not-allowed"
             )}
             onClick={handleOpenFileDialog}
             onKeyDown={(event) => {

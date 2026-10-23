@@ -82,7 +82,7 @@ export function PaginationWithLinks({
       newSearchParams.set(key, String(newPage));
       return `${pathname}?${newSearchParams.toString()}`;
     },
-    [pageSearchParam, searchParams, pathname],
+    [pageSearchParam, searchParams, pathname]
   );
 
   const navigateToPage = useCallback(
@@ -94,7 +94,7 @@ export function PaginationWithLinks({
         });
       }
     },
-    [navigationMode, buildLink, router],
+    [navigationMode, buildLink, router]
   );
 
   const navToPageSize = useCallback(
@@ -120,7 +120,7 @@ export function PaginationWithLinks({
       navigationMode,
       router,
       pageSizeSelectOptions?.pageSizeSearchParam,
-    ],
+    ]
   );
 
   const renderPageNumbers = () => {
@@ -136,7 +136,7 @@ export function PaginationWithLinks({
               isActive={page === pageNum}
               className={cn(
                 "cursor-pointer",
-                isPending && "pointer-events-none opacity-50",
+                isPending && "pointer-events-none opacity-50"
               )}
               aria-disabled={isPending}
               href={buildLink(pageNum)}
@@ -170,7 +170,7 @@ export function PaginationWithLinks({
         items.push(
           <PaginationItem key="ellipsis-start">
             <PaginationEllipsis />
-          </PaginationItem>,
+          </PaginationItem>
         );
       }
 
@@ -185,7 +185,7 @@ export function PaginationWithLinks({
         items.push(
           <PaginationItem key="ellipsis-end">
             <PaginationEllipsis />
-          </PaginationItem>,
+          </PaginationItem>
         );
       }
 
@@ -210,7 +210,7 @@ export function PaginationWithLinks({
         <PaginationContent className="max-sm:gap-0">
           {isPending && navigationMode === "router" && (
             <PaginationItem>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             </PaginationItem>
           )}
           <PaginationItem>
@@ -222,7 +222,7 @@ export function PaginationWithLinks({
                 className={cn(
                   page === 1 || isPending
                     ? "pointer-events-none opacity-50"
-                    : "cursor-pointer",
+                    : "cursor-pointer"
                 )}
                 href={buildLink(Math.max(page - 1, 1))}
               />
@@ -249,7 +249,7 @@ export function PaginationWithLinks({
                 className={cn(
                   page === totalPageCount || isPending
                     ? "pointer-events-none opacity-50"
-                    : "cursor-pointer",
+                    : "cursor-pointer"
                 )}
                 href={buildLink(Math.min(page + 1, totalPageCount))}
               />

@@ -21,10 +21,10 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
     setIsLoading(true)
     try {
       await apiSignOut(meta.refreshToken)
-      logout()
     } catch (_error) {
-      //
+      // Ignore API sign-out error and clear local session regardless
     } finally {
+      logout()
       const currentPath = location.pathname
       navigate(`/sign-in${currentPath ? `?redirect=${currentPath}` : ''}`, {
         replace: true,

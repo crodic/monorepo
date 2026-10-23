@@ -19,6 +19,16 @@ const flags: Record<Locale, typeof US> = {
   vi: VN,
 };
 
+function stripLocalePrefix(pathname: string, locale: string): string {
+  if (pathname.startsWith(`/${locale}/`)) {
+    return pathname.replace(`/${locale}`, "");
+  }
+  if (pathname === `/${locale}`) {
+    return "/";
+  }
+  return pathname;
+}
+
 export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
@@ -30,11 +40,7 @@ export default function LanguageSwitcher() {
   function onSelectChange(selectedLocale: string) {
     const nextLocale = selectedLocale as Locale;
     // Defensive check to avoid duplicate prefix if pathname already has locale segment
-    const cleanPathname = pathname.startsWith(`/${locale}/`)
-      ? pathname.replace(`/${locale}`, "")
-      : pathname === `/${locale}`
-        ? "/"
-        : pathname;
+    const cleanPathname = stripLocalePrefix(pathname, locale);
 
     startTransition(() => {
       router.replace(
@@ -42,7 +48,7 @@ export default function LanguageSwitcher() {
         // are used in combination with a given `pathname`. Since the two will
         // always match for the current route, we can skip runtime checks.
         { pathname: cleanPathname, params },
-        { locale: nextLocale },
+        { locale: nextLocale }
       );
     });
   }

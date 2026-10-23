@@ -69,6 +69,55 @@ export interface SortableImageUploadProps {
   onCoverIndexChange?: (index: number | null) => void;
 }
 
+function resolveNextCoverIndexAfterRemoval(
+  coverIndex: number | null | undefined,
+  removedIndex: number,
+  remainingCount: number
+): number | null | undefined {
+  if (typeof coverIndex !== "number") return undefined;
+  if (remainingCount === 0) return null;
+  if (removedIndex === coverIndex) return 0;
+  if (removedIndex < coverIndex) return coverIndex - 1;
+  if (coverIndex >= remainingCount) return remainingCount - 1;
+  return undefined;
+}
+
+function buildUiImageFromPayload(
+  payload: ImagePayload & { type: "existing" | "new" },
+  existingImages: ExistingImage[],
+  deletedIds: Set<string>,
+  fileMap: Map<string, File>,
+  previewUrls: Map<string, string>
+): UIImage | null {
+  if (payload.type === "existing") {
+    const existing = existingImages.find((e) => e.id === payload.id);
+    if (!existing || deletedIds.has(existing.id)) return null;
+    return {
+      id: existing.id,
+      src: existing.src,
+      alt: existing.alt ?? "Image",
+      source: "existing",
+    };
+  }
+
+  const file = fileMap.get(payload.tempId);
+  if (!file) return null;
+
+  let previewUrl = previewUrls.get(payload.tempId);
+  if (!previewUrl) {
+    previewUrl = URL.createObjectURL(file);
+    previewUrls.set(payload.tempId, previewUrl);
+  }
+
+  return {
+    id: payload.tempId,
+    src: previewUrl,
+    alt: file.name,
+    source: "new",
+    file,
+  };
+}
+
 export default function SortableImageUpload({
   existingImages = EMPTY_EXISTING_IMAGES,
   value,
@@ -113,20 +162,20 @@ export default function SortableImageUpload({
   useEffect(() => {
     const newUiImages: UIImage[] = [];
     const deletedIds = new Set(
-      (value ?? []).filter((p) => p.type === "deleted").map((p) => p.id),
+      (value ?? []).filter((p) => p.type === "deleted").map((p) => p.id)
     );
 
     // Get active payloads sorted by order
     const activePayloads = (value ?? [])
       .filter(
         (p): p is ImagePayload & { type: "existing" | "new" } =>
-          p.type === "existing" || p.type === "new",
+          p.type === "existing" || p.type === "new"
       )
       .sort((a, b) => a.order - b.order);
 
     // Check if value only contains existing images (reset scenario)
     const hasOnlyExistingPayloads = activePayloads.every(
-      (p) => p.type === "existing",
+      (p) => p.type === "existing"
     );
     const newPayloadsInValue = activePayloads.filter((p) => p.type === "new");
 
@@ -176,32 +225,15 @@ export default function SortableImageUpload({
     // If we have payloads with order, use that order
     if (activePayloads.length > 0) {
       for (const payload of activePayloads) {
-        if (payload.type === "existing") {
-          const existing = existingImages.find((e) => e.id === payload.id);
-          if (existing && !deletedIds.has(existing.id)) {
-            newUiImages.push({
-              id: existing.id,
-              src: existing.src,
-              alt: existing.alt ?? "Image",
-              source: "existing",
-            });
-          }
-        } else if (payload.type === "new") {
-          const file = fileMapRef.current.get(payload.tempId);
-          if (file) {
-            let previewUrl = previewUrlsRef.current.get(payload.tempId);
-            if (!previewUrl) {
-              previewUrl = URL.createObjectURL(file);
-              previewUrlsRef.current.set(payload.tempId, previewUrl);
-            }
-            newUiImages.push({
-              id: payload.tempId,
-              src: previewUrl,
-              alt: file.name,
-              source: "new",
-              file,
-            });
-          }
+        const uiImage = buildUiImageFromPayload(
+          payload,
+          existingImages,
+          deletedIds,
+          fileMapRef.current,
+          previewUrlsRef.current
+        );
+        if (uiImage) {
+          newUiImages.push(uiImage);
         }
       }
     } else {
@@ -265,13 +297,13 @@ export default function SortableImageUpload({
 
       return payloads;
     },
-    [],
+    []
   );
 
   // Get current deleted IDs from form value
   const deletedIds = useMemo(
     () => (value ?? []).filter((p) => p.type === "deleted").map((p) => p.id),
-    [value],
+    [value]
   );
 
   // Validate a file before adding
@@ -288,7 +320,7 @@ export default function SortableImageUpload({
       }
       return null;
     },
-    [maxSize, maxFiles, uiImages.length],
+    [maxSize, maxFiles, uiImages.length]
   );
 
   // Simulate upload progress (in real app, this would be actual upload)
@@ -412,7 +444,7 @@ export default function SortableImageUpload({
       coverIndex,
       onCoverIndexChange,
       simulateUpload,
-    ],
+    ]
   );
 
   const closeLightbox = useCallback(() => {
@@ -454,15 +486,14 @@ export default function SortableImageUpload({
       const payload = buildPayload(updatedUiImages, updatedDeletedIds);
       onChange?.(payload);
 
-      if (onCoverIndexChange && typeof coverIndex === "number") {
-        if (updatedUiImages.length === 0) {
-          onCoverIndexChange(null);
-        } else if (removedIndex === coverIndex) {
-          onCoverIndexChange(0);
-        } else if (removedIndex < coverIndex) {
-          onCoverIndexChange(coverIndex - 1);
-        } else if (coverIndex >= updatedUiImages.length) {
-          onCoverIndexChange(updatedUiImages.length - 1);
+      if (onCoverIndexChange) {
+        const nextCoverIdx = resolveNextCoverIndexAfterRemoval(
+          coverIndex,
+          removedIndex,
+          updatedUiImages.length
+        );
+        if (nextCoverIdx !== undefined) {
+          onCoverIndexChange(nextCoverIdx);
         }
       }
 
@@ -478,7 +509,7 @@ export default function SortableImageUpload({
       coverIndex,
       onCoverIndexChange,
       closeLightbox,
-    ],
+    ]
   );
 
   // Handle reorder after drag/drop
@@ -500,7 +531,7 @@ export default function SortableImageUpload({
 
       if (coverImageId && onCoverIndexChange) {
         const nextCoverIndex = reorderedUiImages.findIndex(
-          (image) => image.id === coverImageId,
+          (image) => image.id === coverImageId
         );
         if (nextCoverIndex >= 0) {
           onCoverIndexChange(nextCoverIndex);
@@ -514,7 +545,7 @@ export default function SortableImageUpload({
       onChange,
       coverIndex,
       onCoverIndexChange,
-    ],
+    ]
   );
 
   const openLightbox = useCallback((index: number) => {
@@ -552,7 +583,7 @@ export default function SortableImageUpload({
         addImages(files);
       }
     },
-    [addImages, disabled, loading],
+    [addImages, disabled, loading]
   );
 
   // Open file dialog
@@ -584,7 +615,7 @@ export default function SortableImageUpload({
   // Get upload progress entries as array
   const progressEntries = useMemo(
     () => Array.from(uploadProgress.values()),
-    [uploadProgress],
+    [uploadProgress]
   );
 
   const isDisabled = disabled || loading;
@@ -609,7 +640,7 @@ export default function SortableImageUpload({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    })
   );
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const rect = event.active.rect.current.initial;
@@ -620,7 +651,7 @@ export default function SortableImageUpload({
             width: rect.width,
             height: rect.height,
           }
-        : null,
+        : null
     );
   }, []);
   const renderImageTile = useCallback(
@@ -646,7 +677,7 @@ export default function SortableImageUpload({
       openLightbox,
       overlaySize,
       removeImage,
-    ],
+    ]
   );
 
   return (
@@ -714,7 +745,7 @@ export default function SortableImageUpload({
             <SortableContent
               className={cn(
                 "grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-5",
-                gridClassName,
+                gridClassName
               )}
             >
               {uiImages.map((item, index) => {

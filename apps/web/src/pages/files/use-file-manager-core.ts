@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   parseAsArrayOf,
@@ -10,7 +17,6 @@ import {
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { getSortingStateParser } from '@/lib/parsers'
 import { PaginateQueryBuilder } from '@/lib/query-builder'
 import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { normalizeDate, sortParser } from '@/lib/utils'
@@ -57,6 +63,50 @@ export const fileAllowedSorts = [
   ColumnKey.createdAt,
 ]
 
+type FileDialogsState = {
+  uploadOpen: boolean
+  droppedFiles: File[]
+  folderDialogOpen: boolean
+  renameFolderOpen: boolean
+  folderToRename: string | null
+  previewFile: FileSchema | null
+  inspectorOpen: boolean
+  inspectedFile: FileSchema | null
+  pickerOpen: boolean
+  pickedUrl: string | null
+  movingFile: FileSchema | null
+  renamingFile: FileSchema | null
+  sharingFile: FileSchema | null
+  deletingFile: FileSchema | null
+  permanentDeletingFile: FileSchema | null
+  bulkDeletingFiles: FileSchema[]
+  bulkPermanentDeletingFiles: FileSchema[]
+  deletingFolder: string | null
+  deleteFolderFiles: boolean
+}
+
+const INITIAL_DIALOGS_STATE: FileDialogsState = {
+  uploadOpen: false,
+  droppedFiles: [],
+  folderDialogOpen: false,
+  renameFolderOpen: false,
+  folderToRename: null,
+  previewFile: null,
+  inspectorOpen: false,
+  inspectedFile: null,
+  pickerOpen: false,
+  pickedUrl: null,
+  movingFile: null,
+  renamingFile: null,
+  sharingFile: null,
+  deletingFile: null,
+  permanentDeletingFile: null,
+  bulkDeletingFiles: [],
+  bulkPermanentDeletingFiles: [],
+  deletingFolder: null,
+  deleteFolderFiles: false,
+}
+
 export async function copyFileUrl(file: FileSchema) {
   await navigator.clipboard.writeText(file.url)
 }
@@ -89,39 +139,131 @@ export function useFileManagerCore() {
 
   // --- Modals and Active Entities ---
   const [localFolders, setLocalFolders] = useState<FolderSchema[]>([])
-  const [uploadOpen, setUploadOpen] = useState(false)
-  const [droppedFiles, setDroppedFiles] = useState<File[]>([])
-  const [folderDialogOpen, setFolderDialogOpen] = useState(false)
-  const [renameFolderOpen, setRenameFolderOpen] = useState(false)
-  const [folderToRename, setFolderToRename] = useState<string | null>(null)
-  const [previewFile, setPreviewFile] = useState<FileSchema | null>(null)
-  const [inspectorOpen, setInspectorOpen] = useState(false)
-  const [inspectedFile, setInspectedFile] = useState<FileSchema | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [pickedUrl, setPickedUrl] = useState<string | null>(null)
-  const [movingFile, setMovingFile] = useState<FileSchema | null>(null)
-  const [renamingFile, setRenamingFile] = useState<FileSchema | null>(null)
-  const [sharingFile, setSharingFile] = useState<FileSchema | null>(null)
-  const [deletingFile, setDeletingFile] = useState<FileSchema | null>(null)
-  const [permanentDeletingFile, setPermanentDeletingFile] =
-    useState<FileSchema | null>(null)
-  const [bulkDeletingFiles, setBulkDeletingFiles] = useState<FileSchema[]>([])
-  const [bulkPermanentDeletingFiles, setBulkPermanentDeletingFiles] = useState<
-    FileSchema[]
-  >([])
-  const [deletingFolder, setDeletingFolder] = useState<string | null>(null)
-  const [deleteFolderFiles, setDeleteFolderFiles] = useState(false)
+  const [dialogs, setDialogs] = useState<FileDialogsState>(
+    INITIAL_DIALOGS_STATE
+  )
+
+  const createDialogSetter = useCallback(
+    <K extends keyof FileDialogsState>(
+      key: K
+    ): Dispatch<SetStateAction<FileDialogsState[K]>> =>
+      (value) => {
+        setDialogs((prev) => ({
+          ...prev,
+          [key]:
+            typeof value === 'function'
+              ? (
+                  value as (
+                    prevState: FileDialogsState[K]
+                  ) => FileDialogsState[K]
+                )(prev[key])
+              : value,
+        }))
+      },
+    []
+  )
+
+  const {
+    uploadOpen,
+    droppedFiles,
+    folderDialogOpen,
+    renameFolderOpen,
+    folderToRename,
+    previewFile,
+    inspectorOpen,
+    inspectedFile,
+    pickerOpen,
+    pickedUrl,
+    movingFile,
+    renamingFile,
+    sharingFile,
+    deletingFile,
+    permanentDeletingFile,
+    bulkDeletingFiles,
+    bulkPermanentDeletingFiles,
+    deletingFolder,
+    deleteFolderFiles,
+  } = dialogs
+
+  const setUploadOpen = useMemo(
+    () => createDialogSetter('uploadOpen'),
+    [createDialogSetter]
+  )
+  const setDroppedFiles = useMemo(
+    () => createDialogSetter('droppedFiles'),
+    [createDialogSetter]
+  )
+  const setFolderDialogOpen = useMemo(
+    () => createDialogSetter('folderDialogOpen'),
+    [createDialogSetter]
+  )
+  const setRenameFolderOpen = useMemo(
+    () => createDialogSetter('renameFolderOpen'),
+    [createDialogSetter]
+  )
+  const setFolderToRename = useMemo(
+    () => createDialogSetter('folderToRename'),
+    [createDialogSetter]
+  )
+  const setPreviewFile = useMemo(
+    () => createDialogSetter('previewFile'),
+    [createDialogSetter]
+  )
+  const setInspectorOpen = useMemo(
+    () => createDialogSetter('inspectorOpen'),
+    [createDialogSetter]
+  )
+  const setInspectedFile = useMemo(
+    () => createDialogSetter('inspectedFile'),
+    [createDialogSetter]
+  )
+  const setPickerOpen = useMemo(
+    () => createDialogSetter('pickerOpen'),
+    [createDialogSetter]
+  )
+  const setPickedUrl = useMemo(
+    () => createDialogSetter('pickedUrl'),
+    [createDialogSetter]
+  )
+  const setMovingFile = useMemo(
+    () => createDialogSetter('movingFile'),
+    [createDialogSetter]
+  )
+  const setRenamingFile = useMemo(
+    () => createDialogSetter('renamingFile'),
+    [createDialogSetter]
+  )
+  const setSharingFile = useMemo(
+    () => createDialogSetter('sharingFile'),
+    [createDialogSetter]
+  )
+  const setDeletingFile = useMemo(
+    () => createDialogSetter('deletingFile'),
+    [createDialogSetter]
+  )
+  const setPermanentDeletingFile = useMemo(
+    () => createDialogSetter('permanentDeletingFile'),
+    [createDialogSetter]
+  )
+  const setBulkDeletingFiles = useMemo(
+    () => createDialogSetter('bulkDeletingFiles'),
+    [createDialogSetter]
+  )
+  const setBulkPermanentDeletingFiles = useMemo(
+    () => createDialogSetter('bulkPermanentDeletingFiles'),
+    [createDialogSetter]
+  )
+  const setDeletingFolder = useMemo(
+    () => createDialogSetter('deletingFolder'),
+    [createDialogSetter]
+  )
+  const setDeleteFolderFiles = useMemo(
+    () => createDialogSetter('deleteFolderFiles'),
+    [createDialogSetter]
+  )
 
   // --- Query Params & Pagination ---
-  const [, setPageQuery] = useQueryState('page', parseAsInteger.withDefault(1))
-  const [, setSearchQuery] = useQueryState(
-    'search',
-    parseAsString.withDefault('')
-  )
-  const [, setSortQuery] = useQueryState(
-    'sort',
-    getSortingStateParser<FileSchema>(fileAllowedSorts).withDefault([])
-  )
+  const [, setSearch] = useQueryState('search', parseAsString.withDefault(''))
   const [, setFilterQuery] = useQueryStates(fileFilterParsers)
 
   const {
@@ -295,10 +437,13 @@ export function useFileManagerCore() {
   )
 
   // --- Inspect Handler ---
-  const handleInspectFile = useCallback((file: FileSchema) => {
-    setInspectedFile(file)
-    setInspectorOpen(true)
-  }, [])
+  const handleInspectFile = useCallback(
+    (file: FileSchema) => {
+      setInspectedFile(file)
+      setInspectorOpen(true)
+    },
+    [setInspectedFile, setInspectorOpen]
+  )
 
   // --- Restore & Permanent Delete Mutations ---
   const restoreFileMutation = useMutation({
@@ -368,7 +513,18 @@ export function useFileManagerCore() {
         canUpdate: ability.can('update', 'FILE'),
         canDelete: ability.can('delete', 'FILE'),
       }),
-    [ability, isStarred, toggleStar, restoreFileMutate]
+    [
+      ability,
+      isStarred,
+      toggleStar,
+      restoreFileMutate,
+      setPreviewFile,
+      setMovingFile,
+      setDeletingFile,
+      setPermanentDeletingFile,
+      setRenamingFile,
+      setSharingFile,
+    ]
   )
 
   const { table } = useDataTable({
@@ -429,7 +585,6 @@ export function useFileManagerCore() {
       setActiveFolder(null)
       table.setPageIndex(0)
       table.resetRowSelection()
-      void setPageQuery(1)
       void setFilterQuery({
         [ColumnKey.originalName]: null,
         [ColumnKey.folder]: null,
@@ -439,7 +594,7 @@ export function useFileManagerCore() {
         [ColumnKey.createdAt]: null,
       })
     },
-    [setFilterQuery, setPageQuery, table]
+    [setFilterQuery, table]
   )
 
   const handleFolderSelect = useCallback(
@@ -452,9 +607,7 @@ export function useFileManagerCore() {
       table.resetColumnFilters()
       table.resetSorting()
       table.resetRowSelection()
-      void setPageQuery(1)
-      void setSearchQuery(null)
-      void setSortQuery(null)
+      void setSearch(null)
       void setFilterQuery({
         [ColumnKey.originalName]: null,
         [ColumnKey.folder]: null,
@@ -464,20 +617,12 @@ export function useFileManagerCore() {
         [ColumnKey.createdAt]: null,
       })
     },
-    [
-      activeFolder,
-      table,
-      setPageQuery,
-      setSearchQuery,
-      setSortQuery,
-      setFilterQuery,
-    ]
+    [activeFolder, table, setSearch, setFilterQuery]
   )
 
   const handleCategorySelect = useCallback(
     (category: string | null) => {
       table.setPageIndex(0)
-      void setPageQuery(1)
 
       if (!category || category === 'all') {
         void setFilterQuery((current) => ({
@@ -499,15 +644,18 @@ export function useFileManagerCore() {
         }))
       }
     },
-    [table, setPageQuery, setFilterQuery]
+    [table, setFilterQuery]
   )
 
-  const handleDropFiles = useCallback((files: File[]) => {
-    if (files.length > 0) {
-      setDroppedFiles(files)
-      setUploadOpen(true)
-    }
-  }, [])
+  const handleDropFiles = useCallback(
+    (files: File[]) => {
+      if (files.length > 0) {
+        setDroppedFiles(files)
+        setUploadOpen(true)
+      }
+    },
+    [setDroppedFiles, setUploadOpen]
+  )
 
   const handleCreateFolder = useCallback(
     async (folderName: string, color?: string) => {
@@ -533,7 +681,13 @@ export function useFileManagerCore() {
       setFolderToRename(null)
       await invalidateFiles()
     },
-    [folderToRename, activeFolder, handleFolderSelect, invalidateFiles]
+    [
+      folderToRename,
+      activeFolder,
+      handleFolderSelect,
+      setFolderToRename,
+      invalidateFiles,
+    ]
   )
 
   const handleMoveFile = useCallback(
@@ -549,7 +703,13 @@ export function useFileManagerCore() {
       setMovingFile(null)
       await invalidateFiles()
     },
-    [movingFile, inspectedFile, invalidateFiles]
+    [
+      movingFile,
+      inspectedFile,
+      setInspectedFile,
+      setMovingFile,
+      invalidateFiles,
+    ]
   )
 
   return {
@@ -566,7 +726,7 @@ export function useFileManagerCore() {
     handleCategorySelect,
     handleDropFiles,
     search: search || '',
-    setSearch: setSearchQuery,
+    setSearch,
     starredCount,
     trashCount,
     isStarred,

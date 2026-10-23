@@ -13,6 +13,7 @@ type SortableImageCacheState = {
 @Injectable()
 export class SortableImageCacheService {
   private readonly cacheKeyPrefix = 'sortable-images';
+  private readonly cacheTtlMs = 24 * 60 * 60 * 1000;
 
   constructor(
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
@@ -20,6 +21,7 @@ export class SortableImageCacheService {
   ) {}
 
   async findAll(ownerKey: string) {
+    this.sortableImageUploadService.validateOwnerKey(ownerKey);
     const state = await this.getCachedState(ownerKey);
 
     return {
@@ -35,6 +37,7 @@ export class SortableImageCacheService {
     files: Express.Multer.File[] = [],
     rawCoverIndex?: unknown,
   ) {
+    this.sortableImageUploadService.validateOwnerKey(ownerKey);
     const currentState = await this.getCachedState(ownerKey);
     const nextImages = await this.sortableImageUploadService.buildNextImages({
       currentImages: currentState.images,
@@ -46,10 +49,14 @@ export class SortableImageCacheService {
       nextImages.length,
     );
 
-    await this.cache.set(this.getCacheKey(ownerKey), {
-      images: nextImages,
-      coverIndex,
-    } satisfies SortableImageCacheState);
+    await this.cache.set(
+      this.getCacheKey(ownerKey),
+      {
+        images: nextImages,
+        coverIndex,
+      } satisfies SortableImageCacheState,
+      this.cacheTtlMs,
+    );
 
     return {
       ownerKey,

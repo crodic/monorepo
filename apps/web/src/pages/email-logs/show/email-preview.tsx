@@ -47,14 +47,14 @@ export function EmailPreview({ html }: EmailPreviewProps) {
       <TabsContent value='preview' className='mt-0'>
         <div className='bg-muted/30 flex min-h-[500px] justify-center overflow-hidden rounded-md border p-4'>
           <div
-            className={`h-[600px] overflow-hidden rounded border bg-white shadow-sm transition-all duration-300 ease-in-out ${
+            className={`h-[600px] overflow-hidden rounded border bg-white shadow-sm transition-[width] duration-200 ease-out ${
               device === 'mobile' ? 'w-[375px]' : 'w-full'
             }`}
           >
             <iframe
               title='Email Preview'
               srcDoc={html}
-              className='h-full w-full border-0'
+              className='size-full border-0'
               sandbox='allow-same-origin'
             />
           </div>

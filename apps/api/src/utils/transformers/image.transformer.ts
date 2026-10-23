@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import fs from 'fs';
 import path from 'path';
 import sharp, { type Metadata, type Sharp } from 'sharp';
@@ -6,6 +6,7 @@ import { ImageTransformOptions } from '../../api/file/types/upload.types';
 
 @Injectable()
 export class ImageTransformer {
+  private static readonly SAFE_FONT_REGEX = /^[a-zA-Z0-9 -]{1,40}$/;
   /**
    * Transforms an image using the provided options.
    * @param file The file to transform.
@@ -271,8 +272,11 @@ export class ImageTransformer {
 
     if (ar.includes(':')) {
       const [w, h] = ar.split(':').map(Number);
+      if (!(w > 0 && h > 0 && Number.isFinite(w) && Number.isFinite(h))) {
+        return img;
+      }
       const ratio = w / h;
-      const newH = Math.round(srcW / ratio);
+      const newH = Math.min(Math.max(1, Math.round(srcW / ratio)), 3840);
       return img.resize({ width: srcW, height: newH });
     }
 
@@ -306,26 +310,41 @@ export class ImageTransformer {
 
     // fetch:https://...
     if (overlay.startsWith('fetch:')) {
-      const url = overlay.substring(6);
-      const res = await fetch(url);
-      const buf = Buffer.from(await res.arrayBuffer());
-
-      return img.composite([{ input: buf, gravity: 'southeast' }]);
+      throw new BadRequestException(
+        'Remote fetch overlays are disabled for security',
+      );
     }
 
     // text:...
     if (overlay.startsWith('text:')) {
-      const text = overlay.replace(/^text:/, '');
+      const rawContent = overlay.replace(/^text:/, '');
+      const [rawText, rawFont, rawSize] = rawContent.split(':');
+      const escapedText = this.escapeXml(rawText ?? '');
+      const font =
+        rawFont && ImageTransformer.SAFE_FONT_REGEX.test(rawFont)
+          ? rawFont
+          : 'sans-serif';
+      const parsedSize = this.toFiniteNumber(rawSize);
+      const size = this.clamp(parsedSize ?? 40, 8, 128);
 
       const svg = `
         <svg width="500" height="200">
-          <text x="20" y="40" font-size="40" fill="white">${text}</text>
+          <text x="20" y="40" font-family="${font}" font-size="${size}" fill="white">${escapedText}</text>
         </svg>`;
 
       return img.composite([{ input: Buffer.from(svg), gravity: 'northwest' }]);
     }
 
     return img;
+  }
+
+  private escapeXml(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -352,14 +371,14 @@ export class ImageTransformer {
 
     switch (type) {
       case 'blur':
-        return img.blur(this.clamp(v ?? 10, 0.3, 1000));
+        return img.blur(this.clamp(v ?? 10, 0.3, 50));
       case 'pixelate':
         return img.resize({ width: 100 }).resize({
           width: undefined,
           height: undefined,
         });
       case 'sharpen':
-        return img.sharpen({ sigma: this.clamp(v ?? 10, 0.000001, 10000) });
+        return img.sharpen({ sigma: this.clamp(v ?? 10, 0.5, 10) });
       case 'grayscale':
         return img.grayscale();
       case 'brightness':

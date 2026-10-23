@@ -395,16 +395,21 @@ export function ExpandingDataTableDemo() {
         </div>
         {enableInfinite && (
           <p className='text-muted-foreground mt-2 text-center text-xs'>
-            {hasMoreGroups
-              ? isLoadingMoreGroups
-                ? 'Loading more mock groups...'
-                : 'Scroll near the bottom to load more mock groups.'
-              : 'All mock groups loaded.'}
+            {getInfiniteStatusMessage(hasMoreGroups, isLoadingMoreGroups)}
           </p>
         )}
       </CardContent>
     </Card>
   )
+}
+
+function getInfiniteStatusMessage(
+  hasMoreGroups: boolean,
+  isLoadingMoreGroups: boolean
+) {
+  if (!hasMoreGroups) return 'All mock groups loaded.'
+  if (isLoadingMoreGroups) return 'Loading more mock groups...'
+  return 'Scroll near the bottom to load more mock groups.'
 }
 
 function DemoSwitch({

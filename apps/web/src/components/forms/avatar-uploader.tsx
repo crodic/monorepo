@@ -285,13 +285,14 @@ const AvatarUploader = ({
                 (controlledValue ? URL.createObjectURL(controlledValue) : '')
               }
               alt='preview'
-              className='absolute inset-0 h-full w-full rounded-full object-cover'
+              className='absolute inset-0 size-full rounded-full object-cover'
             />
           )}
           <Button
             variant='secondary'
             size='icon-sm'
             type='button'
+            aria-label='Edit avatar'
             className='absolute right-0 bottom-0 z-10'
             onClick={() => inputRef.current?.click()}
           >

@@ -128,6 +128,7 @@ export function FolderPanel({
                 className='text-muted-foreground hover:text-foreground size-6'
                 onClick={onCreateFolder}
                 title={t('files.actions.createFolder')}
+                aria-label={t('files.actions.createFolder')}
               >
                 <FolderPlus className='size-3.5' />
               </Button>
@@ -256,7 +257,7 @@ export function FolderPanel({
         </div>
         <div className='bg-muted h-1.5 w-full overflow-hidden rounded-full'>
           <div
-            className='bg-primary h-full rounded-full transition-all duration-500'
+            className='bg-primary h-full rounded-full transition-[width] duration-200 ease-out'
             style={{ width: `${Math.max(storagePercentage, 3)}%` }}
           />
         </div>

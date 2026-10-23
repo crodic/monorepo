@@ -15,6 +15,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProfile, useSignOut } from "@/hooks/use-profile";
 import { Link } from "@/i18n/navigation";
+import { getUserInitials } from "@/lib/utils";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -48,12 +49,7 @@ export default function UserAccount() {
     );
   }
 
-  const initials =
-    (
-      (profile.firstName?.[0] || "") + (profile.lastName?.[0] || "")
-    ).toUpperCase() ||
-    profile.email?.slice(0, 2).toUpperCase() ||
-    "U";
+  const initials = getUserInitials(profile);
 
   const handleSignOut = () => {
     signOutMutation.mutate();

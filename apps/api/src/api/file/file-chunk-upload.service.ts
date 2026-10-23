@@ -33,6 +33,7 @@ import { FileResDto } from './dto/file.res.dto';
 import { FileEntity } from './entities/file.entity';
 import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 import { FileFolderService } from './file-folder.service';
+import { FileValidator } from './validators/file.validator';
 
 export type ChunkUploadSession = {
   sessionId: string;
@@ -408,6 +409,8 @@ export class FileChunkUploadService {
   }
 
   async createUploadSession(dto: CreateChunkUploadSessionDto) {
+    FileValidator.validateSafeMimeAndExtension(dto.mime, dto.originalName);
+
     if (dto.size > FILE_UPLOAD_MAX_SIZE) {
       throw new BadRequestException(
         `File exceeds limit: ${this.formatBytes(FILE_UPLOAD_MAX_SIZE)}`,
@@ -604,7 +607,9 @@ export class FileChunkUploadService {
         { id: sessionId },
         { status: 'completed' },
       );
-      await this.abortUploadSession(sessionId);
+      await this.cleanupCompletedSession({
+        id: sessionId,
+      } as FileUploadSessionEntity);
 
       const reloaded = await this.fileRepository.findOne({
         where: { public_id: saved.public_id },
@@ -679,7 +684,9 @@ export class FileChunkUploadService {
       { id: sessionId },
       { status: 'completed' },
     );
-    await this.abortUploadSession(sessionId);
+    await this.cleanupCompletedSession({
+      id: sessionId,
+    } as FileUploadSessionEntity);
 
     const reloaded = await this.fileRepository.findOne({
       where: { public_id: media.public_id },
@@ -687,6 +694,24 @@ export class FileChunkUploadService {
     });
 
     return this.toDto(reloaded ?? media);
+  }
+
+  private async cleanupCompletedSession(
+    session: Pick<FileUploadSessionEntity, 'id'>,
+  ): Promise<void> {
+    if (this.redis) {
+      try {
+        await this.redis.del(`chunk_session:${session.id}`);
+      } catch {
+        // Ignore redis delete failure
+      }
+    }
+
+    try {
+      await rm(this.sessionPath(session.id), { recursive: true, force: true });
+    } catch {
+      // Ignore directory removal failure
+    }
   }
 
   async abortUploadSession(sessionId: string): Promise<{ message: string }> {

@@ -330,6 +330,7 @@ function DataTableSortItem({
         </Select>
         <Button
           aria-controls={sortItemId}
+          aria-label={`Remove ${columnLabels.get(sort.id) ?? sort.id} sort`}
           variant='outline'
           size='icon'
           className='size-8 shrink-0 rounded'
@@ -339,6 +340,7 @@ function DataTableSortItem({
         </Button>
         <SortableItemHandle asChild>
           <Button
+            aria-label={`Reorder ${columnLabels.get(sort.id) ?? sort.id} sort`}
             variant='outline'
             size='icon'
             className='size-8 shrink-0 rounded'

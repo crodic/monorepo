@@ -154,6 +154,7 @@ export function ImagePickerInput({
             type='button'
             variant='destructive'
             size='icon'
+            aria-label='Remove image'
             className='absolute -top-2 -right-2 size-6 rounded-full shadow-sm'
             onClick={() => onChange('')}
           >

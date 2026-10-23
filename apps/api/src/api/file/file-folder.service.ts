@@ -1,15 +1,16 @@
 import { StorageDisk } from '../../filesystem/config/storage-config.type';
 import { StorageDriver } from '../../filesystem/drivers/storage-driver.interface';
 import { FilesystemService } from '../../filesystem/filesystem.service';
-import { removeDiskPath } from '../../utils/filesystem';
+import { resolveStoragePath } from '../../utils/filesystem';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { FileFolderResDto } from './dto/folder.dto';
 import { FileFolderEntity } from './entities/file-folder.entity';
 import { FileEntity } from './entities/file.entity';
@@ -27,6 +28,8 @@ export class FileFolderService {
     @InjectRepository(FileFolderEntity)
     private readonly folderRepository: Repository<FileFolderEntity>,
     private readonly storage: FilesystemService,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {}
 
   private diskForFile(file: Pick<FileEntity, 'disk'>): StorageDriver {
@@ -34,19 +37,7 @@ export class FileFolderService {
   }
 
   private toStorageKey(path: string): string {
-    const normalized = path.replace(/\\/g, '/');
-    const legacyPrefixes = ['storage/public/', 'storage/private/'];
-    const legacyPrefix = legacyPrefixes.find((prefix) =>
-      normalized.includes(prefix),
-    );
-
-    if (legacyPrefix) {
-      return normalized.slice(
-        normalized.indexOf(legacyPrefix) + legacyPrefix.length,
-      );
-    }
-
-    return removeDiskPath(normalized).replace(/^\/+/, '');
+    return resolveStoragePath(path);
   }
 
   normalizeFolder(folder?: string | null): string | null {
@@ -69,7 +60,10 @@ export class FileFolderService {
     return normalized;
   }
 
-  async ensureFolder(folder?: string | null): Promise<FileFolderEntity | null> {
+  async ensureFolder(
+    folder?: string | null,
+    folderRepo: Repository<FileFolderEntity> = this.folderRepository,
+  ): Promise<FileFolderEntity | null> {
     const normalized = this.normalizeFolder(folder);
     if (!normalized) {
       return null;
@@ -84,13 +78,13 @@ export class FileFolderService {
       const segment = segments[depth];
       currentPath = currentPath ? `${currentPath}/${segment}` : segment;
 
-      let entity = await this.folderRepository.findOne({
+      let entity = await folderRepo.findOne({
         where: { name: currentPath },
       });
 
       if (!entity) {
-        entity = await this.folderRepository.save(
-          this.folderRepository.create({
+        entity = await folderRepo.save(
+          folderRepo.create({
             name: currentPath,
             title: segment,
             parentId,
@@ -101,7 +95,7 @@ export class FileFolderService {
         entity.title = segment;
         entity.depth = depth;
         entity.parentId = parentId;
-        entity = await this.folderRepository.save(entity);
+        entity = await folderRepo.save(entity);
       }
 
       parentId = entity.id;
@@ -252,47 +246,63 @@ export class FileFolderService {
       throw new BadRequestException('Target folder already exists');
     }
 
-    // Ensure target folder structure exists
-    const ensuredTarget = await this.ensureFolder(targetFolder);
-    if (color && ensuredTarget) {
-      ensuredTarget.color = color;
-      await this.folderRepository.save(ensuredTarget);
-    } else if (existingSource?.color && ensuredTarget) {
-      ensuredTarget.color = existingSource.color;
-      await this.folderRepository.save(ensuredTarget);
-    }
+    const performRename = async (
+      fileRepo: Repository<FileEntity>,
+      folderRepo: Repository<FileFolderEntity>,
+    ) => {
+      // Ensure target folder structure exists
+      const ensuredTarget = await this.ensureFolder(targetFolder, folderRepo);
+      if (color && ensuredTarget) {
+        ensuredTarget.color = color;
+        await folderRepo.save(ensuredTarget);
+      } else if (existingSource?.color && ensuredTarget) {
+        ensuredTarget.color = existingSource.color;
+        await folderRepo.save(ensuredTarget);
+      }
 
-    // Update files directly in this folder
-    await this.fileRepository
-      .createQueryBuilder()
-      .update(FileEntity)
-      .set({ folder: targetFolder })
-      .where('folder = :folder', { folder: sourceFolder })
-      .execute();
-
-    // Cascade rename to all descendant folders and their files
-    const fromPrefix = `${sourceFolder}/`;
-    const toPrefix = `${targetFolder}/`;
-
-    const descendantFolders = await this.folderRepository
-      .createQueryBuilder('f')
-      .where('f.name LIKE :prefix', { prefix: `${fromPrefix}%` })
-      .getMany();
-
-    for (const desc of descendantFolders) {
-      const newName = desc.name.replace(fromPrefix, toPrefix);
-      await this.ensureFolder(newName);
-      await this.fileRepository
+      // Update files directly in this folder
+      await fileRepo
         .createQueryBuilder()
         .update(FileEntity)
-        .set({ folder: newName })
-        .where('folder = :folder', { folder: desc.name })
+        .set({ folder: targetFolder })
+        .where('folder = :folder', { folder: sourceFolder })
         .execute();
-      await this.folderRepository.delete({ id: desc.id });
-    }
 
-    if (existingSource) {
-      await this.folderRepository.delete({ id: existingSource.id });
+      // Cascade rename to all descendant folders and their files
+      const fromPrefix = `${sourceFolder}/`;
+      const toPrefix = `${targetFolder}/`;
+
+      const descendantFolders = await folderRepo
+        .createQueryBuilder('f')
+        .where('f.name LIKE :prefix', { prefix: `${fromPrefix}%` })
+        .getMany();
+
+      for (const desc of descendantFolders) {
+        const newName = desc.name.replace(fromPrefix, toPrefix);
+        await this.ensureFolder(newName, folderRepo);
+        await fileRepo
+          .createQueryBuilder()
+          .update(FileEntity)
+          .set({ folder: newName })
+          .where('folder = :folder', { folder: desc.name })
+          .execute();
+        await folderRepo.delete({ id: desc.id });
+      }
+
+      if (existingSource) {
+        await folderRepo.delete({ id: existingSource.id });
+      }
+    };
+
+    if (this.dataSource?.transaction) {
+      await this.dataSource.transaction((manager) =>
+        performRename(
+          manager.getRepository(FileEntity),
+          manager.getRepository(FileFolderEntity),
+        ),
+      );
+    } else {
+      await performRename(this.fileRepository, this.folderRepository);
     }
 
     return this.getFolderSummary(targetFolder);
@@ -336,9 +346,9 @@ export class FileFolderService {
           this.diskForFile(file).delete(this.toStorageKey(file.path)),
         ),
       );
-      for (const file of allFiles) {
-        await this.fileRepository.delete({ id: file.id });
-      }
+      await this.fileRepository.delete({
+        id: In(allFiles.map((f) => f.id)),
+      });
     }
 
     if (existingFolder) {

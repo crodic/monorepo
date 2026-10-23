@@ -5,6 +5,17 @@ import {
   type Option,
 } from '@/components/forms/auto-complete-select'
 
+function getOptionBackgroundColor(state: {
+  isSelected: boolean
+  isFocused: boolean
+}): string {
+  if (state.isSelected) return 'var(--color-primary)'
+  if (state.isFocused) {
+    return 'color-mix(in oklch, var(--color-accent) 75%, transparent)'
+  }
+  return 'transparent'
+}
+
 export const stylesSelect: StylesConfig<Option> = {
   control: (provided, state) => ({
     ...provided,
@@ -32,11 +43,7 @@ export const stylesSelect: StylesConfig<Option> = {
 
   option: (provided, state) => ({
     ...provided,
-    backgroundColor: state.isSelected
-      ? 'var(--color-primary)'
-      : state.isFocused
-        ? 'color-mix(in oklch, var(--color-accent) 75%, transparent)'
-        : 'transparent',
+    backgroundColor: getOptionBackgroundColor(state),
     color: state.isSelected
       ? 'var(--color-primary-foreground)'
       : 'var(--color-foreground)',

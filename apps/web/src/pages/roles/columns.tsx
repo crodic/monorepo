@@ -90,7 +90,7 @@ export function getRolesTableColumns(): ColumnDef<RoleSchema>[] {
           {format(row.original.createdAt, 'dd/MM/yyyy HH:mm aa')}
         </p>
       ),
-      enableColumnFilter: true,
+      enableColumnFilter: false,
     },
     {
       id: 'actions',
@@ -103,7 +103,7 @@ export function getRolesTableColumns(): ColumnDef<RoleSchema>[] {
       ),
       cell: ({ row }) => <ComponentTableRowActions row={row} />,
       size: 40,
-      enableColumnFilter: true,
+      enableColumnFilter: false,
       enableHiding: false,
       enableSorting: false,
     },

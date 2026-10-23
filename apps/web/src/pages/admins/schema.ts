@@ -16,6 +16,15 @@ export const ColumnKey = {
   avatar: 'avatar',
 }
 
+function resolveAdminRoles(admin: {
+  roles?: z.infer<typeof roleSchema>[] | null
+  role?: z.infer<typeof roleSchema> | null
+}) {
+  if (admin.roles?.length) return admin.roles
+  if (admin.role) return [admin.role]
+  return []
+}
+
 export const adminSchema = z
   .object({
     id: z.string(),
@@ -51,11 +60,7 @@ export const adminSchema = z
     updatedAt: z.string(),
   })
   .transform((admin) => {
-    const roles = admin.roles?.length
-      ? admin.roles
-      : admin.role
-        ? [admin.role]
-        : []
+    const roles = resolveAdminRoles(admin)
 
     return {
       ...admin,

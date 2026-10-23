@@ -141,7 +141,7 @@ export function FileInspector({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side='right'
-        className='border-border bg-background flex h-full w-full flex-col gap-0 overflow-hidden border-l p-0 sm:max-w-md'
+        className='border-border bg-background flex size-full flex-col gap-0 overflow-hidden border-l p-0 sm:max-w-md'
       >
         <SheetHeader className='border-border flex flex-row items-center space-y-0 border-b px-5 py-4 pr-12'>
           <div className='flex items-center gap-2'>
@@ -169,8 +169,16 @@ export function FileInspector({
             <div className='flex flex-col gap-5'>
               {/* Media Preview Box */}
               <div
+                role='button'
+                tabIndex={0}
                 className='border-border/80 bg-muted/40 group relative flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border shadow-inner'
                 onClick={() => onPreview(activeFile)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onPreview(activeFile)
+                  }
+                }}
               >
                 {isPreviewableImage(activeFile) ||
                 isPreviewableVideo(activeFile) ||
@@ -198,6 +206,7 @@ export function FileInspector({
                       onPreview(activeFile)
                     }}
                     title={t('files.actions.preview')}
+                    aria-label={t('files.actions.preview')}
                   >
                     <ExternalLink className='size-3.5' />
                   </Button>

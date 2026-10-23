@@ -56,6 +56,7 @@ export function UploadProgressList({
                   size="icon"
                   className="size-6"
                   disabled={disabled}
+                  aria-label="Remove file"
                 >
                   <CircleX className="size-3.5" />
                 </Button>
@@ -65,7 +66,7 @@ export function UploadProgressList({
                 value={item.progress}
                 className={cn(
                   "h-1 transition-all duration-300",
-                  "[&>div]:bg-zinc-950 dark:[&>div]:bg-zinc-50",
+                  "[&>div]:bg-zinc-950 dark:[&>div]:bg-zinc-50"
                 )}
               />
             </div>

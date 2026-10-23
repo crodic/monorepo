@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Main } from '@/components/layout/main'
 import { CmsPageForm } from '../cms-page-form'
 import { apiCreateCmsPage } from '../queries'
@@ -18,12 +19,7 @@ export function PageCmsPageCreate() {
       )
       navigate(`/cms-pages/${page.id}/show`)
     },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message ||
-        t('cmsPages.message.createError', 'Could not create page')
-      toast.error(Array.isArray(message) ? message.join(', ') : message)
-    },
+    onError: restApiErrorHandler,
   })
 
   const handleSubmit = (data: CmsPageFormSchema) => {

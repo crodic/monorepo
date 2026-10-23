@@ -106,23 +106,19 @@ export function parseAcceptSpec(accept?: string | string[]): AcceptSpec | null {
       ].some((ext) => item.endsWith(ext))
   )
 
-  let primaryResourceType:
-    'image' | 'video' | 'audio' | 'document' | undefined = undefined
-  let label = acceptString
-
-  if (isAllImages) {
-    primaryResourceType = 'image'
-    label = 'Images'
-  } else if (isAllVideos) {
-    primaryResourceType = 'video'
-    label = 'Videos'
-  } else if (isAllAudio) {
-    primaryResourceType = 'audio'
-    label = 'Audio'
-  } else if (isAllDocs) {
-    primaryResourceType = 'document'
-    label = 'Documents'
+  const resolvePrimaryCategory = (): {
+    primaryResourceType?: 'image' | 'video' | 'audio' | 'document'
+    label: string
+  } => {
+    if (isAllImages) return { primaryResourceType: 'image', label: 'Images' }
+    if (isAllVideos) return { primaryResourceType: 'video', label: 'Videos' }
+    if (isAllAudio) return { primaryResourceType: 'audio', label: 'Audio' }
+    if (isAllDocs)
+      return { primaryResourceType: 'document', label: 'Documents' }
+    return { label: acceptString }
   }
+
+  const { primaryResourceType, label } = resolvePrimaryCategory()
 
   const isMatch = (file: { mime?: string | null; original_name?: string }) => {
     const fileMime = (file.mime ?? '').toLowerCase()
@@ -228,16 +224,12 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
       return
     }
 
-    // Pre-populate if `props.value` is passed
-    if (props.value) {
-      if (Array.isArray(props.value)) {
-        if (props.mode === 'file') {
-          setSelectedFiles(props.value as FileSchema[])
-        }
-      } else if (props.mode === 'file') {
-        setSelectedFiles([props.value as FileSchema])
-      }
-    }
+    if (!props.value || props.mode !== 'file') return
+
+    const initialFiles = Array.isArray(props.value)
+      ? (props.value as FileSchema[])
+      : [props.value as FileSchema]
+    setSelectedFiles(initialFiles)
   }, [props.open, props.mode, props.value])
 
   const params = useMemo(() => {
@@ -293,24 +285,25 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
     if (Array.isArray(props.value)) {
       const urls = new Set(props.value as string[])
       const matched = files.filter((f) => urls.has(f.url))
-      if (matched.length > 0) {
-        setSelectedFiles((current) => {
-          const currentIds = new Set(current.map((c) => c.public_id))
-          const toAdd = matched.filter((m) => !currentIds.has(m.public_id))
-          return toAdd.length > 0 ? [...current, ...toAdd] : current
-        })
-      }
-    } else {
-      const url = props.value as string
-      const matched = files.find((f) => f.url === url)
-      if (matched) {
-        setSelectedFiles((current) =>
-          current.some((c) => c.public_id === matched.public_id)
-            ? current
-            : [matched]
-        )
-      }
+      if (matched.length === 0) return
+
+      setSelectedFiles((current) => {
+        const currentIds = new Set(current.map((c) => c.public_id))
+        const toAdd = matched.filter((m) => !currentIds.has(m.public_id))
+        return toAdd.length > 0 ? [...current, ...toAdd] : current
+      })
+      return
     }
+
+    const url = props.value as string
+    const matched = files.find((f) => f.url === url)
+    if (!matched) return
+
+    setSelectedFiles((current) =>
+      current.some((c) => c.public_id === matched.public_id)
+        ? current
+        : [matched]
+    )
   }, [props.open, props.mode, props.value, files])
 
   // Infinite scroll observer
@@ -502,25 +495,53 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
     }
   }
 
-  const handleConfirm = () => {
-    if (selectedFiles.length === 0) return
-
+  const emitSelectionChange = () => {
     if (props.mode === 'url' && props.multiple === true) {
       props.onValueChange(
         selectedFiles.map((file) => file.url),
         selectedFiles
       )
-    } else if (props.mode === 'url') {
+      return
+    }
+    if (props.mode === 'url') {
       const [file] = selectedFiles
       props.onValueChange(file?.url ?? null, file)
-    } else if (props.multiple === true) {
-      props.onValueChange(selectedFiles)
-    } else {
-      props.onValueChange(selectedFiles[0] ?? null)
+      return
     }
+    if (props.multiple === true) {
+      props.onValueChange(selectedFiles)
+      return
+    }
+    props.onValueChange(selectedFiles[0] ?? null)
+  }
 
+  const handleConfirm = () => {
+    if (selectedFiles.length === 0) return
+
+    emitSelectionChange()
     setSelectedFiles([])
     props.onOpenChange(false)
+  }
+
+  const renderLoadMoreStatus = () => {
+    if (isFetchingNextPage) {
+      return (
+        <>
+          <Loader2 className='size-3.5 animate-spin' />
+          {t('files.picker.loadingMore')}
+        </>
+      )
+    }
+    if (hasNextPage) {
+      return t('files.picker.loadMoreHint', {
+        count: files.length,
+        total: visibleTotal,
+      })
+    }
+    return t('files.picker.loadedAll', {
+      count: files.length,
+      total: visibleTotal,
+    })
   }
 
   const currentUploadFolderLabel =
@@ -657,6 +678,7 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                   setSearch('')
                 }}
                 className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                aria-label={t('dataTable.filter.clear', 'Clear search')}
               >
                 <X className='size-3.5' />
               </button>
@@ -672,6 +694,7 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
               className='size-7 rounded-md'
               onClick={() => setViewMode('grid')}
               title={t('files.view.grid')}
+              aria-label={t('files.view.grid')}
             >
               <LayoutGrid className='size-3.5' />
             </Button>
@@ -682,6 +705,7 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
               className='size-7 rounded-md'
               onClick={() => setViewMode('list')}
               title={t('files.view.table')}
+              aria-label={t('files.view.table')}
             >
               <List className='size-3.5' />
             </Button>
@@ -779,22 +803,7 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                       ref={loadMoreRef}
                       className='text-muted-foreground col-span-full flex min-h-12 items-center justify-center gap-2 text-xs'
                     >
-                      {isFetchingNextPage ? (
-                        <>
-                          <Loader2 className='size-3.5 animate-spin' />
-                          {t('files.picker.loadingMore')}
-                        </>
-                      ) : hasNextPage ? (
-                        t('files.picker.loadMoreHint', {
-                          count: files.length,
-                          total: visibleTotal,
-                        })
-                      ) : (
-                        t('files.picker.loadedAll', {
-                          count: files.length,
-                          total: visibleTotal,
-                        })
-                      )}
+                      {renderLoadMoreStatus()}
                     </div>
                   )}
                 </div>
@@ -866,22 +875,7 @@ export function FilePickerDialog(props: FilePickerDialogProps) {
                       ref={loadMoreRef}
                       className='text-muted-foreground flex min-h-10 items-center justify-center gap-2 py-3 text-xs'
                     >
-                      {isFetchingNextPage ? (
-                        <>
-                          <Loader2 className='size-3.5 animate-spin' />
-                          {t('files.picker.loadingMore')}
-                        </>
-                      ) : hasNextPage ? (
-                        t('files.picker.loadMoreHint', {
-                          count: files.length,
-                          total: visibleTotal,
-                        })
-                      ) : (
-                        t('files.picker.loadedAll', {
-                          count: files.length,
-                          total: visibleTotal,
-                        })
-                      )}
+                      {renderLoadMoreStatus()}
                     </div>
                   )}
                 </div>
@@ -996,6 +990,7 @@ function FilePickerFolderPane({
               className='hover:bg-muted text-muted-foreground hover:text-foreground size-5 rounded'
               onClick={() => setIsCreating((prev) => !prev)}
               title={t('files.picker.newFolder', 'New folder')}
+              aria-label={t('files.picker.newFolder', 'New folder')}
             >
               <Plus className='size-3' />
             </Button>
@@ -1022,6 +1017,7 @@ function FilePickerFolderPane({
             className='size-7 shrink-0'
             disabled={!newFolderName.trim() || isSubmitting}
             onClick={() => void handleCreate()}
+            aria-label={t('buttons.save', 'Create folder')}
           >
             {isSubmitting ? (
               <Loader2 className='size-3 animate-spin' />

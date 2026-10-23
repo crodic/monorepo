@@ -66,6 +66,15 @@ function getEditorThemeColor(colorKey: string): EditorThemeColor {
   return 'default'
 }
 
+function serializeEditorOutput(
+  editor: NonNullable<ReturnType<typeof useEditor>>,
+  output: Props['output']
+): string {
+  if (output === 'text') return editor.getText()
+  if (output === 'json') return JSON.stringify(editor.getJSON())
+  return editor.getHTML()
+}
+
 function TiptapEditor({ className, ...props }: Props) {
   const { colorKey, resolvedTheme } = useTheme()
 
@@ -79,12 +88,7 @@ function TiptapEditor({ className, ...props }: Props) {
     extensions: props.extensions || extensions,
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      const value =
-        props.output === 'text'
-          ? editor.getText()
-          : props.output === 'json'
-            ? JSON.stringify(editor.getJSON())
-            : editor.getHTML()
+      const value = serializeEditorOutput(editor, props.output)
 
       onValueChange(value)
     },
@@ -105,12 +109,7 @@ function TiptapEditor({ className, ...props }: Props) {
     }
 
     const content = props.content || ''
-    const currentContent =
-      props.output === 'text'
-        ? editor.getText()
-        : props.output === 'json'
-          ? JSON.stringify(editor.getJSON())
-          : editor.getHTML()
+    const currentContent = serializeEditorOutput(editor, props.output)
 
     if (content !== currentContent) {
       editor.commands.setContent(content, { emitUpdate: false })

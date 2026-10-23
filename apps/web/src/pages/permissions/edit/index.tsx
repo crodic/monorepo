@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
-import { isAxiosError } from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeftIcon, SaveIcon } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -62,13 +62,7 @@ export function PagePermissionEdit() {
       toast.success('Permission metadata updated successfully')
       navigate(-1)
     },
-    onError: (error) => {
-      if (isAxiosError(error)) {
-        toast.error(
-          error.response?.data?.message || 'Failed to update permission'
-        )
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const onSubmit = (values: PermissionFormSchema) => {

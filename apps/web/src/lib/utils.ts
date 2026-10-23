@@ -127,5 +127,5 @@ export function normalizeDate(value?: number | string) {
 export function normalizeEpoch(value?: number | string) {
   if (!value) return undefined
   const n = Number(value)
-  return n > 1e12 ? Math.floor(n / 1000) : n // nếu ms thì chia 1000
+  return n > 1e12 ? Math.floor(n / 1000) : n // Convert milliseconds to seconds if needed
 }

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import http from '@/lib/http'
 import { PaginateQueryBuilder } from '@/lib/query-builder'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -104,14 +105,19 @@ export function CityDialog({
       )
       onOpenChange(false)
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Something went wrong')
-    },
+    onError: restApiErrorHandler,
   })
 
   const onSubmit = (values: CityFormSchema) => {
     mutation.mutate(values)
   }
+
+  const submitLabel = mutation.isPending
+    ? t('buttons.saving', 'Saving...')
+    : t(
+        isEdit ? 'buttons.save' : 'buttons.create',
+        isEdit ? 'Save Changes' : 'Create'
+      )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -316,11 +322,7 @@ export function CityDialog({
                 {t('buttons.cancel', 'Cancel')}
               </Button>
               <Button type='submit' disabled={mutation.isPending}>
-                {mutation.isPending
-                  ? t('buttons.saving', 'Saving...')
-                  : isEdit
-                    ? t('buttons.save', 'Save Changes')
-                    : t('buttons.create', 'Create')}
+                {submitLabel}
               </Button>
             </DialogFooter>
           </form>

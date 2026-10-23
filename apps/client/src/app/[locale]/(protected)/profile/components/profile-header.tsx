@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getUserInitials } from "@/lib/utils";
 import { User } from "@/types/apis";
 import { useFormatter, useTranslations } from "next-intl";
 import { CalendarIcon, CheckCircle2, ShieldAlert } from "lucide-react";
@@ -37,12 +38,7 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
     return null;
   }
 
-  const initials =
-    (
-      (profile.firstName?.[0] || "") + (profile.lastName?.[0] || "")
-    ).toUpperCase() ||
-    profile.email?.slice(0, 2).toUpperCase() ||
-    "U";
+  const initials = getUserInitials(profile);
 
   const memberSinceFormatted = profile.createdAt
     ? format.dateTime(new Date(profile.createdAt), {

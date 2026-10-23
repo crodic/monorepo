@@ -10,6 +10,7 @@ import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { Main } from '@/components/layout/main'
+import { PageHeader } from '@/components/layout/page-shell'
 import { getActivitiesTableColumns } from './columns'
 import { useDataLogOverview } from './queries'
 import { type ActivityLogSchema, ColumnKey } from './schema'
@@ -64,16 +65,10 @@ export function PageActivityLogOverview() {
   return (
     <>
       <Main fluid className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>
-              {t('activityLogs.overview.title')}
-            </h2>
-            <p className='text-muted-foreground'>
-              {t('activityLogs.overview.description')}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title={t('activityLogs.overview.title')}
+          description={t('activityLogs.overview.description')}
+        />
         <DataTable
           table={table}
           onClickRowAction={handleRowClick}

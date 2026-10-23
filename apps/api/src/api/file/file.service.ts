@@ -5,7 +5,7 @@ import { FilesystemService } from '../../filesystem/filesystem.service';
 import {
   applyFormat,
   extractExt,
-  removeDiskPath,
+  resolveStoragePath,
 } from '../../utils/filesystem';
 import {
   BadRequestException,
@@ -146,11 +146,16 @@ export class FileService {
     return dto;
   }
 
-  async findAll(query: PaginateQuery): Promise<Paginated<FileResDto>> {
+  async findAll(rawQuery: PaginateQuery): Promise<Paginated<FileResDto>> {
     const queryBuilder = this.fileRepository
       .createQueryBuilder('file')
       .leftJoinAndSelect('file.createdByAdmin', 'createdByAdmin')
       .leftJoinAndSelect('file.updatedByAdmin', 'updatedByAdmin');
+
+    const query: PaginateQuery = {
+      ...rawQuery,
+      filter: rawQuery.filter ? { ...rawQuery.filter } : undefined,
+    };
 
     const rawStatus =
       typeof query.filter?.status === 'string'
@@ -159,7 +164,6 @@ export class FileService {
 
     const isTrash =
       rawStatus === 'trash' ||
-      rawStatus === 'archived' ||
       query.filter?.is_trash === 'true' ||
       query.filter?.trash === 'true';
 
@@ -638,7 +642,10 @@ export class FileService {
     };
   }
 
-  private generateHash(): string {
+  private generateHash(buffer?: Buffer): string {
+    if (buffer && buffer.length > 0) {
+      return createHash('sha256').update(buffer).digest('hex');
+    }
     const now = Date.now().toString();
     const rand = uuidv4();
     return createHash('sha256')
@@ -703,7 +710,7 @@ export class FileService {
       visibility: resolvedVisibility,
       original_name: originalName,
       path,
-      hash: this.generateHash(),
+      hash: this.generateHash(buffer),
       mime,
       size,
       width,
@@ -736,19 +743,7 @@ export class FileService {
   }
 
   private toStorageKey(path: string): string {
-    const normalized = path.replace(/\\/g, '/');
-    const legacyPrefixes = ['storage/public/', 'storage/private/'];
-    const legacyPrefix = legacyPrefixes.find((prefix) =>
-      normalized.includes(prefix),
-    );
-
-    if (legacyPrefix) {
-      return normalized.slice(
-        normalized.indexOf(legacyPrefix) + legacyPrefix.length,
-      );
-    }
-
-    return removeDiskPath(normalized).replace(/^\/+/, '');
+    return resolveStoragePath(path);
   }
 
   private async getStorageUrl(path: string): Promise<string> {

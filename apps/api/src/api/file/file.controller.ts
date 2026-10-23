@@ -335,7 +335,7 @@ export class FileController {
     },
   })
   @UseInterceptors(
-    FilesInterceptor('files', 200, {
+    FilesInterceptor('files', 20, {
       ...memoryStorageConfig,
       limits: { fileSize: 10 * 1024 * 1024 },
     }),

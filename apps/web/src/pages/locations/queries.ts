@@ -281,6 +281,11 @@ export async function fetchCountryFilterOptions(
   }
 }
 
+function formatStateFilterLabel(s: StateSchema): string {
+  const countrySuffix = s.country?.name || s.countryCode
+  return countrySuffix ? `${s.name} (${countrySuffix})` : s.name
+}
+
 export async function fetchStateFilterOptions(
   params: PaginateQueryParams
 ): Promise<AsyncSelectResponse> {
@@ -308,7 +313,7 @@ export async function fetchStateFilterOptions(
 
   return {
     data: parsed.data.map((s) => ({
-      label: `${s.name}${s.country?.name ? ` (${s.country.name})` : s.countryCode ? ` (${s.countryCode})` : ''}`,
+      label: formatStateFilterLabel(s),
       value: s.iso2 || s.name,
     })),
     meta: {

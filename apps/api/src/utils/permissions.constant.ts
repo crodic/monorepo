@@ -8,6 +8,7 @@ export enum AppSubjects {
   File = 'FILE',
   Page = 'PAGE',
   Location = 'LOCATION',
+  Setting = 'SETTING',
 
   All = 'all',
 }
@@ -270,6 +271,22 @@ export const ALL_PERMISSIONS = [
     'Location Management',
     'Delete locations',
     'Remove regions, countries, states, and cities.',
+  ),
+
+  // Setting
+  permissionMeta(
+    AppActions.Read,
+    AppSubjects.Setting,
+    'Settings Management',
+    'View settings',
+    'View website and system settings.',
+  ),
+  permissionMeta(
+    AppActions.Update,
+    AppSubjects.Setting,
+    'Settings Management',
+    'Update settings',
+    'Update website and system settings.',
   ),
 
   // SUPER

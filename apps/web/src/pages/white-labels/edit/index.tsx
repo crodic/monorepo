@@ -64,6 +64,7 @@ export function PageWhiteLabelEdit() {
             variant='ghost'
             size='icon'
             onClick={() => navigate('/white-labels')}
+            aria-label={t('buttons.back', 'Back')}
           >
             <ArrowLeft className='size-5' />
           </Button>

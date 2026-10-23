@@ -9,12 +9,14 @@ import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { Main } from '@/components/layout/main'
+import { PageHeader } from '@/components/layout/page-shell'
 import { getEmailTableColumns } from './columns'
 import { useDataEmailLogs } from './queries'
 import { ColumnKey, type EmailLogSchema } from './schema'
 
 const emailLogFilterParsers = {
   subject: parseAsString.withDefault(''),
+  to: parseAsString,
   status: parseAsArrayOf(parseAsString, ',').withDefault([]),
   source: parseAsArrayOf(parseAsString, ',').withDefault([]),
 } as const
@@ -27,6 +29,7 @@ export function PageEmailLogOverview() {
     useCallback((builder, filter) => {
       builder
         .ilike('subject', filter.subject)
+        .ilike('to', filter.to)
         .in('status', filter.status || [])
         .in('source', filter.source || [])
     }, [])
@@ -54,12 +57,10 @@ export function PageEmailLogOverview() {
   return (
     <>
       <Main fluid className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div>
-          <h2 className='text-2xl font-bold tracking-tight'>Email Logs</h2>
-          <p className='text-muted-foreground'>
-            Audit email delivery, schedules, and failures.
-          </p>
-        </div>
+        <PageHeader
+          title='Email Logs'
+          description='Audit email delivery, schedules, and failures.'
+        />
         <DataTable
           table={table}
           onClickRowAction={(email) => navigate(`/email-logs/${email.id}/show`)}

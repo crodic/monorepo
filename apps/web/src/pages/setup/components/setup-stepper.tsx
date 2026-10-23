@@ -16,6 +16,24 @@ type SetupStepperProps = {
   step: number
 }
 
+function getStepCardClass(isCurrent: boolean, isCompleted: boolean): string {
+  if (isCurrent) return 'border-primary/50 bg-primary/5 shadow-xs'
+  if (isCompleted) return 'border-emerald-500/30 bg-emerald-500/5'
+  return 'border-border/60 bg-muted/20 opacity-60'
+}
+
+function getStepIconClass(isCurrent: boolean, isCompleted: boolean): string {
+  if (isCurrent) return 'bg-primary text-primary-foreground shadow-sm'
+  if (isCompleted) return 'bg-emerald-600 text-white'
+  return 'bg-muted text-muted-foreground'
+}
+
+function getStepTitleClass(isCurrent: boolean, isCompleted: boolean): string {
+  if (isCurrent) return 'text-primary'
+  if (isCompleted) return 'text-emerald-700 dark:text-emerald-400'
+  return 'text-foreground'
+}
+
 export function SetupStepper({ step }: SetupStepperProps) {
   const { t } = useTranslation()
 
@@ -73,21 +91,13 @@ export function SetupStepper({ step }: SetupStepperProps) {
                 key={s.id}
                 className={cn(
                   'flex items-start gap-4 rounded-xl border p-4 transition-all duration-200',
-                  isCurrent
-                    ? 'border-primary/50 bg-primary/5 shadow-xs'
-                    : isCompleted
-                      ? 'border-emerald-500/30 bg-emerald-500/5'
-                      : 'border-border/60 bg-muted/20 opacity-60'
+                  getStepCardClass(isCurrent, isCompleted)
                 )}
               >
                 <div
                   className={cn(
                     'flex size-10 shrink-0 items-center justify-center rounded-lg font-semibold transition-colors',
-                    isCurrent
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : isCompleted
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-muted text-muted-foreground'
+                    getStepIconClass(isCurrent, isCompleted)
                   )}
                 >
                   {isCompleted ? (
@@ -102,11 +112,7 @@ export function SetupStepper({ step }: SetupStepperProps) {
                     <p
                       className={cn(
                         'text-sm font-semibold',
-                        isCurrent
-                          ? 'text-primary'
-                          : isCompleted
-                            ? 'text-emerald-700 dark:text-emerald-400'
-                            : 'text-foreground'
+                        getStepTitleClass(isCurrent, isCompleted)
                       )}
                     >
                       {s.title}

@@ -30,6 +30,16 @@ export interface FolderDialogProps {
   onSubmit: (folder: string, color?: string) => Promise<void>
 }
 
+function getMutationErrorMessage(error: unknown): string {
+  if (error instanceof AxiosError) {
+    return error.response?.data?.message ?? error.message
+  }
+  if (error instanceof Error) {
+    return error.message
+  }
+  return String(error)
+}
+
 export function FolderDialog({
   open,
   title,
@@ -55,12 +65,17 @@ export function FolderDialog({
       )
     )
 
-  const folderError =
-    normalizedFolder && !isValidFolderName(normalizedFolder)
-      ? t('files.folders.invalidName')
-      : isDuplicate
-        ? t('files.folders.alreadyExists')
-        : null
+  const getFolderValidationError = (): string | null => {
+    if (normalizedFolder && !isValidFolderName(normalizedFolder)) {
+      return t('files.folders.invalidName')
+    }
+    if (isDuplicate) {
+      return t('files.folders.alreadyExists')
+    }
+    return null
+  }
+
+  const folderError = getFolderValidationError()
 
   const mutation = useMutation({
     mutationFn: () => onSubmit(normalizedFolder, selectedColor),
@@ -118,12 +133,7 @@ export function FolderDialog({
             )}
             {mutation.error && (
               <p className='text-destructive text-sm'>
-                {mutation.error instanceof AxiosError
-                  ? (mutation.error.response?.data?.message ??
-                    mutation.error.message)
-                  : mutation.error instanceof Error
-                    ? mutation.error.message
-                    : String(mutation.error)}
+                {getMutationErrorMessage(mutation.error)}
               </p>
             )}
           </div>
@@ -149,6 +159,7 @@ export function FolderDialog({
                     )}
                     style={{ backgroundColor: item.hex }}
                     title={item.hex}
+                    aria-label={item.hex}
                   >
                     {isSelected && (
                       <Check className='size-3.5 stroke-[3] text-white drop-shadow-xs' />

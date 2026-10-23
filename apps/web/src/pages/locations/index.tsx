@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Main } from '@/components/layout/main'
+import { PageHeader } from '@/components/layout/page-shell'
 import { CitiesTab } from './tabs/cities-tab'
 import { CountriesTab } from './tabs/countries-tab'
 import { RegionsTab } from './tabs/regions-tab'
@@ -17,7 +18,7 @@ export function PageLocationOverview() {
 
   const handleTabChange = useCallback(
     (nextTab: string) => {
-      // Khi chuyển tab, reset sạch toàn bộ query params (filter, sort, search, page) trên URL, chỉ giữ lại tab mới
+      // When switching tabs, reset all query params (filter, sort, search, page) in the URL and keep only the new tab
       navigate(`?tab=${nextTab}`, { replace: true })
     },
     [navigate]
@@ -26,19 +27,13 @@ export function PageLocationOverview() {
   return (
     <>
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>
-              {t('locations.overview.title', 'Location Management')}
-            </h2>
-            <p className='text-muted-foreground'>
-              {t(
-                'locations.overview.description',
-                'Manage global regions, countries, states/provinces, and cities.'
-              )}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title={t('locations.overview.title', 'Location Management')}
+          description={t(
+            'locations.overview.description',
+            'Manage global regions, countries, states/provinces, and cities.'
+          )}
+        />
 
         <Tabs
           value={activeTab}

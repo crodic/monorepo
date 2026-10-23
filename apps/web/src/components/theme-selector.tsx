@@ -26,9 +26,10 @@ export function ThemeSelector() {
             backgroundColor: val.light['--primary'],
           }}
           title={key}
+          aria-label={`Select ${key} theme`}
         >
           {colorKey === key && (
-            <Check className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
+            <Check className='absolute inset-0 m-auto size-4 text-white drop-shadow' />
           )}
         </Button>
       ))}

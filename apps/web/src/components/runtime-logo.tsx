@@ -14,6 +14,21 @@ type RuntimeLogoProps = {
   placeholderClassName?: string
 }
 
+function resolveWhiteLabelLogo(
+  isWhiteLabelEnabled: boolean,
+  resolvedTheme: string | undefined,
+  whiteLabel:
+    | { siteDarkLogo?: string | null; siteLogo?: string | null }
+    | null
+    | undefined
+) {
+  if (!isWhiteLabelEnabled || !whiteLabel) return null
+  if (resolvedTheme === 'dark') {
+    return whiteLabel.siteDarkLogo || whiteLabel.siteLogo || null
+  }
+  return whiteLabel.siteLogo || null
+}
+
 export function RuntimeLogo({
   className,
   placeholderClassName,
@@ -27,11 +42,11 @@ export function RuntimeLogo({
     staleTime: 5 * 60 * 1000,
   })
 
-  const whiteLabelLogo = isWhiteLabelEnabled
-    ? resolvedTheme === 'dark'
-      ? whiteLabel?.siteDarkLogo || whiteLabel?.siteLogo
-      : whiteLabel?.siteLogo
-    : null
+  const whiteLabelLogo = resolveWhiteLabelLogo(
+    isWhiteLabelEnabled,
+    resolvedTheme,
+    whiteLabel
+  )
 
   const websiteSettingsLogo =
     resolvedTheme === 'dark'

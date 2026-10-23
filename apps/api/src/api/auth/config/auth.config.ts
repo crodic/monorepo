@@ -118,62 +118,103 @@ function getOriginFromUrl(url?: string): string | undefined {
 }
 
 export default registerAs<AuthConfig>('auth', () => {
-  const env: Record<string, any> = {
-    AUTH_JWT_SECRET:
-      process.env.AUTH_JWT_SECRET || 'secret-jwt-admin-monorepo-super-key-32',
-    AUTH_JWT_TOKEN_EXPIRES_IN: process.env.AUTH_JWT_TOKEN_EXPIRES_IN || '15m',
-    AUTH_REFRESH_SECRET:
-      process.env.AUTH_REFRESH_SECRET ||
-      'secret-refresh-admin-monorepo-super-key-32',
-    AUTH_REFRESH_TOKEN_EXPIRES_IN:
-      process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN || '7d',
-    AUTH_FORGOT_SECRET:
-      process.env.AUTH_FORGOT_SECRET ||
-      'secret-forgot-admin-monorepo-super-key-32',
-    AUTH_FORGOT_TOKEN_EXPIRES_IN:
-      process.env.AUTH_FORGOT_TOKEN_EXPIRES_IN || '1h',
-    AUTH_CONFIRM_EMAIL_SECRET:
-      process.env.AUTH_CONFIRM_EMAIL_SECRET ||
-      'secret-confirm-admin-monorepo-super-key-32',
-    AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
-      process.env.AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN || '24h',
-    AUTH_PORTAL_URL: process.env.AUTH_PORTAL_URL || 'http://localhost:5173',
-    AUTH_PORTAL_RESET_PASSWORD_URL:
-      process.env.AUTH_PORTAL_RESET_PASSWORD_URL ||
-      'http://localhost:5173/reset-password',
+  const isProd = process.env.NODE_ENV === 'production';
 
-    USER_AUTH_JWT_SECRET:
-      process.env.USER_AUTH_JWT_SECRET ||
-      'secret-jwt-user-monorepo-super-key-32',
-    USER_AUTH_JWT_TOKEN_EXPIRES_IN:
-      process.env.USER_AUTH_JWT_TOKEN_EXPIRES_IN || '15m',
-    USER_AUTH_REFRESH_SECRET:
-      process.env.USER_AUTH_REFRESH_SECRET ||
-      'secret-refresh-user-monorepo-super-key-32',
-    USER_AUTH_REFRESH_TOKEN_EXPIRES_IN:
-      process.env.USER_AUTH_REFRESH_TOKEN_EXPIRES_IN || '7d',
-    USER_AUTH_FORGOT_SECRET:
-      process.env.USER_AUTH_FORGOT_SECRET ||
-      'secret-forgot-user-monorepo-super-key-32',
-    USER_AUTH_FORGOT_TOKEN_EXPIRES_IN:
-      process.env.USER_AUTH_FORGOT_TOKEN_EXPIRES_IN || '1h',
-    USER_AUTH_CONFIRM_EMAIL_SECRET:
-      process.env.USER_AUTH_CONFIRM_EMAIL_SECRET ||
-      'secret-confirm-user-monorepo-super-key-32',
-    USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
-      process.env.USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN || '24h',
-    USER_AUTH_CLIENT_URL:
-      process.env.USER_AUTH_CLIENT_URL || 'http://localhost:3000',
-    USER_AUTH_CLIENT_RESET_PASSWORD_URL:
-      process.env.USER_AUTH_CLIENT_RESET_PASSWORD_URL ||
-      'http://localhost:3000/reset-password',
-    GOOGLE_OAUTH_CALLBACK_URL:
-      process.env.GOOGLE_OAUTH_CALLBACK_URL ||
-      'http://localhost:8001/api/v1/user/auth/google/callback',
+  const env: Record<string, any> = isProd
+    ? {
+        AUTH_JWT_SECRET: process.env.AUTH_JWT_SECRET,
+        AUTH_JWT_TOKEN_EXPIRES_IN: process.env.AUTH_JWT_TOKEN_EXPIRES_IN,
+        AUTH_REFRESH_SECRET: process.env.AUTH_REFRESH_SECRET,
+        AUTH_REFRESH_TOKEN_EXPIRES_IN:
+          process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN,
+        AUTH_FORGOT_SECRET: process.env.AUTH_FORGOT_SECRET,
+        AUTH_FORGOT_TOKEN_EXPIRES_IN: process.env.AUTH_FORGOT_TOKEN_EXPIRES_IN,
+        AUTH_CONFIRM_EMAIL_SECRET: process.env.AUTH_CONFIRM_EMAIL_SECRET,
+        AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
+          process.env.AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN,
+        AUTH_PORTAL_URL: process.env.AUTH_PORTAL_URL,
+        AUTH_PORTAL_RESET_PASSWORD_URL:
+          process.env.AUTH_PORTAL_RESET_PASSWORD_URL,
 
-    ADMIN_PANEL_USERNAME: process.env.ADMIN_PANEL_USERNAME,
-    ADMIN_PANEL_PASSWORD: process.env.ADMIN_PANEL_PASSWORD,
-  };
+        USER_AUTH_JWT_SECRET: process.env.USER_AUTH_JWT_SECRET,
+        USER_AUTH_JWT_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_JWT_TOKEN_EXPIRES_IN,
+        USER_AUTH_REFRESH_SECRET: process.env.USER_AUTH_REFRESH_SECRET,
+        USER_AUTH_REFRESH_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_REFRESH_TOKEN_EXPIRES_IN,
+        USER_AUTH_FORGOT_SECRET: process.env.USER_AUTH_FORGOT_SECRET,
+        USER_AUTH_FORGOT_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_FORGOT_TOKEN_EXPIRES_IN,
+        USER_AUTH_CONFIRM_EMAIL_SECRET:
+          process.env.USER_AUTH_CONFIRM_EMAIL_SECRET,
+        USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN,
+        USER_AUTH_CLIENT_URL: process.env.USER_AUTH_CLIENT_URL,
+        USER_AUTH_CLIENT_RESET_PASSWORD_URL:
+          process.env.USER_AUTH_CLIENT_RESET_PASSWORD_URL,
+        GOOGLE_OAUTH_CALLBACK_URL: process.env.GOOGLE_OAUTH_CALLBACK_URL,
+
+        ADMIN_PANEL_USERNAME: process.env.ADMIN_PANEL_USERNAME,
+        ADMIN_PANEL_PASSWORD: process.env.ADMIN_PANEL_PASSWORD,
+      }
+    : {
+        AUTH_JWT_SECRET:
+          process.env.AUTH_JWT_SECRET ||
+          'secret-jwt-admin-monorepo-super-key-32',
+        AUTH_JWT_TOKEN_EXPIRES_IN:
+          process.env.AUTH_JWT_TOKEN_EXPIRES_IN || '15m',
+        AUTH_REFRESH_SECRET:
+          process.env.AUTH_REFRESH_SECRET ||
+          'secret-refresh-admin-monorepo-super-key-32',
+        AUTH_REFRESH_TOKEN_EXPIRES_IN:
+          process.env.AUTH_REFRESH_TOKEN_EXPIRES_IN || '7d',
+        AUTH_FORGOT_SECRET:
+          process.env.AUTH_FORGOT_SECRET ||
+          'secret-forgot-admin-monorepo-super-key-32',
+        AUTH_FORGOT_TOKEN_EXPIRES_IN:
+          process.env.AUTH_FORGOT_TOKEN_EXPIRES_IN || '1h',
+        AUTH_CONFIRM_EMAIL_SECRET:
+          process.env.AUTH_CONFIRM_EMAIL_SECRET ||
+          'secret-confirm-admin-monorepo-super-key-32',
+        AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
+          process.env.AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN || '24h',
+        AUTH_PORTAL_URL: process.env.AUTH_PORTAL_URL || 'http://localhost:5173',
+        AUTH_PORTAL_RESET_PASSWORD_URL:
+          process.env.AUTH_PORTAL_RESET_PASSWORD_URL ||
+          'http://localhost:5173/reset-password',
+
+        USER_AUTH_JWT_SECRET:
+          process.env.USER_AUTH_JWT_SECRET ||
+          'secret-jwt-user-monorepo-super-key-32',
+        USER_AUTH_JWT_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_JWT_TOKEN_EXPIRES_IN || '15m',
+        USER_AUTH_REFRESH_SECRET:
+          process.env.USER_AUTH_REFRESH_SECRET ||
+          'secret-refresh-user-monorepo-super-key-32',
+        USER_AUTH_REFRESH_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_REFRESH_TOKEN_EXPIRES_IN || '7d',
+        USER_AUTH_FORGOT_SECRET:
+          process.env.USER_AUTH_FORGOT_SECRET ||
+          'secret-forgot-user-monorepo-super-key-32',
+        USER_AUTH_FORGOT_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_FORGOT_TOKEN_EXPIRES_IN || '1h',
+        USER_AUTH_CONFIRM_EMAIL_SECRET:
+          process.env.USER_AUTH_CONFIRM_EMAIL_SECRET ||
+          'secret-confirm-user-monorepo-super-key-32',
+        USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN:
+          process.env.USER_AUTH_CONFIRM_EMAIL_TOKEN_EXPIRES_IN || '24h',
+        USER_AUTH_CLIENT_URL:
+          process.env.USER_AUTH_CLIENT_URL || 'http://localhost:3000',
+        USER_AUTH_CLIENT_RESET_PASSWORD_URL:
+          process.env.USER_AUTH_CLIENT_RESET_PASSWORD_URL ||
+          'http://localhost:3000/reset-password',
+        GOOGLE_OAUTH_CALLBACK_URL:
+          process.env.GOOGLE_OAUTH_CALLBACK_URL ||
+          'http://localhost:8001/api/v1/user/auth/google/callback',
+
+        ADMIN_PANEL_USERNAME: process.env.ADMIN_PANEL_USERNAME,
+        ADMIN_PANEL_PASSWORD: process.env.ADMIN_PANEL_PASSWORD,
+      };
 
   validateConfig(env, EnvironmentVariablesValidator);
 
@@ -189,7 +230,7 @@ export default registerAs<AuthConfig>('auth', () => {
     portalUrl:
       env.AUTH_PORTAL_URL ||
       getOriginFromUrl(env.AUTH_PORTAL_RESET_PASSWORD_URL) ||
-      'http://localhost:5173',
+      (isProd ? '' : 'http://localhost:5173'),
     portalResetPasswordUrl: env.AUTH_PORTAL_RESET_PASSWORD_URL,
 
     userSecret: env.USER_AUTH_JWT_SECRET,
@@ -204,7 +245,7 @@ export default registerAs<AuthConfig>('auth', () => {
     clientResetPasswordUrl: env.USER_AUTH_CLIENT_RESET_PASSWORD_URL,
     googleOAuthCallbackUrl: env.GOOGLE_OAUTH_CALLBACK_URL,
 
-    adminPanelUsername: env.ADMIN_PANEL_USERNAME || 'admin',
-    adminPanelPassword: env.ADMIN_PANEL_PASSWORD || 'admin',
+    adminPanelUsername: env.ADMIN_PANEL_USERNAME || (isProd ? '' : 'admin'),
+    adminPanelPassword: env.ADMIN_PANEL_PASSWORD || (isProd ? '' : 'admin'),
   };
 });

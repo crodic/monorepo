@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -12,7 +13,7 @@ import {
   Paginated,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { IsNull, Not, Repository } from 'typeorm';
+import { DataSource, In, IsNull, Not, Repository } from 'typeorm';
 import { CmsPageResDto } from './dto/cms-page.res.dto';
 import { CreateCmsPageReqDto } from './dto/create-cms-page.req.dto';
 import { UpdateCmsPageReqDto } from './dto/update-cms-page.req.dto';
@@ -26,6 +27,8 @@ export class CmsPageService {
     private readonly cmsPageRepository: Repository<CmsPageEntity>,
     @InjectRepository(CmsPageTranslationEntity)
     private readonly translationRepository: Repository<CmsPageTranslationEntity>,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {}
 
   async findAll(query: PaginateQuery): Promise<Paginated<CmsPageResDto>> {
@@ -131,8 +134,9 @@ export class CmsPageService {
         t.slug = `${t.locale}-${t.slug}`;
       }
       slugs.add(t.slug);
-      await this.assertSlugAvailable(t.slug);
     }
+
+    await this.assertSlugsAvailable(Array.from(slugs));
 
     const page = this.cmsPageRepository.create({
       status,
@@ -142,7 +146,11 @@ export class CmsPageService {
       translations,
     });
 
-    const saved = await this.cmsPageRepository.save(page);
+    const saved = this.dataSource?.transaction
+      ? await this.dataSource.transaction((manager) =>
+          manager.getRepository(CmsPageEntity).save(page),
+        )
+      : await this.cmsPageRepository.save(page);
     return this.findOne(saved.id);
   }
 
@@ -196,8 +204,8 @@ export class CmsPageService {
           t.slug = `${t.locale}-${t.slug}`;
         }
         slugs.add(t.slug);
-        await this.assertSlugAvailable(t.slug, id);
       }
+      await this.assertSlugsAvailable(Array.from(slugs), id);
 
       await this.cmsPageRepository.manager.transaction(async (manager) => {
         await manager.delete(CmsPageTranslationEntity, { pageId: id });
@@ -243,6 +251,33 @@ export class CmsPageService {
     }
 
     return { message: 'Page deleted successfully' };
+  }
+
+  private async assertSlugsAvailable(
+    slugs: string[],
+    currentId?: AutoIncrementID,
+  ) {
+    if (slugs.length === 0) return;
+
+    if (typeof this.translationRepository.find === 'function') {
+      const where = currentId
+        ? { slug: In(slugs), pageId: Not(currentId) }
+        : { slug: In(slugs) };
+      const existing = await this.translationRepository.find({
+        where,
+        select: ['slug'],
+      });
+      if (existing.length > 0) {
+        throw new BadRequestException(
+          `A page with slug ${existing[0].slug} already exists`,
+        );
+      }
+      return;
+    }
+
+    for (const slug of slugs) {
+      await this.assertSlugAvailable(slug, currentId);
+    }
   }
 
   private async assertSlugAvailable(slug: string, currentId?: AutoIncrementID) {

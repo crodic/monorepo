@@ -85,6 +85,37 @@ export function SessionManager() {
       toast.error(t('settings.security.sessionsMessageRevokeAllFailed')),
   })
 
+  const renderSessionsBody = () => {
+    if (isFetching) {
+      return (
+        <TableRow>
+          <TableCell colSpan={4} className='text-muted-foreground py-8'>
+            {t('settings.security.sessionsLoading')}
+          </TableCell>
+        </TableRow>
+      )
+    }
+
+    if (sessions.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={4} className='text-muted-foreground py-8'>
+            {t('settings.security.sessionsEmpty')}
+          </TableCell>
+        </TableRow>
+      )
+    }
+
+    return sessions.map((session) => (
+      <SessionRow
+        key={session.id}
+        session={session}
+        isRevoking={revokeSessionMutation.isPending}
+        onRevoke={() => setSessionToRevoke(session)}
+      />
+    ))
+  }
+
   return (
     <>
       <Card>
@@ -126,30 +157,7 @@ export function SessionManager() {
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {isFetching ? (
-                <TableRow>
-                  <TableCell colSpan={4} className='text-muted-foreground py-8'>
-                    {t('settings.security.sessionsLoading')}
-                  </TableCell>
-                </TableRow>
-              ) : sessions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className='text-muted-foreground py-8'>
-                    {t('settings.security.sessionsEmpty')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sessions.map((session) => (
-                  <SessionRow
-                    key={session.id}
-                    session={session}
-                    isRevoking={revokeSessionMutation.isPending}
-                    onRevoke={() => setSessionToRevoke(session)}
-                  />
-                ))
-              )}
-            </TableBody>
+            <TableBody>{renderSessionsBody()}</TableBody>
           </Table>
         </CardContent>
       </Card>
