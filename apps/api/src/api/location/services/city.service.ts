@@ -102,6 +102,16 @@ export class CityService {
     return this.findOne(saved.id);
   }
 
+  private resolveNullableId(
+    nextValue: string | AutoIncrementID | null | undefined,
+    currentValue: AutoIncrementID | null,
+  ): AutoIncrementID | null {
+    if (nextValue === undefined) {
+      return currentValue;
+    }
+    return nextValue ? (nextValue as AutoIncrementID) : null;
+  }
+
   async update(
     id: AutoIncrementID,
     dto: UpdateCityReqDto,
@@ -114,18 +124,8 @@ export class CityService {
 
     Object.assign(city, {
       ...dto,
-      stateId:
-        dto.stateId !== undefined
-          ? dto.stateId
-            ? (dto.stateId as AutoIncrementID)
-            : null
-          : city.stateId,
-      countryId:
-        dto.countryId !== undefined
-          ? dto.countryId
-            ? (dto.countryId as AutoIncrementID)
-            : null
-          : city.countryId,
+      stateId: this.resolveNullableId(dto.stateId, city.stateId),
+      countryId: this.resolveNullableId(dto.countryId, city.countryId),
     });
 
     await this.cityRepository.save(city);

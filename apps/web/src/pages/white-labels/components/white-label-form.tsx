@@ -37,6 +37,15 @@ type WhiteLabelFormProps = {
 
 type TabType = 'brand' | 'colors' | 'seo' | 'preview'
 
+function resolvePasteScope(
+  pasteScope: 'auto' | 'current' | 'light' | 'dark',
+  editorMode: ThemeMode
+): ThemeMode | undefined {
+  if (pasteScope === 'auto') return undefined
+  if (pasteScope === 'current') return editorMode
+  return pasteScope
+}
+
 export function WhiteLabelForm({
   initialData,
   isSubmitting,
@@ -189,12 +198,7 @@ export function WhiteLabelForm({
     pasteScope: 'auto' | 'current' | 'light' | 'dark'
   ) => {
     try {
-      const scopeParam =
-        pasteScope === 'auto'
-          ? undefined
-          : pasteScope === 'current'
-            ? editorMode
-            : pasteScope
+      const scopeParam = resolvePasteScope(pasteScope, editorMode)
       const parsed = parseThemeCss(pastedText, currentStyles, scopeParam)
       updateStyles(parsed)
       toast.success('CSS variables injected into theme successfully!')

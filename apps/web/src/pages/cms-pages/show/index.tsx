@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -55,8 +56,7 @@ export function PageCmsPageShow() {
       queryClient.invalidateQueries({ queryKey: ['cms-pages'] })
       navigate('/cms-pages')
     },
-    onError: () =>
-      toast.error(t('cmsPages.message.deleteError', 'Could not delete page')),
+    onError: restApiErrorHandler,
   })
 
   if (isFetching) return <DataLoader />

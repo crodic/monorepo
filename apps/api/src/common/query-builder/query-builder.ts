@@ -251,12 +251,7 @@ export class QueryBuilder<T extends ObjectLiteral> {
       filter,
     };
 
-    const basePath =
-      typeof this.query.path === 'string'
-        ? this.query.path
-        : typeof options === 'object' && options?.path
-          ? options.path
-          : '';
+    const basePath = this.resolveBasePath(options);
 
     const buildLink = (targetPage: number): string => {
       const q: Record<string, any> = { ...this.query };
@@ -326,6 +321,28 @@ export class QueryBuilder<T extends ObjectLiteral> {
     this.applySorts();
   }
 
+  private resolveBasePath(
+    options?: number | { defaultLimit?: number; path?: string },
+  ): string {
+    if (typeof this.query.path === 'string') {
+      return this.query.path;
+    }
+    if (typeof options === 'object' && options?.path) {
+      return options.path;
+    }
+    return '';
+  }
+
+  private parseScopedFieldValues(value: unknown): string[] {
+    if (Array.isArray(value)) {
+      return value.map(String);
+    }
+    if (typeof value === 'string') {
+      return value.split(',');
+    }
+    return [];
+  }
+
   private applyFields(): void {
     const fieldsParam = this.query[this.config.parameters.fields];
     if (!fieldsParam) return;
@@ -341,11 +358,7 @@ export class QueryBuilder<T extends ObjectLiteral> {
       );
     } else if (typeof fieldsParam === 'object' && fieldsParam !== null) {
       for (const [scope, value] of Object.entries(fieldsParam)) {
-        const valArr = Array.isArray(value)
-          ? value
-          : typeof value === 'string'
-            ? value.split(',')
-            : [];
+        const valArr = this.parseScopedFieldValues(value);
         for (const rawField of valArr) {
           const field = rawField.trim();
           if (!field) continue;
@@ -362,8 +375,15 @@ export class QueryBuilder<T extends ObjectLiteral> {
 
     if (requestedFields.length === 0) return;
 
+    if (this._fields.length === 0) {
+      if (this._strictMode) {
+        throw new InvalidFieldQueryException(requestedFields, []);
+      }
+      return;
+    }
+
     // Strict mode validation
-    if (this._strictMode && this._fields.length > 0) {
+    if (this._strictMode) {
       const allowedSet = new Set(this._fields);
       const invalid = requestedFields.filter((f) => !allowedSet.has(f));
       if (invalid.length > 0) {
@@ -371,11 +391,7 @@ export class QueryBuilder<T extends ObjectLiteral> {
       }
     }
 
-    // Filter fields if whitelist defined, otherwise apply all requested
-    const validFields =
-      this._fields.length > 0
-        ? requestedFields.filter((f) => this._fields.includes(f))
-        : requestedFields;
+    const validFields = requestedFields.filter((f) => this._fields.includes(f));
 
     if (validFields.length === 0) return;
 

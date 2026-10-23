@@ -125,7 +125,7 @@ export function getUsersTableColumns(): ColumnDef<UserSchema>[] {
       ),
       cell: ({ row }) => <ComponentTableRowActions row={row} />,
       size: 40,
-      enableColumnFilter: true,
+      enableColumnFilter: false,
       enableHiding: false,
       enableSorting: false,
     },

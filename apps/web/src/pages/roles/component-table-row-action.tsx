@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { AxiosError } from 'axios'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Edit2Icon, Trash2Icon } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Button } from '@/components/ui/button'
 import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { apiDeleteRole } from './queries'
@@ -27,11 +27,7 @@ export default function ComponentTableRowActions({
       toast.success('Role deleted successfully')
       setIsShowDeleteDialog(false)
     },
-    onError: (error) => {
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data.message)
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = () => {

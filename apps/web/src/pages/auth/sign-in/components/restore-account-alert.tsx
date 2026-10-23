@@ -33,9 +33,9 @@ export function RestoreAccountAlert({
               disabled={isPending}
             >
               {isPending ? (
-                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                <Loader2 className='mr-2 size-4 animate-spin' />
               ) : (
-                <RotateCcw className='mr-2 h-4 w-4' />
+                <RotateCcw className='mr-2 size-4' />
               )}
               {t('auth.signIn.restoreButton')}
             </Button>

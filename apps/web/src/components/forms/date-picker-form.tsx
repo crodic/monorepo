@@ -63,7 +63,7 @@ export function DatePickerForm<
               className
             )}
           >
-            <CalendarIcon className='mr-2 h-4 w-4' />
+            <CalendarIcon className='mr-2 size-4' />
             {field.value ? (
               format(dateValue, 'PPP')
             ) : (

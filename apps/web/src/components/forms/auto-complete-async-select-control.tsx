@@ -39,6 +39,30 @@ export interface AutoCompleteAsyncSelectControlProps<
   defaultOption?: TOption | TOption[] | null
 }
 
+function resolveSelectedOption(
+  candidate: OptionType | OptionType[] | null | undefined,
+  value: unknown,
+  isMulti?: boolean
+): OptionType | OptionType[] | null {
+  if (!candidate) return null
+
+  if (isMulti && Array.isArray(candidate) && Array.isArray(value)) {
+    const matches = candidate.filter((opt) =>
+      value.some((v) => String(v) === String(opt.value ?? (opt as any).id))
+    )
+    return matches.length > 0 ? matches : null
+  }
+
+  if (!isMulti && !Array.isArray(candidate)) {
+    const optVal = candidate.value ?? (candidate as any).id
+    if (String(optVal) === String(value)) {
+      return candidate
+    }
+  }
+
+  return null
+}
+
 export const AutoCompleteAsyncSelectControl = forwardRef<
   any,
   AutoCompleteAsyncSelectControlProps
@@ -58,47 +82,30 @@ export const AutoCompleteAsyncSelectControl = forwardRef<
       if (value == null || value === '') return null
 
       // Value is already an option object
-      if (typeof value === 'object') {
+      if (typeof value === 'object' && !Array.isArray(value)) {
+        return value as any
+      }
+      if (
+        Array.isArray(value) &&
+        value.length > 0 &&
+        typeof value[0] === 'object'
+      ) {
         return value as any
       }
 
-      // Match against recently selected option
-      if (currentSelectedOption) {
-        if (
-          isMulti &&
-          Array.isArray(currentSelectedOption) &&
-          Array.isArray(value)
-        ) {
-          const matches = currentSelectedOption.filter((opt) =>
-            value.some(
-              (v) => String(v) === String(opt.value ?? (opt as any).id)
-            )
-          )
-          if (matches.length > 0) return matches
-        } else if (!isMulti && !Array.isArray(currentSelectedOption)) {
-          const optVal =
-            currentSelectedOption.value ?? (currentSelectedOption as any).id
-          if (String(optVal) === String(value)) {
-            return currentSelectedOption
-          }
-        }
-      }
+      const matchedCurrent = resolveSelectedOption(
+        currentSelectedOption,
+        value,
+        isMulti
+      )
+      if (matchedCurrent) return matchedCurrent
 
-      // Match against defaultOption provided for edit mode
-      if (defaultOption) {
-        if (isMulti && Array.isArray(defaultOption) && Array.isArray(value)) {
-          return defaultOption.filter((opt) =>
-            value.some(
-              (v) => String(v) === String(opt.value ?? (opt as any).id)
-            )
-          )
-        } else if (!isMulti && !Array.isArray(defaultOption)) {
-          const optVal = defaultOption.value ?? (defaultOption as any).id
-          if (String(optVal) === String(value)) {
-            return defaultOption
-          }
-        }
-      }
+      const matchedDefault = resolveSelectedOption(
+        defaultOption,
+        value,
+        isMulti
+      )
+      if (matchedDefault) return matchedDefault
 
       // Fallback: render placeholder label with the primitive value
       return isMulti

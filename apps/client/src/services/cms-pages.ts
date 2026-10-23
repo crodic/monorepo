@@ -34,11 +34,11 @@ export type CmsPage = CmsPageTranslation & {
 
 export const getCmsPageBySlug = async (
   slug: string,
-  locale: string,
+  locale: string
 ): Promise<CmsPage | null> => {
   try {
     const { data } = await http.get<CmsPageApiResponse>(
-      `/api/v1/public/cms-pages/by-slug/${slug}?locale=${locale}`,
+      `/api/v1/public/cms-pages/by-slug/${slug}?locale=${locale}`
     );
 
     if (!data || !data.translations || data.translations.length === 0) {
@@ -61,7 +61,8 @@ export const getCmsPageBySlug = async (
       updatedAt: data.updatedAt,
       ...translation,
     };
-  } catch {
+  } catch (error) {
+    console.error(`Failed to fetch CMS page by slug "${slug}":`, error);
     return null;
   }
 };
@@ -89,7 +90,8 @@ export const fetchPublishedCmsPages = async (): Promise<
 
     const data = await response.json();
     return Array.isArray(data) ? data : [];
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch published CMS pages:", error);
     return [];
   }
 };

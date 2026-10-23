@@ -1,5 +1,5 @@
 import { AutoIncrementID } from '../../common/types/common.type';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import {
@@ -15,14 +15,28 @@ import { AdminPermissionEntity } from './entities/admin-permission.entity';
 import { FULL_ACCESS_PERMISSION_KEY, syncPermissions } from './permission-sync';
 
 @Injectable()
-export class AdminPermissionService {
+export class AdminPermissionService implements OnModuleInit {
+  private isSynced = false;
+
   constructor(
     @InjectRepository(AdminPermissionEntity)
     private readonly permissionRepository: Repository<AdminPermissionEntity>,
   ) {}
 
-  async formOptions(): Promise<AdminPermissionResDto[]> {
+  async onModuleInit(): Promise<void> {
+    await this.ensureSynced();
+  }
+
+  private async ensureSynced(): Promise<void> {
+    if (this.isSynced) {
+      return;
+    }
     await syncPermissions(this.permissionRepository);
+    this.isSynced = true;
+  }
+
+  async formOptions(): Promise<AdminPermissionResDto[]> {
+    await this.ensureSynced();
 
     const permissions = await this.permissionRepository.find({
       where: {
@@ -41,7 +55,7 @@ export class AdminPermissionService {
   async findAll(
     query: PaginateQuery,
   ): Promise<Paginated<AdminPermissionResDto>> {
-    await syncPermissions(this.permissionRepository);
+    await this.ensureSynced();
 
     const queryBuilder =
       this.permissionRepository.createQueryBuilder('permission');

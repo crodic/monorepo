@@ -34,7 +34,13 @@ export function Footer() {
               {t("about")}
             </p>
             <div className="flex items-center gap-2 pt-2">
-              <Button asChild size="icon" variant="outline" className="size-8">
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="size-8"
+                aria-label="GitHub"
+              >
                 <a
                   href="https://github.com"
                   target="_blank"
@@ -44,7 +50,13 @@ export function Footer() {
                   <Github className="size-4" />
                 </a>
               </Button>
-              <Button asChild size="icon" variant="outline" className="size-8">
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="size-8"
+                aria-label="Twitter"
+              >
                 <a
                   href="https://twitter.com"
                   target="_blank"
@@ -54,7 +66,13 @@ export function Footer() {
                   <Twitter className="size-4" />
                 </a>
               </Button>
-              <Button asChild size="icon" variant="outline" className="size-8">
+              <Button
+                asChild
+                size="icon"
+                variant="outline"
+                className="size-8"
+                aria-label="Turborepo"
+              >
                 <a
                   href="https://turborepo.org"
                   target="_blank"

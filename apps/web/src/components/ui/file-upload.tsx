@@ -1308,7 +1308,7 @@ function FileUploadItemProgress(props: FileUploadItemProgressProps) {
           )}
         >
           <div
-            className='bg-primary h-full w-full flex-1 transition-transform duration-300 ease-linear'
+            className='bg-primary size-full flex-1 transition-transform duration-300 ease-linear'
             style={{
               transform: `translateX(-${100 - itemContext.fileState.progress}%)`,
             }}

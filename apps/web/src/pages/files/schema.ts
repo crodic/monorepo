@@ -28,6 +28,17 @@ export const fileResourceTypeSchema = z.enum(['image', 'video', 'raw', 'file'])
 
 export const fileVisibilitySchema = z.enum(['public', 'private'])
 
+export const fileAdminUserSummarySchema = z.object({
+  id: z.string(),
+  firstName: z.string().optional(),
+  lastName: z.string().nullable().optional(),
+  fullName: z.string(),
+  email: z.string(),
+  avatar: z.string().nullable().optional(),
+})
+
+export type FileAdminUserSummary = z.infer<typeof fileAdminUserSummarySchema>
+
 export const fileSchema = z.object({
   id: z.string(),
   public_id: z.string(),
@@ -44,14 +55,21 @@ export const fileSchema = z.object({
   duration: nullableNumber,
   resource_type: z.string(),
   status: z.string(),
+  is_starred: z.boolean().default(false),
   url: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  createdByAdminId: optionalNullableString,
+  createdByAdmin: fileAdminUserSummarySchema.nullable().optional(),
+  updatedByAdminId: optionalNullableString,
+  updatedByAdmin: fileAdminUserSummarySchema.nullable().optional(),
+  deletedAt: optionalNullableString,
 })
 
 export const folderSchema = z.object({
   folder: z.string(),
   name: z.string().optional(),
+  color: z.string().optional(),
   parent: nullableString.optional(),
   depth: z.number().default(0),
   count: z.number(),
@@ -64,10 +82,12 @@ export const updateFileSchema = z.object({
   status: fileStatusSchema.optional(),
   visibility: fileVisibilitySchema.optional(),
   disk: z.string().optional(),
+  is_starred: z.boolean().optional(),
 })
 
 export const createFolderSchema = z.object({
   folder: folderNameSchema,
+  color: z.string().max(20).optional(),
 })
 
 export function isValidFolderName(folder: string) {
@@ -90,5 +110,7 @@ export const ColumnKey = {
   size: 'size',
   dimensions: 'dimensions',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  uploadedBy: 'uploaded_by',
   actions: 'actions',
 }

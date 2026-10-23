@@ -201,31 +201,31 @@ export default function CoverUpload({
     }
   }, [onChange])
 
+  const clearPreviewObjectUrl = useCallback(() => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current)
+      previewObjectUrlRef.current = null
+    }
+  }, [])
+
   useEffect(() => {
     if (value === undefined) {
-      if (!isCleared && defaultUri) {
-        sourceFileRef.current = null
-        emittedCroppedFileRef.current = null
-        if (previewObjectUrlRef.current) {
-          URL.revokeObjectURL(previewObjectUrlRef.current)
-          previewObjectUrlRef.current = null
-        }
-        setPreviewUrl(defaultUri)
-        setImageLoading(true)
-        setCanReposition(false)
-        setPosition(DEFAULT_POSITION)
-        positionRef.current = DEFAULT_POSITION
-      }
+      if (isCleared || !defaultUri) return
+      sourceFileRef.current = null
+      emittedCroppedFileRef.current = null
+      clearPreviewObjectUrl()
+      setPreviewUrl(defaultUri)
+      setImageLoading(true)
+      setCanReposition(false)
+      setPosition(DEFAULT_POSITION)
+      positionRef.current = DEFAULT_POSITION
       return
     }
 
     if (value === null) {
       sourceFileRef.current = null
       emittedCroppedFileRef.current = null
-      if (previewObjectUrlRef.current) {
-        URL.revokeObjectURL(previewObjectUrlRef.current)
-        previewObjectUrlRef.current = null
-      }
+      clearPreviewObjectUrl()
       setPreviewUrl(null)
       setCanReposition(false)
       setPosition(DEFAULT_POSITION)
@@ -244,7 +244,7 @@ export default function CoverUpload({
     setCanReposition(true)
     setPosition(DEFAULT_POSITION)
     positionRef.current = DEFAULT_POSITION
-  }, [defaultUri, isCleared, setPreviewFromFile, value])
+  }, [clearPreviewObjectUrl, defaultUri, isCleared, setPreviewFromFile, value])
 
   const hasImage = Boolean(previewUrl)
 
@@ -388,17 +388,23 @@ export default function CoverUpload({
     return `${(maxSize / 1024 / 1024).toFixed(0)}MB`
   }, [maxSize])
 
+  const dropzoneStateClassName = useMemo(() => {
+    if (isDragging && !disabled) {
+      return 'border-primary bg-primary/5 border-dashed'
+    }
+    if (hasImage) {
+      return 'border-border bg-background hover:border-primary/50'
+    }
+    return 'border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5 border-dashed'
+  }, [disabled, hasImage, isDragging])
+
   return (
     <div className={cn('w-full space-y-4', className)}>
       <div
         className={cn(
           'group border-border relative overflow-hidden rounded-xl border transition-all duration-200',
           disabled && 'cursor-not-allowed opacity-50',
-          isDragging && !disabled
-            ? 'border-primary bg-primary/5 border-dashed'
-            : hasImage
-              ? 'border-border bg-background hover:border-primary/50'
-              : 'border-muted-foreground/25 bg-muted/30 hover:border-primary hover:bg-primary/5 border-dashed',
+          dropzoneStateClassName,
           disabled && 'hover:border-muted-foreground/25 hover:bg-muted/30'
         )}
         onDragEnter={disabled ? undefined : handleDragEnter}
@@ -435,7 +441,7 @@ export default function CoverUpload({
               src={previewUrl || '/placeholder.svg'}
               alt='Cover'
               className={cn(
-                'h-full w-full object-cover transition-opacity duration-300 select-none',
+                'size-full object-cover transition-opacity duration-300 select-none',
                 imageLoading ? 'opacity-0' : 'opacity-100'
               )}
               draggable={false}

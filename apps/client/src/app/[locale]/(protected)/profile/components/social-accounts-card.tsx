@@ -16,6 +16,29 @@ import React, { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Globe, Loader2 } from "lucide-react";
 
+function GoogleLinkButtonContent({
+  isLinking,
+  hasGoogleLinked,
+  t,
+}: {
+  isLinking: boolean;
+  hasGoogleLinked: boolean;
+  t: ReturnType<typeof useTranslations<"Security.social">>;
+}) {
+  if (isLinking) {
+    return (
+      <>
+        <Loader2 className="mr-2 size-4 animate-spin" />
+        {t("linking")}
+      </>
+    );
+  }
+  if (hasGoogleLinked) {
+    return <>{t("linked")}</>;
+  }
+  return <>{t("linkGoogle")}</>;
+}
+
 export function SocialAccountsCard() {
   const t = useTranslations("Security.social");
   const { data: socialAccounts = [], isLoading } = useSocialAccounts();
@@ -50,7 +73,7 @@ export function SocialAccountsCard() {
   }, [router, searchParams, t]);
 
   const hasGoogleLinked = socialAccounts.some(
-    (account) => account.provider === "google",
+    (account) => account.provider === "google"
   );
 
   const handleLinkGoogle = async () => {
@@ -107,16 +130,11 @@ export function SocialAccountsCard() {
             disabled={hasGoogleLinked || isLinking || isLoading}
             onClick={handleLinkGoogle}
           >
-            {isLinking ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                {t("linking")}
-              </>
-            ) : hasGoogleLinked ? (
-              t("linked")
-            ) : (
-              t("linkGoogle")
-            )}
+            <GoogleLinkButtonContent
+              isLinking={isLinking}
+              hasGoogleLinked={hasGoogleLinked}
+              t={t}
+            />
           </Button>
         </div>
       </CardContent>

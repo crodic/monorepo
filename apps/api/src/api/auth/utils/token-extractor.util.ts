@@ -2,22 +2,23 @@ import type { Request } from 'express';
 
 export function extractCookieToken(
   request: Request,
-  name: string,
+  cookieName: string,
 ): string | null {
-  const cookies = parseCookies(request.headers.cookie);
-  return cookies[name] ?? null;
-}
+  const cookieHeader = request.headers?.cookie;
+  if (!cookieHeader) return null;
 
-function parseCookies(cookieHeader?: string): Record<string, string> {
-  if (!cookieHeader) return {};
+  for (const part of cookieHeader.split(';')) {
+    const [name, ...valueParts] = part.trim().split('=');
+    if (!name) continue;
 
-  return cookieHeader
-    .split(';')
-    .reduce<Record<string, string>>((cookies, part) => {
-      const [name, ...valueParts] = part.trim().split('=');
-      if (!name) return cookies;
+    if (name.trim() === cookieName) {
+      try {
+        return decodeURIComponent(valueParts.join('='));
+      } catch {
+        return null;
+      }
+    }
+  }
 
-      cookies[name] = decodeURIComponent(valueParts.join('='));
-      return cookies;
-    }, {});
+  return null;
 }

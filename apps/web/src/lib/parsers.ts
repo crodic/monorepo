@@ -7,14 +7,17 @@ const sortingItemSchema = z.object({
   desc: z.boolean(),
 })
 
+function toValidKeysSet(
+  columnIds?: string[] | Set<string>
+): Set<string> | null {
+  if (!columnIds) return null
+  return columnIds instanceof Set ? columnIds : new Set(columnIds)
+}
+
 export const getSortingStateParser = <TData>(
   columnIds?: string[] | Set<string>
 ) => {
-  const validKeys = columnIds
-    ? columnIds instanceof Set
-      ? columnIds
-      : new Set(columnIds)
-    : null
+  const validKeys = toValidKeysSet(columnIds)
 
   return createParser({
     parse: (value) => {

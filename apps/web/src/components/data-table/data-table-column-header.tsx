@@ -20,6 +20,16 @@ interface DataTableColumnHeaderProps<
   label: string
 }
 
+function SortDirectionIcon({
+  direction,
+}: {
+  direction: false | 'asc' | 'desc'
+}) {
+  if (direction === 'desc') return <ChevronDown />
+  if (direction === 'asc') return <ChevronUp />
+  return <ChevronsUpDown />
+}
+
 export function DataTableColumnHeader<TData, TValue>({
   column,
   label,
@@ -42,14 +52,9 @@ export function DataTableColumnHeader<TData, TValue>({
         {...props}
       >
         {label}
-        {column.getCanSort() &&
-          (column.getIsSorted() === 'desc' ? (
-            <ChevronDown />
-          ) : column.getIsSorted() === 'asc' ? (
-            <ChevronUp />
-          ) : (
-            <ChevronsUpDown />
-          ))}
+        {column.getCanSort() && (
+          <SortDirectionIcon direction={column.getIsSorted()} />
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align='start' className='w-28'>
         {column.getCanSort() && (

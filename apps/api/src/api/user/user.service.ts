@@ -2,7 +2,7 @@ import { AutoIncrementID } from '../../common/types/common.type';
 import { EAccountProvider } from '../../common/constants/entity.enum';
 import { ErrorCode } from '../../common/constants/error-code.constant';
 import { ValidationException } from '../../common/exceptions/validation.exception';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import assert from 'assert';
 import { plainToInstance } from 'class-transformer';
@@ -13,7 +13,7 @@ import {
   Paginated,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { UserAccountRecoveryService } from '../auth/services/user-account-recovery.service';
 import { CreateUserReqDto } from './dto/create-user.req.dto';
 import { UpdateUserReqDto } from './dto/update-user.req.dto';
@@ -32,6 +32,8 @@ export class UserService {
     private readonly userAccountRepository: Repository<UserAccountEntity>,
     private cls: ClsService,
     private readonly userAccountRecoveryService: UserAccountRecoveryService,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {}
 
   async findAllUser(query: PaginateQuery): Promise<Paginated<UserResDto>> {
@@ -80,21 +82,36 @@ export class UserService {
       email,
     });
 
-    const savedUser = await this.userRepository.save(newUser);
+    const persistUser = async (
+      userRepo: Repository<UserEntity>,
+      accountRepo: Repository<UserAccountEntity>,
+    ) => {
+      const saved = await userRepo.save(newUser);
 
-    if (password) {
-      await this.userAccountRepository.save(
-        new UserAccountEntity({
-          userId: savedUser.id,
-          provider: EAccountProvider.LOCAL,
-          providerAccountId: savedUser.email,
-          password,
-          email: savedUser.email,
-          displayName:
-            `${savedUser.firstName} ${savedUser.lastName ?? ''}`.trim(),
-        }),
-      );
-    }
+      if (password) {
+        await accountRepo.save(
+          new UserAccountEntity({
+            userId: saved.id,
+            provider: EAccountProvider.LOCAL,
+            providerAccountId: saved.email,
+            password,
+            email: saved.email,
+            displayName: `${saved.firstName} ${saved.lastName ?? ''}`.trim(),
+          }),
+        );
+      }
+
+      return saved;
+    };
+
+    const savedUser = this.dataSource?.transaction
+      ? await this.dataSource.transaction((manager) =>
+          persistUser(
+            manager.getRepository(UserEntity),
+            manager.getRepository(UserAccountEntity),
+          ),
+        )
+      : await persistUser(this.userRepository, this.userAccountRepository);
 
     await this.userAccountRecoveryService.sendVerificationEmail(savedUser);
 

@@ -6,6 +6,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getUserInitials(
+  profile?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null
+): string {
+  if (!profile) return "U";
+  const fromNames = (
+    (profile.firstName?.[0] || "") + (profile.lastName?.[0] || "")
+  ).toUpperCase();
+  if (fromNames) return fromNames;
+  return profile.email?.slice(0, 2).toUpperCase() || "U";
+}
+
 export function decodeToken(token: string) {
   try {
     const payload = decodeJwt(token);

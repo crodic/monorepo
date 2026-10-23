@@ -38,7 +38,7 @@ import {
 export function NavGroup({ title, items, onlyDevMode }: NavGroupProps) {
   const { t } = useTranslation()
   const { state, isMobile } = useSidebar()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((s) => s.ability)
   const { pathname: href } = useLocation()
 
   if (onlyDevMode && !import.meta.env.DEV) return null

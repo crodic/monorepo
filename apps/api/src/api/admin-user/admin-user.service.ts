@@ -6,7 +6,7 @@ import { ErrorCode } from '../../common/constants/error-code.constant';
 import { ValidationException } from '../../common/exceptions/validation.exception';
 import { EmailQueueService } from '../../background/queues/email-queue/email-queue.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import assert from 'assert';
@@ -17,7 +17,7 @@ import {
   Paginated,
   PaginateQuery,
 } from 'nestjs-paginate';
-import { EntityManager, In, LessThan, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, LessThan, Repository } from 'typeorm';
 import { AdminAccountRecoveryService } from '../auth/services/admin-account-recovery.service';
 import { AdminRoleEntity } from '../admin-role/entities/admin-role.entity';
 import { AdminUserResDto } from './dto/admin-user.res.dto';
@@ -41,6 +41,8 @@ export class AdminUserService {
     private readonly cacheManager: Cache,
     private readonly adminAccountRecoveryService: AdminAccountRecoveryService,
     private readonly emailQueueService: EmailQueueService,
+    @Optional()
+    private readonly dataSource?: DataSource,
   ) {}
 
   async hasAdmin(): Promise<boolean> {
@@ -137,18 +139,37 @@ export class AdminUserService {
       phone,
     });
 
-    const savedUser = await this.adminUserRepository.save(newUser);
+    const persistAdmin = async (
+      userRepo: Repository<AdminUserEntity>,
+      accountRepo: Repository<AdminAccountEntity>,
+    ) => {
+      const saved = await userRepo.save(newUser);
 
-    if (password) {
-      await this.adminAccountRepository.save(
-        new AdminAccountEntity({
-          adminUserId: savedUser.id,
-          provider: EAccountProvider.LOCAL,
-          providerAccountId: savedUser.email,
-          password,
-        }),
-      );
-    }
+      if (password) {
+        await accountRepo.save(
+          new AdminAccountEntity({
+            adminUserId: saved.id,
+            provider: EAccountProvider.LOCAL,
+            providerAccountId: saved.email,
+            password,
+          }),
+        );
+      }
+
+      return saved;
+    };
+
+    const savedUser = this.dataSource?.transaction
+      ? await this.dataSource.transaction((manager) =>
+          persistAdmin(
+            manager.getRepository(AdminUserEntity),
+            manager.getRepository(AdminAccountEntity),
+          ),
+        )
+      : await persistAdmin(
+          this.adminUserRepository,
+          this.adminAccountRepository,
+        );
 
     await this.adminAccountRecoveryService.sendVerificationEmail(savedUser);
 

@@ -380,28 +380,37 @@ export function UploadFilePreview({
     return () => URL.revokeObjectURL(url)
   }, [file, isImage, isVideo])
 
+  const renderThumbnail = () => {
+    if (previewUrl && isVideo) {
+      return (
+        <video
+          src={previewUrl}
+          className='size-full object-cover'
+          muted
+          playsInline
+          preload='metadata'
+        />
+      )
+    }
+    if (previewUrl) {
+      return (
+        <img
+          src={previewUrl}
+          alt={file.name}
+          className='size-full object-cover'
+        />
+      )
+    }
+    if (isVideo) {
+      return <Video className='text-muted-foreground size-5' />
+    }
+    return <FileIcon className='text-muted-foreground size-5' />
+  }
+
   return (
     <div className='border-border flex min-w-0 items-center gap-3 rounded-md border p-3'>
       <div className='bg-muted flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border'>
-        {previewUrl && isVideo ? (
-          <video
-            src={previewUrl}
-            className='size-full object-cover'
-            muted
-            playsInline
-            preload='metadata'
-          />
-        ) : previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={file.name}
-            className='size-full object-cover'
-          />
-        ) : isVideo ? (
-          <Video className='text-muted-foreground size-5' />
-        ) : (
-          <FileIcon className='text-muted-foreground size-5' />
-        )}
+        {renderThumbnail()}
       </div>
       <div className='min-w-0 flex-1'>
         <p className='truncate text-sm font-medium'>{file.name}</p>
@@ -417,6 +426,7 @@ export function UploadFilePreview({
         className='shrink-0'
         onClick={onRemove}
         disabled={uploading}
+        aria-label='Remove file'
       >
         <X className='size-4' />
       </Button>

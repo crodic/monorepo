@@ -1,14 +1,15 @@
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export interface DeleteFolderDialogProps {
   folder: string | null
@@ -30,14 +31,14 @@ export function DeleteFolderDialog({
   const { t } = useTranslation()
 
   return (
-    <Dialog open={Boolean(folder)} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('files.folders.deleteTitle')}</DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={Boolean(folder)} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('files.folders.deleteTitle')}</AlertDialogTitle>
+          <AlertDialogDescription>
             {t('files.folders.deleteDescription')}
-          </DialogDescription>
-        </DialogHeader>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
         <label className='border-border flex cursor-pointer items-start gap-3 rounded-md border p-3'>
           <Checkbox
             checked={deleteFiles}
@@ -52,23 +53,19 @@ export function DeleteFolderDialog({
             </span>
           </span>
         </label>
-        <DialogFooter>
-          <Button
-            variant='outline'
-            disabled={isLoading}
-            onClick={() => onOpenChange(false)}
-          >
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading}>
             {t('buttons.cancel')}
-          </Button>
-          <Button
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant='destructive'
             disabled={isLoading}
             onClick={onConfirm}
           >
             {t('buttons.delete')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

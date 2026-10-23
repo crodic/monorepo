@@ -15,11 +15,13 @@ import {
   Lock,
   MoveRight,
   Pencil,
+  RotateCcw,
   Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -51,16 +53,21 @@ import {
   isPreviewableVideo,
 } from '../file-preview'
 import { apiUpdateFile, fileQueryKeys } from '../queries'
-import type { FileSchema } from '../schema'
+import type { FileSchema, FolderSchema } from '../schema'
+import { StorageOverviewWidget } from './storage-overview-widget'
 
 interface FileInspectorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   file: FileSchema | null
+  files?: FileSchema[]
+  folders?: FolderSchema[]
   onPreview: (file: FileSchema) => void
   onCopyUrl: (file: FileSchema) => void
   onMove: (file: FileSchema) => void
   onDelete: (file: FileSchema) => void
+  onRestore?: (file: FileSchema) => void
+  onPermanentDelete?: (file: FileSchema) => void
   onRename?: (file: FileSchema) => void
   onShare?: (file: FileSchema) => void
   onFileUpdated?: (file: FileSchema) => void
@@ -72,10 +79,14 @@ export function FileInspector({
   open,
   onOpenChange,
   file,
+  files = [],
+  folders = [],
   onPreview,
   onCopyUrl,
   onMove,
   onDelete,
+  onRestore,
+  onPermanentDelete,
   onRename,
   onShare,
   onFileUpdated,
@@ -130,7 +141,7 @@ export function FileInspector({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side='right'
-        className='border-border bg-background flex h-full w-full flex-col gap-0 overflow-hidden border-l p-0 sm:max-w-md'
+        className='border-border bg-background flex size-full flex-col gap-0 overflow-hidden border-l p-0 sm:max-w-md'
       >
         <SheetHeader className='border-border flex flex-row items-center space-y-0 border-b px-5 py-4 pr-12'>
           <div className='flex items-center gap-2'>
@@ -142,21 +153,32 @@ export function FileInspector({
         </SheetHeader>
 
         {!activeFile ? (
-          <div className='flex flex-1 flex-col items-center justify-center p-8 text-center'>
-            <div className='bg-muted text-muted-foreground mb-3 flex size-14 items-center justify-center rounded-2xl'>
-              <FileIcon className='size-7' />
+          <div className='flex flex-1 flex-col gap-4 overflow-y-auto p-5'>
+            <StorageOverviewWidget files={files} folders={folders} />
+            <div className='flex flex-1 flex-col items-center justify-center p-6 text-center'>
+              <div className='bg-muted text-muted-foreground mb-3 flex size-12 items-center justify-center rounded-2xl'>
+                <FileIcon className='size-6' />
+              </div>
+              <p className='text-muted-foreground text-xs font-medium'>
+                {t('files.inspector.empty', 'Select a file to inspect details')}
+              </p>
             </div>
-            <p className='text-foreground text-sm font-medium'>
-              {t('files.inspector.empty')}
-            </p>
           </div>
         ) : (
           <div className='min-h-0 flex-1 overflow-y-auto p-5'>
             <div className='flex flex-col gap-5'>
               {/* Media Preview Box */}
               <div
+                role='button'
+                tabIndex={0}
                 className='border-border/80 bg-muted/40 group relative flex aspect-video cursor-pointer items-center justify-center overflow-hidden rounded-xl border shadow-inner'
                 onClick={() => onPreview(activeFile)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onPreview(activeFile)
+                  }
+                }}
               >
                 {isPreviewableImage(activeFile) ||
                 isPreviewableVideo(activeFile) ||
@@ -184,6 +206,7 @@ export function FileInspector({
                       onPreview(activeFile)
                     }}
                     title={t('files.actions.preview')}
+                    aria-label={t('files.actions.preview')}
                   >
                     <ExternalLink className='size-3.5' />
                   </Button>
@@ -283,40 +306,76 @@ export function FileInspector({
                   </Button>
                 )}
 
-                {canUpdate && onRename && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onRename(activeFile)}
-                    className='h-9 justify-center gap-2'
-                  >
-                    <Pencil className='size-4' />
-                    <span>{t('files.actions.rename', 'Rename')}</span>
-                  </Button>
-                )}
+                {activeFile.deletedAt ? (
+                  <>
+                    {canUpdate && onRestore && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onRestore(activeFile)}
+                        className='text-primary hover:text-primary hover:bg-primary/10 col-span-2 h-9 justify-center gap-2'
+                      >
+                        <RotateCcw className='size-4' />
+                        <span>
+                          {t('files.actions.restore', 'Restore File')}
+                        </span>
+                      </Button>
+                    )}
+                    {canDelete && onPermanentDelete && (
+                      <Button
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => onPermanentDelete(activeFile)}
+                        className='col-span-2 h-9 justify-center gap-2'
+                      >
+                        <Trash2 className='size-4' />
+                        <span>
+                          {t(
+                            'files.actions.permanentDelete',
+                            'Delete permanently'
+                          )}
+                        </span>
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {canUpdate && onRename && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onRename(activeFile)}
+                        className='h-9 justify-center gap-2'
+                      >
+                        <Pencil className='size-4' />
+                        <span>{t('files.actions.rename', 'Rename')}</span>
+                      </Button>
+                    )}
 
-                {canUpdate && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onMove(activeFile)}
-                    className='h-9 justify-center gap-2'
-                  >
-                    <MoveRight className='size-4' />
-                    <span>{t('files.actions.move')}</span>
-                  </Button>
-                )}
+                    {canUpdate && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onMove(activeFile)}
+                        className='h-9 justify-center gap-2'
+                      >
+                        <MoveRight className='size-4' />
+                        <span>{t('files.actions.move')}</span>
+                      </Button>
+                    )}
 
-                {canDelete && (
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onDelete(activeFile)}
-                    className='text-destructive hover:text-destructive hover:bg-destructive/10 col-span-2 h-9 justify-center gap-2'
-                  >
-                    <Trash2 className='size-4' />
-                    <span>{t('files.actions.delete')}</span>
-                  </Button>
+                    {canDelete && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => onDelete(activeFile)}
+                        className='text-destructive hover:text-destructive hover:bg-destructive/10 col-span-2 h-9 justify-center gap-2'
+                      >
+                        <Trash2 className='size-4' />
+                        <span>{t('files.actions.delete')}</span>
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -431,7 +490,9 @@ export function FileInspector({
                     <>
                       <Separator />
                       <div className='flex items-center justify-between py-1'>
-                        <span className='text-muted-foreground'>Duration</span>
+                        <span className='text-muted-foreground'>
+                          {t('files.table.duration', 'Duration')}
+                        </span>
                         <span className='text-foreground font-medium'>
                           {activeFile.duration}s
                         </span>
@@ -452,6 +513,32 @@ export function FileInspector({
 
                   <Separator />
 
+                  {/* Uploaded By */}
+                  <div className='flex items-center justify-between py-1'>
+                    <span className='text-muted-foreground'>
+                      {t('files.inspector.uploadedBy', 'Uploaded by')}
+                    </span>
+                    <div className='flex items-center gap-1.5'>
+                      <Avatar className='border-border/50 size-5 border'>
+                        {activeFile.createdByAdmin?.avatar && (
+                          <AvatarImage src={activeFile.createdByAdmin.avatar} />
+                        )}
+                        <AvatarFallback className='bg-primary/10 text-primary text-[9px] font-semibold'>
+                          {(activeFile.createdByAdmin?.fullName ||
+                            activeFile.createdByAdmin?.email ||
+                            'U')[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className='text-foreground max-w-36 truncate text-xs font-medium'>
+                        {activeFile.createdByAdmin?.fullName ||
+                          activeFile.createdByAdmin?.email ||
+                          t('files.table.system', 'System')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Separator />
+
                   <div className='flex items-center justify-between py-1'>
                     <span className='text-muted-foreground'>
                       {t('files.inspector.uploaded')}
@@ -461,10 +548,72 @@ export function FileInspector({
                     </span>
                   </div>
 
+                  {activeFile.updatedByAdmin && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-muted-foreground'>
+                          {t(
+                            'files.inspector.lastModifiedBy',
+                            'Last modified by'
+                          )}
+                        </span>
+                        <div className='flex items-center gap-1.5'>
+                          <Avatar className='border-border/50 size-5 border'>
+                            {activeFile.updatedByAdmin?.avatar && (
+                              <AvatarImage
+                                src={activeFile.updatedByAdmin.avatar}
+                              />
+                            )}
+                            <AvatarFallback className='bg-primary/10 text-primary text-[9px] font-semibold'>
+                              {(activeFile.updatedByAdmin?.fullName ||
+                                activeFile.updatedByAdmin?.email ||
+                                'U')[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className='text-foreground max-w-36 truncate text-xs font-medium'>
+                            {activeFile.updatedByAdmin?.fullName ||
+                              activeFile.updatedByAdmin?.email}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {activeFile.updatedAt && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-muted-foreground'>
+                          {t('files.inspector.lastActivity', 'Last activity')}
+                        </span>
+                        <span className='text-foreground font-medium'>
+                          {format(new Date(activeFile.updatedAt), 'PPpp')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  {activeFile.deletedAt && (
+                    <>
+                      <Separator />
+                      <div className='flex items-center justify-between py-1'>
+                        <span className='text-destructive font-medium'>
+                          {t('files.inspector.deletedAt', 'Deleted at')}
+                        </span>
+                        <span className='text-destructive font-medium'>
+                          {format(new Date(activeFile.deletedAt), 'PPpp')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+
                   <Separator />
 
                   <div className='flex items-center justify-between py-1'>
-                    <span className='text-muted-foreground'>Public ID</span>
+                    <span className='text-muted-foreground'>
+                      {t('files.inspector.publicId', 'Public ID')}
+                    </span>
                     <span className='text-muted-foreground max-w-45 truncate font-mono text-[11px]'>
                       {activeFile.public_id}
                     </span>

@@ -31,7 +31,7 @@ export default function DeleteAccount() {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate()
-  const { logout } = useAuthStore()
+  const logout = useAuthStore((s) => s.logout)
 
   const deleteAccountMutation = useMutation({
     mutationFn: apiDeleteAccount,

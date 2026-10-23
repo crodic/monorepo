@@ -2,6 +2,7 @@ import { FilesystemService } from '../../filesystem/filesystem.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { In } from 'typeorm';
 import { FileFolderEntity } from './entities/file-folder.entity';
 import { FileEntity } from './entities/file.entity';
 import { FileFolderService } from './file-folder.service';
@@ -209,8 +210,9 @@ describe('FileFolderService', () => {
     await expect(service.deleteFolder('avatars', true)).resolves.toEqual({
       message: 'Successfully deleted',
     });
-    expect(repository.delete).toHaveBeenCalledWith({ id: '1' });
-    expect(repository.delete).toHaveBeenCalledWith({ id: '2' });
+    expect(repository.delete).toHaveBeenCalledWith({
+      id: In(['1', '2']),
+    });
     expect(folderRepository.delete).toHaveBeenCalledWith({ id: 1 });
   });
 });

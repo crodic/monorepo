@@ -1,5 +1,16 @@
 import type { Column } from '@tanstack/react-table'
 
+function getPinnedBoxShadow(
+  withBorder: boolean,
+  isLastLeftPinnedColumn: boolean,
+  isFirstRightPinnedColumn: boolean
+): string | undefined {
+  if (!withBorder) return undefined
+  if (isLastLeftPinnedColumn) return '-4px 0 4px -4px var(--border) inset'
+  if (isFirstRightPinnedColumn) return '4px 0 4px -4px var(--border) inset'
+  return undefined
+}
+
 export function getCommonPinningStyles<TData>({
   column,
   withBorder = false,
@@ -14,13 +25,11 @@ export function getCommonPinningStyles<TData>({
     isPinned === 'right' && column.getIsFirstColumn('right')
 
   return {
-    boxShadow: withBorder
-      ? isLastLeftPinnedColumn
-        ? '-4px 0 4px -4px var(--border) inset'
-        : isFirstRightPinnedColumn
-          ? '4px 0 4px -4px var(--border) inset'
-          : undefined
-      : undefined,
+    boxShadow: getPinnedBoxShadow(
+      withBorder,
+      isLastLeftPinnedColumn,
+      isFirstRightPinnedColumn
+    ),
     left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
     right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
     opacity: isPinned ? 0.97 : 1,

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,8 +29,9 @@ export function MoveFileDialog({
 }: MoveFileDialogProps) {
   const { t } = useTranslation()
   const [folder, setFolder] = useState(file?.folder ?? '')
-  const mutation = useMutation({
+  const moveMutation = useMutation({
     mutationFn: () => onMoved(folder.trim() || null),
+    onError: restApiErrorHandler,
   })
 
   useEffect(() => {
@@ -68,8 +70,8 @@ export function MoveFileDialog({
             {t('buttons.cancel')}
           </Button>
           <Button
-            onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            onClick={() => moveMutation.mutate()}
+            disabled={moveMutation.isPending}
           >
             {t('buttons.save')}
           </Button>

@@ -129,11 +129,10 @@ export function parseThemeCss(
       const [name, ...valParts] = decl.split(':')
       const key = name.trim().replace(/^--/, '') as ThemeStyleKey
       const value = valParts.join(':').trim()
-      if (THEME_STYLE_KEYS.includes(key) && value) {
-        next.dark[key] = value
-        if (COMMON_THEME_STYLE_KEYS.includes(key)) {
-          next.light[key] = value
-        }
+      if (!THEME_STYLE_KEYS.includes(key) || !value) return
+      next.dark[key] = value
+      if (COMMON_THEME_STYLE_KEYS.includes(key)) {
+        next.light[key] = value
       }
     })
   }
@@ -149,11 +148,10 @@ export function parseThemeCss(
       const [name, ...valParts] = decl.split(':')
       const key = name.trim().replace(/^--/, '') as ThemeStyleKey
       const value = valParts.join(':').trim()
-      if (THEME_STYLE_KEYS.includes(key) && value) {
-        next.light[key] = value
-        if (COMMON_THEME_STYLE_KEYS.includes(key)) {
-          next.dark[key] = value
-        }
+      if (!THEME_STYLE_KEYS.includes(key) || !value) return
+      next.light[key] = value
+      if (COMMON_THEME_STYLE_KEYS.includes(key)) {
+        next.dark[key] = value
       }
     })
   }
@@ -166,12 +164,11 @@ export function parseThemeCss(
       const [name, ...valParts] = decl.split(':')
       const key = name.trim().replace(/^--/, '') as ThemeStyleKey
       const value = valParts.join(':').trim()
-      if (THEME_STYLE_KEYS.includes(key) && value) {
-        next[mode][key] = value
-        if (COMMON_THEME_STYLE_KEYS.includes(key)) {
-          const otherMode = mode === 'light' ? 'dark' : 'light'
-          next[otherMode][key] = value
-        }
+      if (!THEME_STYLE_KEYS.includes(key) || !value) return
+      next[mode][key] = value
+      if (COMMON_THEME_STYLE_KEYS.includes(key)) {
+        const otherMode = mode === 'light' ? 'dark' : 'light'
+        next[otherMode][key] = value
       }
     })
   }

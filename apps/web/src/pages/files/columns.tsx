@@ -7,18 +7,19 @@ import {
   Download,
   Eye,
   FileIcon,
-  FileImage,
-  Folder,
   Globe,
   Link2,
   Lock,
   MoreHorizontal,
   MoveRight,
   Pencil,
+  RotateCcw,
+  Star,
   Tag,
   Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -42,15 +43,26 @@ import {
 } from './disk-helper'
 import { downloadFile } from './download-helper'
 import { FilePreviewThumbnail } from './file-preview'
+import {
+  FILE_CATEGORY_CONFIG,
+  formatBytes,
+  getFileCategory,
+} from './file-types'
 import { ColumnKey, type FileSchema } from './schema'
 
-type FileTableColumnOptions = {
+export { formatBytes }
+
+export type FileTableColumnOptions = {
   onPreview: (file: FileSchema) => void
   onCopyUrl: (file: FileSchema) => void
   onMove: (file: FileSchema) => void
   onDelete: (file: FileSchema) => void
+  onRestore?: (file: FileSchema) => void
+  onPermanentDelete?: (file: FileSchema) => void
   onRename?: (file: FileSchema) => void
   onShare?: (file: FileSchema) => void
+  isStarred?: (publicId?: string | null) => boolean
+  onToggleStar?: (publicId: string) => void
   canUpdate: boolean
   canDelete: boolean
 }
@@ -60,8 +72,12 @@ export function getFilesTableColumns({
   onCopyUrl,
   onMove,
   onDelete,
+  onRestore,
+  onPermanentDelete,
   onRename,
   onShare,
+  isStarred,
+  onToggleStar,
   canUpdate,
   canDelete,
 }: FileTableColumnOptions): ColumnDef<FileSchema>[] {
@@ -90,6 +106,50 @@ export function getFilesTableColumns({
     enableSorting: false,
   }
 
+  const starColumn: ColumnDef<FileSchema> = {
+    id: 'star',
+    header: () => null,
+    cell: ({ row }) => {
+      const file = row.original
+      const starred = isStarred?.(file.public_id) ?? false
+
+      return (
+        <Button
+          variant='ghost'
+          size='icon'
+          className='size-7'
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggleStar?.(file.public_id)
+          }}
+          title={
+            starred
+              ? i18n.t('files.actions.unstar', 'Unstar file')
+              : i18n.t('files.actions.star', 'Star file')
+          }
+          aria-label={
+            starred
+              ? i18n.t('files.actions.unstar', 'Unstar file')
+              : i18n.t('files.actions.star', 'Star file')
+          }
+        >
+          <Star
+            className={cn(
+              'size-3.5 transition-colors',
+              starred
+                ? 'fill-amber-400 text-amber-500'
+                : 'text-muted-foreground/30 hover:text-amber-500'
+            )}
+          />
+        </Button>
+      )
+    },
+    size: 32,
+    enableColumnFilter: false,
+    enableHiding: false,
+    enableSorting: false,
+  }
+
   const columns: ColumnDef<FileSchema>[] = [
     {
       id: ColumnKey.originalName,
@@ -105,19 +165,38 @@ export function getFilesTableColumns({
         const isPrivate = isFilePrivate(file)
         const diskLabel = getFileDiskLabel(file.disk, isPrivate)
         const diskTooltip = getFileDiskTooltip(file.disk, isPrivate)
+        const cat = getFileCategory(
+          file.mime,
+          file.resource_type,
+          file.original_name
+        )
+        const catMeta = FILE_CATEGORY_CONFIG[cat]
+        const CatIcon = catMeta.icon
 
         return (
           <div className='flex min-w-0 items-center gap-3'>
-            <div className='bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border'>
-              <FilePreviewThumbnail
-                file={file}
-                transformations='w_80,h_80,c_fill,q_75'
-                hoverToPlay={false}
-              />
+            <div
+              className={cn(
+                'flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border',
+                catMeta.bgColor,
+                catMeta.borderColor
+              )}
+            >
+              {cat === 'image' || cat === 'video' ? (
+                <FilePreviewThumbnail
+                  file={file}
+                  transformations='w_80,h_80,c_fill,q_75'
+                  hoverToPlay={false}
+                />
+              ) : (
+                <CatIcon className={cn('size-4', catMeta.textColor)} />
+              )}
             </div>
             <div className='min-w-0'>
               <div className='flex items-center gap-1.5'>
-                <p className='truncate font-medium'>{file.original_name}</p>
+                <p className='text-foreground truncate text-sm font-medium'>
+                  {file.original_name}
+                </p>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span
@@ -159,30 +238,6 @@ export function getFilesTableColumns({
       minSize: 260,
     },
     {
-      id: ColumnKey.folder,
-      accessorFn: (row) => row.folder,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          label={i18n.t('files.table.folder')}
-        />
-      ),
-      cell: ({ row }) => (
-        <Badge variant='outline'>
-          <Folder className='size-3' />
-          {row.original.folder ?? i18n.t('files.folders.root')}
-        </Badge>
-      ),
-      meta: {
-        label: i18n.t('files.table.folder'),
-        placeholder: i18n.t('files.filters.folder'),
-        variant: 'text',
-        icon: Folder,
-      },
-      enableColumnFilter: true,
-      enableSorting: true,
-    },
-    {
       id: ColumnKey.resourceType,
       accessorFn: (row) => row.resource_type,
       header: ({ column }) => (
@@ -191,45 +246,76 @@ export function getFilesTableColumns({
           label={i18n.t('files.table.type')}
         />
       ),
-      cell: ({ row }) => (
-        <Badge variant='secondary'>{row.original.resource_type}</Badge>
-      ),
+      cell: ({ row }) => {
+        const file = row.original
+        const cat = getFileCategory(
+          file.mime,
+          file.resource_type,
+          file.original_name
+        )
+        const catMeta = FILE_CATEGORY_CONFIG[cat]
+
+        return (
+          <Badge
+            variant='outline'
+            className={cn(
+              'border text-xs font-normal capitalize',
+              catMeta.bgColor,
+              catMeta.textColor,
+              catMeta.borderColor
+            )}
+          >
+            {catMeta.label}
+          </Badge>
+        )
+      },
       meta: {
         label: i18n.t('files.table.type'),
+        placeholder: i18n.t('files.table.type'),
         variant: 'select',
-        icon: FileImage,
         options: [
-          { label: 'Image', value: 'image' },
-          { label: 'Video', value: 'video' },
-          { label: 'Raw', value: 'raw' },
-          { label: 'File', value: 'file' },
+          { label: i18n.t('files.categories.images'), value: 'image' },
+          { label: i18n.t('files.categories.videos'), value: 'video' },
+          { label: i18n.t('files.categories.documents'), value: 'raw' },
+          { label: i18n.t('files.categories.audio'), value: 'file' },
         ],
-      },
-      enableColumnFilter: true,
-      enableSorting: true,
-    },
-    {
-      id: ColumnKey.mime,
-      accessorFn: (row) => row.mime,
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          label={i18n.t('files.table.mime')}
-        />
-      ),
-      cell: ({ row }) => (
-        <span className='text-muted-foreground text-sm'>
-          {row.original.mime}
-        </span>
-      ),
-      meta: {
-        label: i18n.t('files.table.mime'),
-        placeholder: i18n.t('files.filters.mime'),
-        variant: 'text',
         icon: Tag,
       },
       enableColumnFilter: true,
       enableSorting: true,
+      size: 130,
+    },
+    {
+      id: ColumnKey.status,
+      accessorFn: (row) => row.status,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          label={i18n.t('files.table.status', 'Status')}
+        />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status
+        return (
+          <Badge
+            variant={status === 'active' ? 'secondary' : 'outline'}
+            className='text-xs capitalize'
+          >
+            {status}
+          </Badge>
+        )
+      },
+      meta: {
+        label: i18n.t('files.table.status', 'Status'),
+        variant: 'select',
+        options: [
+          { label: 'Active', value: 'active' },
+          { label: 'Archived', value: 'archived' },
+        ],
+      },
+      enableColumnFilter: true,
+      enableSorting: true,
+      size: 100,
     },
     {
       id: ColumnKey.size,
@@ -240,49 +326,98 @@ export function getFilesTableColumns({
           label={i18n.t('files.table.size')}
         />
       ),
-      cell: ({ row }) => formatBytes(row.original.size),
+      cell: ({ row }) => (
+        <span className='text-muted-foreground text-xs tabular-nums'>
+          {formatBytes(row.original.size)}
+        </span>
+      ),
+      meta: {
+        label: i18n.t('files.table.size'),
+      },
+      enableColumnFilter: false,
       enableSorting: true,
+      size: 100,
     },
     {
-      id: ColumnKey.dimensions,
+      id: ColumnKey.uploadedBy,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          label={i18n.t('files.table.dimensions')}
+          label={i18n.t('files.table.uploadedBy', 'Uploaded by')}
         />
       ),
       cell: ({ row }) => {
-        const { width, height } = row.original
-        return width && height ? `${width} x ${height}` : '-'
+        const uploader = row.original.createdByAdmin
+        const name =
+          uploader?.fullName ||
+          uploader?.email ||
+          i18n.t('files.table.system', 'System')
+        const initials = name
+          .split(' ')
+          .map((part) => part[0])
+          .slice(0, 2)
+          .join('')
+          .toUpperCase()
+
+        return (
+          <div className='flex max-w-44 min-w-0 items-center gap-2'>
+            <Avatar className='border-border/60 size-6 shrink-0 border'>
+              {uploader?.avatar && (
+                <AvatarImage src={uploader.avatar} alt={name} />
+              )}
+              <AvatarFallback className='bg-primary/10 text-primary text-[10px] font-semibold'>
+                {initials || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <span
+              className='text-foreground truncate text-xs font-medium'
+              title={name}
+            >
+              {name}
+            </span>
+          </div>
+        )
       },
+      meta: {
+        label: i18n.t('files.table.uploadedBy', 'Uploaded by'),
+      },
+      enableColumnFilter: false,
       enableSorting: false,
+      size: 140,
     },
     {
-      id: ColumnKey.status,
-      accessorFn: (row) => row.status,
+      id: ColumnKey.updatedAt,
+      accessorFn: (row) => row.updatedAt,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          label={i18n.t('files.table.status')}
+          label={i18n.t('files.table.lastActivity', 'Last activity')}
         />
       ),
-      cell: ({ row }) => (
-        <Badge
-          variant={row.original.status === 'active' ? 'default' : 'secondary'}
-        >
-          {row.original.status}
-        </Badge>
-      ),
-      meta: {
-        label: i18n.t('files.table.status'),
-        variant: 'select',
-        options: [
-          { label: 'Active', value: 'active' },
-          { label: 'Archived', value: 'archived' },
-        ],
+      cell: ({ row }) => {
+        const updatedDate = new Date(row.original.updatedAt)
+        const updater = row.original.updatedByAdmin
+        return (
+          <div className='flex flex-col text-xs'>
+            <span className='text-foreground font-medium'>
+              {format(updatedDate, 'dd/MM/yyyy HH:mm')}
+            </span>
+            {updater && (
+              <span className='text-muted-foreground max-w-36 truncate text-[11px]'>
+                {updater.fullName || updater.email}
+              </span>
+            )}
+          </div>
+        )
       },
-      enableColumnFilter: true,
+      meta: {
+        label: i18n.t('files.table.lastActivity', 'Last activity'),
+        variant: 'dateRange',
+        icon: Calendar,
+      },
+      enableColumnFilter: false,
       enableSorting: true,
+      size: 140,
     },
     {
       id: ColumnKey.createdAt,
@@ -293,7 +428,11 @@ export function getFilesTableColumns({
           label={i18n.t('files.table.createdAt')}
         />
       ),
-      cell: ({ row }) => format(row.original.createdAt, 'dd/MM/yyyy HH:mm'),
+      cell: ({ row }) => (
+        <span className='text-muted-foreground text-xs'>
+          {format(new Date(row.original.createdAt), 'dd/MM/yyyy HH:mm')}
+        </span>
+      ),
       meta: {
         label: i18n.t('files.table.createdAt'),
         variant: 'dateRange',
@@ -301,6 +440,7 @@ export function getFilesTableColumns({
       },
       enableColumnFilter: true,
       enableSorting: true,
+      size: 140,
     },
     {
       id: ColumnKey.actions,
@@ -310,66 +450,100 @@ export function getFilesTableColumns({
           label={i18n.t('files.table.actions')}
         />
       ),
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant='ghost'
-              size='icon'
-              aria-label={i18n.t('files.table.actions', 'Actions')}
-            >
-              <MoreHorizontal className='size-4' aria-hidden='true' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem onClick={() => onPreview(row.original)}>
-              <Eye className='size-4' />
-              {i18n.t('files.actions.preview')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => downloadFile(row.original)}>
-              <Download className='size-4' />
-              {i18n.t('files.actions.download', 'Download')}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onCopyUrl(row.original)}>
-              <Copy className='size-4' />
-              {i18n.t('files.actions.copyUrl')}
-            </DropdownMenuItem>
-            {isFilePrivate(row.original) && onShare && (
-              <DropdownMenuItem
-                onClick={() => onShare(row.original)}
-                className='text-amber-600 dark:text-amber-400'
+      cell: ({ row }) => {
+        const isTrash = Boolean(row.original.deletedAt)
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                aria-label={i18n.t('files.table.actions', 'Actions')}
               >
-                <Link2 className='size-4' />
-                {i18n.t('files.actions.share', 'Share link')}
+                <MoreHorizontal className='size-4' aria-hidden='true' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => onPreview(row.original)}>
+                <Eye className='size-4' />
+                {i18n.t('files.actions.preview')}
               </DropdownMenuItem>
-            )}
-            {canUpdate && onRename && (
-              <DropdownMenuItem onClick={() => onRename(row.original)}>
-                <Pencil className='size-4' />
-                {i18n.t('files.actions.rename', 'Rename')}
+              <DropdownMenuItem onClick={() => downloadFile(row.original)}>
+                <Download className='size-4' />
+                {i18n.t('files.actions.download', 'Download')}
               </DropdownMenuItem>
-            )}
-            {canUpdate && (
-              <DropdownMenuItem onClick={() => onMove(row.original)}>
-                <MoveRight className='size-4' />
-                {i18n.t('files.actions.move')}
-              </DropdownMenuItem>
-            )}
-            {canDelete && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant='destructive'
-                  onClick={() => onDelete(row.original)}
-                >
-                  <Trash2 className='size-4' />
-                  {i18n.t('files.actions.delete')}
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
+
+              {isTrash ? (
+                <>
+                  <DropdownMenuSeparator />
+                  {canUpdate && onRestore && (
+                    <DropdownMenuItem
+                      onClick={() => onRestore(row.original)}
+                      className='text-primary'
+                    >
+                      <RotateCcw className='size-4' />
+                      {i18n.t('files.actions.restore', 'Restore')}
+                    </DropdownMenuItem>
+                  )}
+                  {canDelete && onPermanentDelete && (
+                    <DropdownMenuItem
+                      variant='destructive'
+                      onClick={() => onPermanentDelete(row.original)}
+                    >
+                      <Trash2 className='size-4' />
+                      {i18n.t(
+                        'files.actions.permanentDelete',
+                        'Delete permanently'
+                      )}
+                    </DropdownMenuItem>
+                  )}
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem onClick={() => onCopyUrl(row.original)}>
+                    <Copy className='size-4' />
+                    {i18n.t('files.actions.copyUrl')}
+                  </DropdownMenuItem>
+                  {isFilePrivate(row.original) && onShare && (
+                    <DropdownMenuItem
+                      onClick={() => onShare(row.original)}
+                      className='text-amber-600 dark:text-amber-400'
+                    >
+                      <Link2 className='size-4' />
+                      {i18n.t('files.actions.share', 'Share link')}
+                    </DropdownMenuItem>
+                  )}
+                  {canUpdate && onRename && (
+                    <DropdownMenuItem onClick={() => onRename(row.original)}>
+                      <Pencil className='size-4' />
+                      {i18n.t('files.actions.rename', 'Rename')}
+                    </DropdownMenuItem>
+                  )}
+                  {canUpdate && (
+                    <DropdownMenuItem onClick={() => onMove(row.original)}>
+                      <MoveRight className='size-4' />
+                      {i18n.t('files.actions.move')}
+                    </DropdownMenuItem>
+                  )}
+                  {canDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant='destructive'
+                        onClick={() => onDelete(row.original)}
+                      >
+                        <Trash2 className='size-4' />
+                        {i18n.t('files.actions.delete')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
       size: 64,
       enableColumnFilter: false,
       enableHiding: false,
@@ -377,15 +551,6 @@ export function getFilesTableColumns({
     },
   ]
 
-  return canDelete ? [selectionColumn, ...columns] : columns
-}
-
-export function formatBytes(bytes: number) {
-  if (bytes === 0) return '0 B'
-
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const index = Math.floor(Math.log(bytes) / Math.log(1024))
-  const value = bytes / Math.pow(1024, index)
-
-  return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`
+  const baseColumns = [starColumn, ...columns]
+  return canDelete ? [selectionColumn, ...baseColumns] : baseColumns
 }

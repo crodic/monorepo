@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import {
   applyRuntimeTheme,
   hasPersonalThemeColor,
@@ -58,6 +59,7 @@ import {
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { DeleteAlertDialog } from '@/components/common/delete-alert-dialog'
 import { Main } from '@/components/layout/main'
 import { WhiteLabelPreview } from '../components/white-label-preview'
 import {
@@ -75,11 +77,12 @@ export default function PageWhiteLabelShow() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
 
   const [activeTab, setActiveTab] = useState<TabType>('brand')
   const [colorMode, setColorMode] = useState<ThemeMode>('light')
   const [isCodeDialogOpen, setIsCodeDialogOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   const { data: item, isLoading } = useDataWhiteLabelById(id!)
 
@@ -129,6 +132,7 @@ export default function PageWhiteLabelShow() {
         })
       )
     },
+    onError: restApiErrorHandler,
   })
 
   const deleteMutation = useMutation({
@@ -136,13 +140,14 @@ export default function PageWhiteLabelShow() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: whiteLabelQueryKeys.all })
       toast.success(t('whiteLabels.message.deleted'))
+      setIsDeleteOpen(false)
       navigate('/white-labels')
     },
+    onError: restApiErrorHandler,
   })
 
   const handleDelete = () => {
     if (!item) return
-    if (!window.confirm(t('whiteLabels.show.deleteConfirm'))) return
     deleteMutation.mutate(item.id)
   }
 
@@ -187,6 +192,12 @@ export default function PageWhiteLabelShow() {
 
   return (
     <>
+      <DeleteAlertDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        handleDelete={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
       <Main className='flex flex-1 flex-col gap-6'>
         {/* Top Header Bar */}
         <div className='flex flex-wrap items-center justify-between gap-4'>
@@ -196,6 +207,7 @@ export default function PageWhiteLabelShow() {
               size='icon'
               onClick={() => navigate('/white-labels')}
               title={t('whiteLabels.show.back')}
+              aria-label={t('whiteLabels.show.back')}
             >
               <ArrowLeft className='size-5' />
             </Button>
@@ -280,7 +292,7 @@ export default function PageWhiteLabelShow() {
               <Button
                 variant='destructive'
                 size='sm'
-                onClick={handleDelete}
+                onClick={() => setIsDeleteOpen(true)}
                 disabled={deleteMutation.isPending}
                 className='gap-1.5'
               >

@@ -1,7 +1,6 @@
 import React, { useCallback } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { Cross2Icon } from '@radix-ui/react-icons'
-import { ImagePlus } from 'lucide-react'
+import { ImagePlus, X } from 'lucide-react'
 import { useDropzone, type DropzoneProps } from 'react-dropzone'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
@@ -113,15 +112,16 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             alt='Uploaded image'
             className='max-h-[200px] rounded-lg'
           />
-          <div className='absolute top-0 left-0 h-full w-full transform opacity-0 backdrop-brightness-50 transition-opacity duration-300 group-hover:opacity-100'>
+          <div className='absolute top-0 left-0 size-full transform opacity-0 backdrop-brightness-50 transition-opacity duration-300 group-hover:opacity-100'>
             <Button
               className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
               onClick={onClear}
               type='button'
               variant='destructive'
               size='sm'
+              aria-label='Remove image'
             >
-              <Cross2Icon />
+              <X />
             </Button>
           </div>
         </div>

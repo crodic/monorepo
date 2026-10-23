@@ -83,6 +83,55 @@ export interface SortableImageUploadProps {
   onCoverIndexChange?: (index: number | null) => void
 }
 
+function resolveNextCoverIndexAfterRemoval(
+  coverIndex: number | null | undefined,
+  removedIndex: number,
+  remainingCount: number
+): number | null | undefined {
+  if (typeof coverIndex !== 'number') return undefined
+  if (remainingCount === 0) return null
+  if (removedIndex === coverIndex) return 0
+  if (removedIndex < coverIndex) return coverIndex - 1
+  if (coverIndex >= remainingCount) return remainingCount - 1
+  return undefined
+}
+
+function buildUiImageFromPayload(
+  payload: ImagePayload & { type: 'existing' | 'new' },
+  existingImages: ExistingImage[],
+  deletedIds: Set<string>,
+  fileMap: Map<string, File>,
+  previewUrls: Map<string, string>
+): UIImage | null {
+  if (payload.type === 'existing') {
+    const existing = existingImages.find((e) => e.id === payload.id)
+    if (!existing || deletedIds.has(existing.id)) return null
+    return {
+      id: existing.id,
+      src: existing.src,
+      alt: existing.alt ?? 'Image',
+      source: 'existing',
+    }
+  }
+
+  const file = fileMap.get(payload.tempId)
+  if (!file) return null
+
+  let previewUrl = previewUrls.get(payload.tempId)
+  if (!previewUrl) {
+    previewUrl = URL.createObjectURL(file)
+    previewUrls.set(payload.tempId, previewUrl)
+  }
+
+  return {
+    id: payload.tempId,
+    src: previewUrl,
+    alt: file.name,
+    source: 'new',
+    file,
+  }
+}
+
 export default function SortableImageUpload({
   existingImages = EMPTY_EXISTING_IMAGES,
   value,
@@ -187,32 +236,15 @@ export default function SortableImageUpload({
     // If we have payloads with order, use that order
     if (activePayloads.length > 0) {
       for (const payload of activePayloads) {
-        if (payload.type === 'existing') {
-          const existing = existingImages.find((e) => e.id === payload.id)
-          if (existing && !deletedIds.has(existing.id)) {
-            newUiImages.push({
-              id: existing.id,
-              src: existing.src,
-              alt: existing.alt ?? 'Image',
-              source: 'existing',
-            })
-          }
-        } else if (payload.type === 'new') {
-          const file = fileMapRef.current.get(payload.tempId)
-          if (file) {
-            let previewUrl = previewUrlsRef.current.get(payload.tempId)
-            if (!previewUrl) {
-              previewUrl = URL.createObjectURL(file)
-              previewUrlsRef.current.set(payload.tempId, previewUrl)
-            }
-            newUiImages.push({
-              id: payload.tempId,
-              src: previewUrl,
-              alt: file.name,
-              source: 'new',
-              file,
-            })
-          }
+        const uiImage = buildUiImageFromPayload(
+          payload,
+          existingImages,
+          deletedIds,
+          fileMapRef.current,
+          previewUrlsRef.current
+        )
+        if (uiImage) {
+          newUiImages.push(uiImage)
         }
       }
     } else {
@@ -465,15 +497,14 @@ export default function SortableImageUpload({
       const payload = buildPayload(updatedUiImages, updatedDeletedIds)
       onChange?.(payload)
 
-      if (onCoverIndexChange && typeof coverIndex === 'number') {
-        if (updatedUiImages.length === 0) {
-          onCoverIndexChange(null)
-        } else if (removedIndex === coverIndex) {
-          onCoverIndexChange(0)
-        } else if (removedIndex < coverIndex) {
-          onCoverIndexChange(coverIndex - 1)
-        } else if (coverIndex >= updatedUiImages.length) {
-          onCoverIndexChange(updatedUiImages.length - 1)
+      if (onCoverIndexChange) {
+        const nextCoverIdx = resolveNextCoverIndexAfterRemoval(
+          coverIndex,
+          removedIndex,
+          updatedUiImages.length
+        )
+        if (nextCoverIdx !== undefined) {
+          onCoverIndexChange(nextCoverIdx)
         }
       }
 
@@ -695,6 +726,8 @@ export default function SortableImageUpload({
 
       return (
         <div
+          role={isOverlay ? undefined : 'button'}
+          tabIndex={isOverlay ? undefined : 0}
           className={cn(
             'bg-accent/50 group border-border hover:bg-accent/70 relative flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-md border shadow-none transition-all duration-200 hover:z-10 data-[dragging=true]:z-50',
             isOverlay && 'z-50 shadow-lg'
@@ -708,10 +741,20 @@ export default function SortableImageUpload({
               : undefined
           }
           onClick={isOverlay ? undefined : () => openLightbox(index)}
+          onKeyDown={
+            isOverlay
+              ? undefined
+              : (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    openLightbox(index)
+                  }
+                }
+          }
         >
           <img
             src={item.src || '/placeholder.svg'}
-            className='pointer-events-none h-full w-full rounded-md object-cover'
+            className='pointer-events-none size-full rounded-md object-cover'
             alt={item.alt}
           />
 
@@ -768,6 +811,7 @@ export default function SortableImageUpload({
               variant='outline'
               size='icon'
               type='button'
+              aria-label='Remove image'
               className={cn(
                 'bg-background/80 absolute size-8 rounded-full opacity-100 shadow-sm sm:size-6 sm:opacity-0 sm:group-hover:opacity-100',
                 canSelectCover ? 'end-2 bottom-2' : 'end-2 top-2'
@@ -957,6 +1001,7 @@ export default function SortableImageUpload({
                       size='icon'
                       className='size-6'
                       disabled={isDisabled}
+                      aria-label='Remove file'
                     >
                       <CircleX className='size-3.5' />
                     </Button>
@@ -1050,7 +1095,7 @@ export default function SortableImageUpload({
           )}
 
           <div
-            className='flex h-full w-full items-center justify-center px-4 py-16 sm:px-20 sm:py-10'
+            className='flex size-full items-center justify-center px-4 py-16 sm:px-20 sm:py-10'
             onClick={(event) => event.stopPropagation()}
           >
             <img

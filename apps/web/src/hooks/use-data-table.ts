@@ -359,6 +359,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   )
 
   const table = useReactTable({
+    enableRowSelection: true,
     ...tableProps,
     columns,
     initialState,
@@ -375,7 +376,6 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
       ...tableProps.defaultColumn,
       enableColumnFilter: false,
     },
-    enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onExpandedChange: setExpanded,
     onPaginationChange,

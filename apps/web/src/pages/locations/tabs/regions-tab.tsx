@@ -4,6 +4,7 @@ import { PlusIcon } from 'lucide-react'
 import { parseAsString } from 'nuqs'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import {
   useResourceTable,
   type ResourceQueryBuilderFn,
@@ -84,9 +85,7 @@ export function RegionsTab() {
       setDeleteDialogOpen(false)
       setRegionToDelete(null)
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Delete failed')
-    },
+    onError: restApiErrorHandler,
   })
 
   return (

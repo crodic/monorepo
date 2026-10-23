@@ -33,9 +33,11 @@ export function SortableImageTile({
 }: SortableImageTileProps) {
   return (
     <div
+      role={isOverlay ? undefined : "button"}
+      tabIndex={isOverlay ? undefined : 0}
       className={cn(
         "bg-accent/50 group border-border hover:bg-accent/70 relative flex aspect-square shrink-0 items-center justify-center overflow-hidden rounded-md border shadow-none transition-all duration-200 hover:z-10 data-[dragging=true]:z-50",
-        isOverlay && "z-50 shadow-lg",
+        isOverlay && "z-50 shadow-lg"
       )}
       style={
         isOverlay && overlaySize
@@ -46,10 +48,20 @@ export function SortableImageTile({
           : undefined
       }
       onClick={isOverlay ? undefined : () => onOpenLightbox(index)}
+      onKeyDown={
+        isOverlay
+          ? undefined
+          : (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpenLightbox(index);
+              }
+            }
+      }
     >
       <img
         src={item.src || "/placeholder.svg"}
-        className="pointer-events-none h-full w-full rounded-md object-cover"
+        className="pointer-events-none size-full rounded-md object-cover"
         alt={item.alt}
       />
 
@@ -59,7 +71,7 @@ export function SortableImageTile({
           "absolute start-2 bottom-2 rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
           item.source === "existing"
             ? "bg-background/80 text-foreground"
-            : "bg-primary/80 text-primary-foreground",
+            : "bg-primary/80 text-primary-foreground"
         )}
       >
         {item.source === "existing" ? "Saved" : "New"}
@@ -84,7 +96,7 @@ export function SortableImageTile({
           className={cn(
             "absolute end-2 top-2 size-8 rounded-full shadow-sm sm:size-6",
             !isCover &&
-              "bg-background/80 opacity-100 sm:opacity-0 sm:group-hover:opacity-100",
+              "bg-background/80 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           )}
         >
           <Star
@@ -104,9 +116,10 @@ export function SortableImageTile({
           variant="outline"
           size="icon"
           type="button"
+          aria-label="Remove image"
           className={cn(
             "bg-background/80 absolute size-8 rounded-full opacity-100 shadow-sm sm:size-6 sm:opacity-0 sm:group-hover:opacity-100",
-            canSelectCover ? "end-2 bottom-2" : "end-2 top-2",
+            canSelectCover ? "end-2 bottom-2" : "end-2 top-2"
           )}
         >
           <XIcon className="size-4 sm:size-3.5" />

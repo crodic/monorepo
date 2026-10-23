@@ -19,7 +19,34 @@ import { FileStorageAccessGuard } from './guards/file-storage-access.guard';
 @Controller({ path: 'storage/uploads', version: [VERSION_NEUTRAL, '1'] })
 @UseGuards(FileStorageAccessGuard)
 export class TransformController {
+  private static readonly SAFE_INLINE_MIMES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/avif',
+    'application/pdf',
+  ]);
+
   constructor(private readonly fileStreamService: FileStreamService) {}
+
+  private applySecurityHeaders(res: Response, mime: string) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'",
+    );
+
+    const normalizedMime = (mime || '').toLowerCase().split(';')[0].trim();
+    const isSafeInline =
+      TransformController.SAFE_INLINE_MIMES.has(normalizedMime) ||
+      normalizedMime.startsWith('video/') ||
+      normalizedMime.startsWith('audio/');
+
+    if (!isSafeInline) {
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+  }
 
   @Get(':resourceType/:transformations/:publicId.:ext')
   async transformed(
@@ -36,6 +63,7 @@ export class TransformController {
       ext,
     );
 
+    this.applySecurityHeaders(res, file.mime);
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     res.setHeader('Content-Type', file.mime);
     res.setHeader('Content-Length', String(file.size));
@@ -60,6 +88,7 @@ export class TransformController {
         req.headers.range,
       );
 
+      this.applySecurityHeaders(res, file.mime);
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       res.setHeader('Content-Type', file.mime);

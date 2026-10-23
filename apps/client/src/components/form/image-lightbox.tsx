@@ -12,18 +12,22 @@ export interface ImageLightboxProps {
   onIndexChange: (index: number) => void;
 }
 
+function resolveSafeLightboxIndex(
+  currentIndex: number | null,
+  images: UIImage[]
+): number | null {
+  if (currentIndex === null || images.length === 0) return null;
+  if (images[currentIndex]) return currentIndex;
+  return Math.min(currentIndex, images.length - 1);
+}
+
 export function ImageLightbox({
   images,
   currentIndex,
   onClose,
   onIndexChange,
 }: ImageLightboxProps) {
-  const safeIndex =
-    currentIndex !== null && images[currentIndex]
-      ? currentIndex
-      : currentIndex !== null && images.length > 0
-        ? Math.min(currentIndex, images.length - 1)
-        : null;
+  const safeIndex = resolveSafeLightboxIndex(currentIndex, images);
 
   const currentImage = safeIndex !== null ? images[safeIndex] : null;
 
@@ -119,7 +123,7 @@ export function ImageLightbox({
       )}
 
       <div
-        className="flex h-full w-full items-center justify-center px-4 py-16 sm:px-20 sm:py-10"
+        className="flex size-full items-center justify-center px-4 py-16 sm:px-20 sm:py-10"
         onClick={(event) => event.stopPropagation()}
       >
         <img

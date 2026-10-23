@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 import { applyPersonalFontPreference } from '@/lib/personal-font'
 import {
@@ -157,58 +164,76 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener('change', handleChange)
   }, [theme, colorKey, resolvedTheme, isWhiteLabelEnabled])
 
-  const setTheme = (t: Theme) => {
-    setCookie(storageKey, t, THEME_COOKIE_MAX_AGE)
-    _setTheme(t)
-  }
+  const setTheme = useCallback(
+    (t: Theme) => {
+      setCookie(storageKey, t, THEME_COOKIE_MAX_AGE)
+      _setTheme(t)
+    },
+    [storageKey]
+  )
 
-  const setColorKey = (key: ColorKey) => {
+  const setColorKey = useCallback((key: ColorKey) => {
     _setColorKey(key)
     localStorage.setItem(PERSONAL_THEME_COLOR_STORAGE_KEY, key)
     localStorage.setItem(WHITE_LABEL_ENABLED_STORAGE_KEY, 'false')
     _setIsWhiteLabelEnabled(false)
     setHasPersonalColor(true)
-  }
+  }, [])
 
-  const clearPersonalColor = () => {
+  const clearPersonalColor = useCallback(() => {
     localStorage.removeItem(PERSONAL_THEME_COLOR_STORAGE_KEY)
     _setColorKey(DEFAULT_COLOR)
     setHasPersonalColor(false)
     localStorage.setItem(WHITE_LABEL_ENABLED_STORAGE_KEY, 'true')
     _setIsWhiteLabelEnabled(true)
-  }
+  }, [])
 
-  const setWhiteLabelEnabled = (enabled: boolean) => {
+  const setWhiteLabelEnabled = useCallback((enabled: boolean) => {
     _setIsWhiteLabelEnabled(enabled)
     localStorage.setItem(WHITE_LABEL_ENABLED_STORAGE_KEY, String(enabled))
     if (enabled) {
       localStorage.removeItem(PERSONAL_THEME_COLOR_STORAGE_KEY)
       setHasPersonalColor(false)
     }
-  }
+  }, [])
 
-  const resetTheme = () => {
+  const resetTheme = useCallback(() => {
     removeCookie(storageKey)
     clearPersonalColor()
     _setTheme(DEFAULT_THEME)
-  }
+  }, [storageKey, clearPersonalColor])
+
+  const contextValue = useMemo<ThemeProviderState>(
+    () => ({
+      theme,
+      resolvedTheme,
+      defaultTheme,
+      colorKey,
+      hasPersonalColor,
+      isWhiteLabelEnabled,
+      setTheme,
+      setColorKey,
+      clearPersonalColor,
+      setWhiteLabelEnabled,
+      resetTheme,
+    }),
+    [
+      theme,
+      resolvedTheme,
+      defaultTheme,
+      colorKey,
+      hasPersonalColor,
+      isWhiteLabelEnabled,
+      setTheme,
+      setColorKey,
+      clearPersonalColor,
+      setWhiteLabelEnabled,
+      resetTheme,
+    ]
+  )
 
   return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        resolvedTheme,
-        defaultTheme,
-        colorKey,
-        hasPersonalColor,
-        isWhiteLabelEnabled,
-        setTheme,
-        setColorKey,
-        clearPersonalColor,
-        setWhiteLabelEnabled,
-        resetTheme,
-      }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   )

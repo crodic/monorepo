@@ -41,9 +41,15 @@ describe('FileService', () => {
     diskRoot = 'storage/public';
     repository = {
       findOneByOrFail: jest.fn(),
+      findOne: jest.fn((opts) =>
+        repository.findOneByOrFail(opts?.where || opts),
+      ),
       create: jest.fn(),
       save: jest.fn(),
       delete: jest.fn(),
+      softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
+      restore: jest.fn().mockResolvedValue({ affected: 1 }),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
       count: jest.fn(),
       find: jest.fn(),
       createQueryBuilder: jest.fn(),
@@ -179,10 +185,10 @@ describe('FileService', () => {
     disk.exists.mockResolvedValue(false);
 
     await expect(service.delete('missing-file')).resolves.toEqual({
-      message: 'Successfully deleted',
+      message: 'File moved to trash successfully',
     });
     expect(disk.delete).not.toHaveBeenCalled();
-    expect(repository.delete).toHaveBeenCalledWith({
+    expect(repository.softDelete).toHaveBeenCalledWith({
       public_id: 'missing-file',
     });
   });

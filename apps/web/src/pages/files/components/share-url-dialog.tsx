@@ -149,6 +149,7 @@ export function ShareUrlDialog({
                   onClick={handleCopy}
                   className='shrink-0'
                   title='Copy link'
+                  aria-label='Copy link'
                 >
                   {copied ? (
                     <Check className='size-4 text-emerald-500' />

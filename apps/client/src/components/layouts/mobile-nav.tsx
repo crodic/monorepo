@@ -5,7 +5,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { featureLinks, platformLinks } from "@/components/layouts/nav-links";
 import { LinkItem } from "@/components/layouts/sheard";
 import { Link } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
+import { cn, getUserInitials } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { LogOut, MenuIcon, User, XIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -31,12 +31,7 @@ export function MobileNav() {
     };
   }, [open, isMobile]);
 
-  const initials =
-    (
-      (profile?.firstName?.[0] || "") + (profile?.lastName?.[0] || "")
-    ).toUpperCase() ||
-    profile?.email?.slice(0, 2).toUpperCase() ||
-    "U";
+  const initials = getUserInitials(profile);
 
   return (
     <>
@@ -52,7 +47,7 @@ export function MobileNav() {
         <div
           className={cn(
             "transition-all",
-            open ? "scale-100 opacity-100" : "scale-0 opacity-0",
+            open ? "scale-100 opacity-100" : "scale-0 opacity-0"
           )}
         >
           <XIcon aria-hidden="true" className="size-4.5" />
@@ -60,7 +55,7 @@ export function MobileNav() {
         <div
           className={cn(
             "absolute transition-all",
-            open ? "scale-0 opacity-0" : "scale-100 opacity-100",
+            open ? "scale-0 opacity-0" : "scale-100 opacity-100"
           )}
         >
           <MenuIcon aria-hidden="true" className="size-4.5" />
@@ -72,14 +67,14 @@ export function MobileNav() {
           <div
             className={cn(
               "bg-background/95 supports-backdrop-filter:bg-background/80 backdrop-blur-md",
-              "fixed top-14 right-0 bottom-0 left-0 z-40 flex flex-col overflow-hidden border-t md:hidden",
+              "fixed top-14 right-0 bottom-0 left-0 z-40 flex flex-col overflow-hidden border-t md:hidden"
             )}
             id="mobile-menu"
           >
             <div
               className={cn(
                 "data-[slot=open]:zoom-in-97 data-[slot=open]:animate-in ease-out",
-                "size-full overflow-x-hidden overflow-y-auto p-5",
+                "size-full overflow-x-hidden overflow-y-auto p-5"
               )}
               data-slot={open ? "open" : "closed"}
             >
@@ -191,7 +186,7 @@ export function MobileNav() {
               </div>
             </div>
           </div>,
-          document.body,
+          document.body
         )}
     </>
   );

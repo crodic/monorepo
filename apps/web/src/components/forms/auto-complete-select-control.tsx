@@ -36,16 +36,17 @@ const AutoCompleteSelectControl = forwardRef<
       return undefined
     }
 
-    let _value = undefined
+    let _value: PropsValue<Option>
     if (isMulti) {
       _value = options.filter((i) =>
         (value as OptionValue[]).includes((i as Option).id)
-      )
+      ) as PropsValue<Option>
     } else {
-      _value = options.find((i) => (i as Option).id == value) ?? null
+      _value = (options.find((i) => (i as Option).id == value) ??
+        null) as PropsValue<Option>
     }
 
-    return _value as PropsValue<Option>
+    return _value
   }, [isMulti, options, value])
 
   const form = useFormContext()
@@ -57,7 +58,7 @@ const AutoCompleteSelectControl = forwardRef<
         return
       }
 
-      let _value: OptionValue | OptionValue[] | undefined = undefined
+      let _value: OptionValue | OptionValue[] | undefined
       if (Array.isArray(v)) {
         _value = (v as MultiValue<Option>).map((i) => i.id)
       } else {

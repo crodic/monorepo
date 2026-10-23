@@ -109,6 +109,16 @@ export class CountryService {
     return this.findOne(saved.id);
   }
 
+  private resolveNullableId(
+    nextValue: string | AutoIncrementID | null | undefined,
+    currentValue: AutoIncrementID | null,
+  ): AutoIncrementID | null {
+    if (nextValue === undefined) {
+      return currentValue;
+    }
+    return nextValue ? (nextValue as AutoIncrementID) : null;
+  }
+
   async update(
     id: AutoIncrementID,
     dto: UpdateCountryReqDto,
@@ -121,12 +131,7 @@ export class CountryService {
 
     Object.assign(country, {
       ...dto,
-      regionId:
-        dto.regionId !== undefined
-          ? dto.regionId
-            ? (dto.regionId as AutoIncrementID)
-            : null
-          : country.regionId,
+      regionId: this.resolveNullableId(dto.regionId, country.regionId),
     });
 
     await this.countryRepository.save(country);

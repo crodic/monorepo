@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react'
 import type { fonts } from '@/config/fonts'
 import { setCookie, removeCookie } from '@/lib/cookies'
 import {
@@ -44,24 +51,30 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
     applyPersonalFontPreference(font)
   }, [font])
 
-  const setFont = (font: Font) => {
-    if (font === DYNAMIC_THEME_FONT) {
-      resetFont()
-      return
-    }
-
-    setCookie(FONT_COOKIE_NAME, font, FONT_COOKIE_MAX_AGE)
-    _setFont(font)
-  }
-
-  const resetFont = () => {
+  const resetFont = useCallback(() => {
     removeCookie(FONT_COOKIE_NAME)
     _setFont(DYNAMIC_THEME_FONT)
-  }
+  }, [])
 
-  return (
-    <FontContext value={{ font, setFont, resetFont }}>{children}</FontContext>
+  const setFont = useCallback(
+    (newFont: Font) => {
+      if (newFont === DYNAMIC_THEME_FONT) {
+        resetFont()
+        return
+      }
+
+      setCookie(FONT_COOKIE_NAME, newFont, FONT_COOKIE_MAX_AGE)
+      _setFont(newFont)
+    },
+    [resetFont]
   )
+
+  const contextValue = useMemo<FontContextType>(
+    () => ({ font, setFont, resetFont }),
+    [font, setFont, resetFont]
+  )
+
+  return <FontContext value={contextValue}>{children}</FontContext>
 }
 
 export const useFont = () => {

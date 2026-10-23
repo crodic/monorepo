@@ -8,6 +8,46 @@ import {
 
 @Injectable()
 export class FileValidator {
+  private static readonly DANGEROUS_MIME_TYPES = new Set([
+    'text/html',
+    'application/xhtml+xml',
+    'application/javascript',
+    'text/javascript',
+    'application/x-javascript',
+    'image/svg+xml',
+    'application/x-sh',
+    'application/x-msdownload',
+  ]);
+
+  private static readonly DANGEROUS_EXTENSIONS = new Set([
+    'html',
+    'htm',
+    'xhtml',
+    'js',
+    'mjs',
+    'cjs',
+    'svg',
+    'sh',
+    'exe',
+    'php',
+    'jsp',
+  ]);
+
+  static validateSafeMimeAndExtension(
+    mime: string,
+    originalName: string,
+  ): void {
+    const normalizedMime = (mime || '').toLowerCase();
+    const ext = (originalName?.split('.').pop() || '').toLowerCase();
+
+    if (
+      FileValidator.DANGEROUS_MIME_TYPES.has(normalizedMime) ||
+      FileValidator.DANGEROUS_EXTENSIONS.has(ext)
+    ) {
+      throw new BadRequestException(`Invalid file type: ${mime}`);
+    }
+  }
+
   validateImage(
     file: Express.Multer.File,
     options: Pick<UploadImageOptions, 'allowedMimeTypes' | 'maxFileSize'>,
@@ -24,7 +64,7 @@ export class FileValidator {
     }
 
     const ext = this.detectExt(file.mimetype);
-    if (!allowedMimeTypes.includes(ext)) {
+    if (!ext || !allowedMimeTypes.includes(ext)) {
       throw new BadRequestException(`Invalid file type: ${file.mimetype}`);
     }
   }
@@ -36,6 +76,16 @@ export class FileValidator {
     if (file.size > maxFileSize) {
       throw new BadRequestException(
         `File exceeds limit: ${this.formatBytes(maxFileSize)}`,
+      );
+    }
+
+    const isExplicitlyAllowed =
+      allowedMimeTypes.length > 0 && allowedMimeTypes.includes(file.mimetype);
+
+    if (!isExplicitlyAllowed) {
+      FileValidator.validateSafeMimeAndExtension(
+        file.mimetype,
+        file.originalname,
       );
     }
 
@@ -64,10 +114,11 @@ export class FileValidator {
     }
   }
 
-  detectExt(mime: string): 'jpeg' | 'png' | 'webp' {
+  detectExt(mime: string): 'jpeg' | 'png' | 'webp' | null {
     if (mime.includes('png')) return 'png';
     if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpeg';
-    return 'webp';
+    if (mime.includes('webp')) return 'webp';
+    return null;
   }
 
   private formatBytes(bytes: number): string {

@@ -43,6 +43,7 @@ export const fileQueryKeys = {
     'infinite',
     params,
   ],
+  starredCount: () => [...fileQueryKeys.all, 'starred-count'] as const,
   detail: (publicId: string) => [...fileQueryKeys.all, publicId],
   folders: ['file-folders'] as const,
   disks: ['file-disks'] as const,
@@ -203,8 +204,28 @@ export async function apiDeleteFile(publicId: string) {
   return http.delete(`/files/${publicId}`)
 }
 
+export async function apiRestoreFile(publicId: string) {
+  const response = await http.post(`/files/${publicId}/restore`)
+  return fileSchema.parse(response.data)
+}
+
+export async function apiPermanentDeleteFile(publicId: string) {
+  return http.delete(`/files/${publicId}/permanent`)
+}
+
 export async function apiDeleteFiles(publicIds: string[]) {
-  return Promise.all(publicIds.map((publicId) => apiDeleteFile(publicId)))
+  if (publicIds.length === 0) return
+  return http.post('/files/bulk-delete', { public_ids: publicIds })
+}
+
+export async function apiRestoreFiles(publicIds: string[]) {
+  if (publicIds.length === 0) return
+  return http.post('/files/bulk-restore', { public_ids: publicIds })
+}
+
+export async function apiPermanentDeleteFiles(publicIds: string[]) {
+  if (publicIds.length === 0) return
+  return http.post('/files/bulk-permanent-delete', { public_ids: publicIds })
 }
 
 export async function apiGetFileFolders() {
@@ -304,4 +325,26 @@ export const useDataFileDisks = () =>
   useQuery({
     queryKey: fileQueryKeys.disks,
     queryFn: apiGetAvailableDisks,
+  })
+
+export const useDataFileStarredCount = () =>
+  useQuery({
+    queryKey: fileQueryKeys.starredCount(),
+    queryFn: () =>
+      apiGetFileListing({
+        filter: { is_starred: { $eq: true } },
+        limit: 1,
+      }),
+    select: (data) => data.meta.totalItems,
+  })
+
+export const useDataFileTrashCount = () =>
+  useQuery({
+    queryKey: [...fileQueryKeys.all, 'trash-count'] as const,
+    queryFn: () =>
+      apiGetFileListing({
+        filter: { status: { $eq: 'trash' } },
+        limit: 1,
+      }),
+    select: (data) => data.meta.totalItems,
   })

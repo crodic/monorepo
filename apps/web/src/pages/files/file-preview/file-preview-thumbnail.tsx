@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { FileIcon, Music, Video as VideoIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import type { FileSchema } from '../schema'
 import {
@@ -18,6 +19,7 @@ export function VideoThumbnail({
   className?: string
   hoverToPlay?: boolean
 }) {
+  const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement>(null)
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -76,7 +78,9 @@ export function VideoThumbnail({
       >
         <VideoIcon className='size-3' />
         {isPlaying && (
-          <span className='text-[10px] font-semibold'>Playing</span>
+          <span className='text-[10px] font-semibold'>
+            {t('files.preview.playing', 'Playing')}
+          </span>
         )}
       </span>
     </div>

@@ -1,4 +1,3 @@
-import { isAxiosError } from 'axios'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -6,6 +5,7 @@ import { ArrowLeftIcon, SaveIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { restApiErrorHandler } from '@/lib/rest-api-handler'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -58,17 +58,12 @@ export function AdminEditForm({ data }: { data: AdminSchema }) {
   const editAdminMutation = useMutation({
     mutationFn: apiEditAdmin,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin'] })
       queryClient.invalidateQueries({ queryKey: ['admins'] })
       queryClient.invalidateQueries({ queryKey: ['admin'] })
       toast.success('Admin updated successfully')
       navigate(-1)
     },
-    onError: (error) => {
-      if (isAxiosError(error)) {
-        toast.error(error?.response?.data?.message || 'Failed to update admin')
-      }
-    },
+    onError: restApiErrorHandler,
   })
 
   const onSubmit = (values: AdminEditSchema) => {

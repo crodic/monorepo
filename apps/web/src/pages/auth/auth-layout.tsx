@@ -10,7 +10,7 @@ type AuthLayoutProps = {
 }
 
 export function AuthLayout({ children, className }: AuthLayoutProps) {
-  const { isAuthenticated } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const navigate = useNavigate()
 
   useEffect(() => {

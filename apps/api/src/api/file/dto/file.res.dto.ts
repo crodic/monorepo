@@ -1,5 +1,40 @@
-import { Expose } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Type } from 'class-transformer';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+
+export class FileAdminUserSummaryDto {
+  @ApiProperty({ example: '1' })
+  @Expose()
+  @IsString()
+  id: string;
+
+  @ApiProperty({ example: 'John' })
+  @Expose()
+  @IsString()
+  firstName: string;
+
+  @ApiPropertyOptional({ example: 'Doe' })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @ApiProperty({ example: 'John Doe' })
+  @Expose()
+  @IsString()
+  fullName: string;
+
+  @ApiProperty({ example: 'admin@example.com' })
+  @Expose()
+  @IsString()
+  email: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/avatar.png' })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+}
 
 export class FileResDto {
   @IsString()
@@ -63,6 +98,10 @@ export class FileResDto {
   status: string;
 
   @Expose()
+  @IsBoolean()
+  is_starred: boolean;
+
+  @Expose()
   @IsString()
   url: string;
 
@@ -73,4 +112,35 @@ export class FileResDto {
   @Expose()
   @IsString()
   updatedAt: string;
+
+  @ApiPropertyOptional({ example: '1', nullable: true })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  createdByAdminId?: string | null;
+
+  @ApiPropertyOptional({ type: () => FileAdminUserSummaryDto, nullable: true })
+  @Expose()
+  @Type(() => FileAdminUserSummaryDto)
+  createdByAdmin?: FileAdminUserSummaryDto | null;
+
+  @ApiPropertyOptional({ example: '1', nullable: true })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  updatedByAdminId?: string | null;
+
+  @ApiPropertyOptional({ type: () => FileAdminUserSummaryDto, nullable: true })
+  @Expose()
+  @Type(() => FileAdminUserSummaryDto)
+  updatedByAdmin?: FileAdminUserSummaryDto | null;
+
+  @ApiPropertyOptional({
+    example: '2026-10-22T08:00:00.000Z',
+    nullable: true,
+  })
+  @Expose()
+  @IsOptional()
+  @IsString()
+  deletedAt?: string | null;
 }

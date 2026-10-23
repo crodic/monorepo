@@ -27,6 +27,9 @@ export class FileFolderEntity extends AbstractEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   title?: string | null;
 
+  @Column({ type: 'varchar', length: 20, default: '#8B5CF6' })
+  color: string;
+
   @Column({ name: 'parent_id', type: 'bigint', nullable: true })
   @Index('IDX_file_folders_parent_id')
   parentId?: AutoIncrementID | null;

@@ -1,3 +1,4 @@
+import { AutoIncrementID } from '../../common/types/common.type';
 import { StorageDisk } from '../../filesystem/config/storage-config.type';
 import {
   isMultipartCapable,
@@ -32,6 +33,7 @@ import { FileResDto } from './dto/file.res.dto';
 import { FileEntity } from './entities/file.entity';
 import { FileUploadSessionEntity } from './entities/file-upload-session.entity';
 import { FileFolderService } from './file-folder.service';
+import { FileValidator } from './validators/file.validator';
 
 export type ChunkUploadSession = {
   sessionId: string;
@@ -148,7 +150,19 @@ export class FileChunkUploadService {
     return join(process.cwd(), 'storage', 'tmp', 'file-uploads');
   }
 
+  private assertSafeSessionId(sessionId: string): string {
+    if (
+      !sessionId ||
+      typeof sessionId !== 'string' ||
+      !/^[a-zA-Z0-9_-]{1,64}$/.test(sessionId)
+    ) {
+      throw new BadRequestException('Invalid upload session id');
+    }
+    return sessionId;
+  }
+
   private sessionPath(sessionId: string): string {
+    this.assertSafeSessionId(sessionId);
     return join(this.uploadSessionsRoot(), sessionId);
   }
 
@@ -337,6 +351,8 @@ export class FileChunkUploadService {
     size,
     resourceType,
     metadataPath,
+    createdByAdminId,
+    updatedByAdminId,
   }: {
     publicId: string;
     folder: string | null;
@@ -348,6 +364,8 @@ export class FileChunkUploadService {
     size: number;
     resourceType: string;
     metadataPath?: string;
+    createdByAdminId?: AutoIncrementID | null;
+    updatedByAdminId?: AutoIncrementID | null;
   }): Promise<FileEntity> {
     let width: number | null = null;
     let height: number | null = null;
@@ -383,12 +401,16 @@ export class FileChunkUploadService {
       duration: null,
       resource_type: resourceType,
       status: 'active',
+      createdByAdminId,
+      updatedByAdminId,
     });
 
     return this.fileRepository.save(media);
   }
 
   async createUploadSession(dto: CreateChunkUploadSessionDto) {
+    FileValidator.validateSafeMimeAndExtension(dto.mime, dto.originalName);
+
     if (dto.size > FILE_UPLOAD_MAX_SIZE) {
       throw new BadRequestException(
         `File exceeds limit: ${this.formatBytes(FILE_UPLOAD_MAX_SIZE)}`,
@@ -525,7 +547,10 @@ export class FileChunkUploadService {
     };
   }
 
-  async completeUploadSession(sessionId: string): Promise<FileResDto> {
+  async completeUploadSession(
+    sessionId: string,
+    adminId?: AutoIncrementID,
+  ): Promise<FileResDto> {
     const session = await this.readUploadSession(sessionId);
 
     if (session.uploadedChunks.length !== session.totalChunks) {
@@ -573,6 +598,8 @@ export class FileChunkUploadService {
         duration: null,
         resource_type: resourceType,
         status: 'active',
+        createdByAdminId: adminId,
+        updatedByAdminId: adminId,
       });
 
       const saved = await this.fileRepository.save(media);
@@ -580,9 +607,16 @@ export class FileChunkUploadService {
         { id: sessionId },
         { status: 'completed' },
       );
-      await this.abortUploadSession(sessionId);
+      await this.cleanupCompletedSession({
+        id: sessionId,
+      } as FileUploadSessionEntity);
 
-      return this.toDto(saved);
+      const reloaded = await this.fileRepository.findOne({
+        where: { public_id: saved.public_id },
+        relations: ['createdByAdmin', 'updatedByAdmin'],
+      });
+
+      return this.toDto(reloaded ?? saved);
     }
 
     for (let index = 0; index < session.totalChunks; index++) {
@@ -642,15 +676,42 @@ export class FileChunkUploadService {
       size: fileStat.size,
       resourceType,
       metadataPath: mergedPath,
+      createdByAdminId: adminId,
+      updatedByAdminId: adminId,
     });
 
     await this.sessionRepository.update(
       { id: sessionId },
       { status: 'completed' },
     );
-    await this.abortUploadSession(sessionId);
+    await this.cleanupCompletedSession({
+      id: sessionId,
+    } as FileUploadSessionEntity);
 
-    return this.toDto(media);
+    const reloaded = await this.fileRepository.findOne({
+      where: { public_id: media.public_id },
+      relations: ['createdByAdmin', 'updatedByAdmin'],
+    });
+
+    return this.toDto(reloaded ?? media);
+  }
+
+  private async cleanupCompletedSession(
+    session: Pick<FileUploadSessionEntity, 'id'>,
+  ): Promise<void> {
+    if (this.redis) {
+      try {
+        await this.redis.del(`chunk_session:${session.id}`);
+      } catch {
+        // Ignore redis delete failure
+      }
+    }
+
+    try {
+      await rm(this.sessionPath(session.id), { recursive: true, force: true });
+    } catch {
+      // Ignore directory removal failure
+    }
   }
 
   async abortUploadSession(sessionId: string): Promise<{ message: string }> {

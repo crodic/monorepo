@@ -12,6 +12,7 @@ import { DataTable } from '@/components/data-table/data-table'
 import { DataTableSortList } from '@/components/data-table/data-table-sort-list'
 import { DataTableToolbar } from '@/components/data-table/data-table-toolbar'
 import { Main } from '@/components/layout/main'
+import { PageHeader } from '@/components/layout/page-shell'
 import { getCmsPagesTableColumns } from './columns'
 import { useDataCmsPageOverview } from './queries'
 import { ColumnKey, type CmsPageSchema } from './schema'
@@ -55,20 +56,16 @@ export function PageCmsPageOverview() {
   return (
     <>
       <Main className='flex flex-1 flex-col gap-4 sm:gap-6'>
-        <div className='flex flex-wrap items-end justify-between gap-2'>
-          <div>
-            <h2 className='text-2xl font-bold tracking-tight'>
-              {t('cmsPages.overview.title')}
-            </h2>
-            <p className='text-muted-foreground'>
-              {t('cmsPages.overview.description')}
-            </p>
-          </div>
-          <Button onClick={() => navigate('create')}>
-            <PlusIcon />
-            {t('buttons.create')}
-          </Button>
-        </div>
+        <PageHeader
+          title={t('cmsPages.overview.title')}
+          description={t('cmsPages.overview.description')}
+          actions={
+            <Button onClick={() => navigate('create')}>
+              <PlusIcon className='size-4' aria-hidden='true' />
+              {t('buttons.create')}
+            </Button>
+          }
+        />
         <DataTable
           table={table}
           isFetching={isFetching}

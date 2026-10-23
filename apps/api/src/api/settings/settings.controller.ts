@@ -1,8 +1,12 @@
 import { ApiAuth } from '../../decorators/http.decorators';
+import { CheckPolicies } from '../../decorators/policies.decorator';
 import { FilesystemService } from '../../filesystem/filesystem.service';
 import { AdminAuthGuard } from '../../guards/admin-auth.guard';
+import { PoliciesGuard } from '../../guards/policies.guard';
 import { SettingKeyValidationPipe } from '../../pipes/setting-key-validation.pipe';
+import { AppAbility } from '../../shared/casl/ability.factory';
 import { getPackageVersion } from '../../utils/app-version.util';
+import { AppActions, AppSubjects } from '../../utils/permissions.constant';
 import {
   BadRequestException,
   Body,
@@ -149,7 +153,10 @@ export class SettingsController {
       websiteUploadOptions,
     ),
   )
-  @UseGuards(AdminAuthGuard)
+  @UseGuards(AdminAuthGuard, PoliciesGuard)
+  @CheckPolicies((ability: AppAbility) =>
+    ability.can(AppActions.Update, AppSubjects.Setting),
+  )
   async updateWebsiteSetting(
     @Param('key', SettingKeyValidationPipe) key: string,
     @Body() dto: UpdateWebsiteSettingReqDto,

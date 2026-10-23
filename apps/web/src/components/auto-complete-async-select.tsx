@@ -104,29 +104,25 @@ export interface AutoCompleteAsyncSelectProps<
   }>
 }
 
-// ===== AUTO COMPLETE ASYNC SELECT (DEFAULT) =====
-export function AutoCompleteAsyncSelect<
-  TOption = OptionType,
-  TGroup extends GroupBase<TOption> = GroupBase<TOption>,
-  TAdditional = PaginationAdditional,
-  TIsMulti extends boolean = false,
->({
-  fetchOptions,
-  loadOptions,
-  additional,
-  className,
-  styles,
-  classNames,
-  theme,
-  components,
-  debounceTimeout = 400,
-  isClearable = true,
-  isSearchable = true,
-  getOptionLabel,
-  getOptionValue,
-  ...props
-}: AutoCompleteAsyncSelectProps<TOption, TGroup, TAdditional, TIsMulti>) {
-  const internalLoadOptions = useCallback(
+const defaultGetOptionLabel = (opt: any) =>
+  opt?.label ?? opt?.name ?? String(opt?.value ?? opt?.id ?? '')
+
+const defaultGetOptionValue = (opt: any) =>
+  String(opt?.value ?? opt?.id ?? opt?.label ?? '')
+
+function useAsyncOptionsLoader<
+  TOption,
+  TGroup extends GroupBase<TOption>,
+  TAdditional,
+>(
+  fetchOptions?: FetchOptionsFn<TOption>,
+  loadOptions?: AutoCompleteAsyncSelectProps<
+    TOption,
+    TGroup,
+    TAdditional
+  >['loadOptions']
+) {
+  return useCallback(
     async (
       search: string,
       loadedOptions: OptionsOrGroups<TOption, TGroup>,
@@ -138,7 +134,7 @@ export function AutoCompleteAsyncSelect<
         const res = await fetchOptions(search, page)
         const data = ('data' in res ? res.data : (res as any).options) ?? []
 
-        let hasMore = false
+        let hasMore: boolean
         if (typeof res.hasMore === 'boolean') {
           hasMore = res.hasMore
         } else if (typeof res.totalPages === 'number') {
@@ -166,14 +162,35 @@ export function AutoCompleteAsyncSelect<
     },
     [fetchOptions, loadOptions]
   )
+}
 
-  const defaultGetOptionLabel = useCallback((opt: any) => {
-    return opt?.label ?? opt?.name ?? String(opt?.value ?? opt?.id ?? '')
-  }, [])
-
-  const defaultGetOptionValue = useCallback((opt: any) => {
-    return String(opt?.value ?? opt?.id ?? opt?.label ?? '')
-  }, [])
+// ===== AUTO COMPLETE ASYNC SELECT (DEFAULT) =====
+export function AutoCompleteAsyncSelect<
+  TOption = OptionType,
+  TGroup extends GroupBase<TOption> = GroupBase<TOption>,
+  TAdditional = PaginationAdditional,
+  TIsMulti extends boolean = false,
+>({
+  fetchOptions,
+  loadOptions,
+  additional,
+  className,
+  styles,
+  classNames,
+  theme,
+  components,
+  debounceTimeout = 400,
+  isClearable = true,
+  isSearchable = true,
+  getOptionLabel,
+  getOptionValue,
+  ...props
+}: AutoCompleteAsyncSelectProps<TOption, TGroup, TAdditional, TIsMulti>) {
+  const internalLoadOptions = useAsyncOptionsLoader<
+    TOption,
+    TGroup,
+    TAdditional
+  >(fetchOptions, loadOptions)
 
   return (
     <AsyncPaginate<TOption, TGroup, TAdditional, TIsMulti>
@@ -216,54 +233,11 @@ export function AutoCompleteAsyncCreatableSelect<
   getOptionValue,
   ...props
 }: AutoCompleteAsyncSelectProps<TOption, TGroup, TAdditional, TIsMulti>) {
-  const internalLoadOptions = useCallback(
-    async (
-      search: string,
-      loadedOptions: OptionsOrGroups<TOption, TGroup>,
-      currentAdditional?: TAdditional
-    ) => {
-      const page = (currentAdditional as any)?.page ?? 1
-
-      if (fetchOptions) {
-        const res = await fetchOptions(search, page)
-        const data = ('data' in res ? res.data : (res as any).options) ?? []
-
-        let hasMore = false
-        if (typeof res.hasMore === 'boolean') {
-          hasMore = res.hasMore
-        } else if (typeof res.totalPages === 'number') {
-          hasMore = page < res.totalPages
-        } else {
-          hasMore = data.length > 0
-        }
-
-        return {
-          options: data,
-          hasMore,
-          additional: { page: page + 1 } as unknown as TAdditional,
-        }
-      }
-
-      if (loadOptions) {
-        return loadOptions(search, loadedOptions, currentAdditional)
-      }
-
-      return {
-        options: [],
-        hasMore: false,
-        additional: currentAdditional,
-      }
-    },
-    [fetchOptions, loadOptions]
-  )
-
-  const defaultGetOptionLabel = useCallback((opt: any) => {
-    return opt?.label ?? opt?.name ?? String(opt?.value ?? opt?.id ?? '')
-  }, [])
-
-  const defaultGetOptionValue = useCallback((opt: any) => {
-    return String(opt?.value ?? opt?.id ?? opt?.label ?? '')
-  }, [])
+  const internalLoadOptions = useAsyncOptionsLoader<
+    TOption,
+    TGroup,
+    TAdditional
+  >(fetchOptions, loadOptions)
 
   return (
     <AsyncPaginateCreatable<TOption, TGroup, TAdditional, TIsMulti>

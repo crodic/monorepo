@@ -22,9 +22,14 @@ export class EmailService {
   ) {}
 
   async findAll(
-    query: PaginateQuery,
+    rawQuery: PaginateQuery,
     filter: Partial<EmailLogEntity> = {},
   ): Promise<Paginated<EmailLogResDto>> {
+    const query: PaginateQuery = {
+      ...rawQuery,
+      filter: rawQuery.filter ? { ...rawQuery.filter } : undefined,
+    };
+
     const qb = this.emailLogRepository
       .createQueryBuilder('emailLog')
       .leftJoinAndSelect('emailLog.createdByAdmin', 'createdByAdmin');

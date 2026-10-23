@@ -182,44 +182,16 @@ export function DataTable<TData>({
               ))}
             </TableHeader>
             <TableBody>
-              {isFetching ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={table.getAllColumns().length}
-                    className='h-48'
-                  >
-                    <div className='flex items-center justify-center'>
-                      <Loader2 className='animate-spin' size={32} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows?.length ? (
-                table
-                  .getRowModel()
-                  .rows.map((row) => (
-                    <DataTableRow
-                      key={row.id}
-                      row={row}
-                      onClickRowAction={onClickRowAction}
-                      renderSubRow={renderSubRow}
-                      subRowClassName={subRowClassName}
-                      colSpan={colSpan}
-                    />
-                  ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={table.getAllColumns().length}
-                    className='p-0 text-center'
-                  >
-                    <DataTableEmptyState
-                      table={table}
-                      emptyState={emptyState}
-                      onResetFilters={onResetFilters}
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
+              <DataTableBodyContent
+                table={table}
+                isFetching={isFetching}
+                onClickRowAction={onClickRowAction}
+                renderSubRow={renderSubRow}
+                subRowClassName={subRowClassName}
+                colSpan={colSpan}
+                emptyState={emptyState}
+                onResetFilters={onResetFilters}
+              />
             </TableBody>
           </Table>
         )}
@@ -398,47 +370,165 @@ function DataTableVirtualized<TData>({
             position: 'relative',
           }}
         >
-          {isFetching ? (
-            <tr className='flex h-48 items-center justify-center'>
-              <td>
-                <Loader2 className='animate-spin' size={32} />
-              </td>
-            </tr>
-          ) : rows.length ? (
-            virtualRows.map((virtualRow) => {
-              const row = rows[virtualRow.index]
-              if (!row) return null
-
-              return (
-                <DataTableVirtualizedRow
-                  key={row.id}
-                  row={row}
-                  virtualRow={virtualRow}
-                  rowVirtualizer={rowVirtualizer}
-                  onClickRowAction={onClickRowAction}
-                  renderSubRow={renderSubRow}
-                  subRowClassName={subRowClassName}
-                  beforeVirtualColumns={beforeVirtualColumns}
-                  afterVirtualColumns={afterVirtualColumns}
-                  virtualColumns={virtualColumns}
-                  enableVirtualRows={enableVirtualRows}
-                />
-              )
-            })
-          ) : (
-            <tr className='flex w-full items-center justify-center'>
-              <td className='w-full p-0 text-center'>
-                <DataTableEmptyState
-                  table={table}
-                  emptyState={emptyState}
-                  onResetFilters={onResetFilters}
-                />
-              </td>
-            </tr>
-          )}
+          <DataTableVirtualizedBodyContent
+            table={table}
+            isFetching={isFetching}
+            rows={rows}
+            virtualRows={virtualRows}
+            rowVirtualizer={rowVirtualizer}
+            onClickRowAction={onClickRowAction}
+            renderSubRow={renderSubRow}
+            subRowClassName={subRowClassName}
+            beforeVirtualColumns={beforeVirtualColumns}
+            afterVirtualColumns={afterVirtualColumns}
+            virtualColumns={virtualColumns}
+            enableVirtualRows={enableVirtualRows}
+            emptyState={emptyState}
+            onResetFilters={onResetFilters}
+          />
         </tbody>
       </table>
     </div>
+  )
+}
+
+function DataTableBodyContent<TData>({
+  table,
+  isFetching,
+  onClickRowAction,
+  renderSubRow,
+  subRowClassName,
+  colSpan,
+  emptyState,
+  onResetFilters,
+}: {
+  table: TanstackTable<TData>
+  isFetching?: boolean
+  onClickRowAction?: (row: TData) => void
+  renderSubRow?: (row: Row<TData>) => React.ReactNode
+  subRowClassName?: string
+  colSpan: number
+  emptyState?: React.ReactNode
+  onResetFilters?: () => void
+}) {
+  if (isFetching) {
+    return (
+      <TableRow>
+        <TableCell colSpan={table.getAllColumns().length} className='h-48'>
+          <div className='flex items-center justify-center'>
+            <Loader2 className='animate-spin' size={32} />
+          </div>
+        </TableCell>
+      </TableRow>
+    )
+  }
+
+  const rows = table.getRowModel().rows
+  if (rows?.length) {
+    return rows.map((row) => (
+      <DataTableRow
+        key={row.id}
+        row={row}
+        onClickRowAction={onClickRowAction}
+        renderSubRow={renderSubRow}
+        subRowClassName={subRowClassName}
+        colSpan={colSpan}
+      />
+    ))
+  }
+
+  return (
+    <TableRow>
+      <TableCell
+        colSpan={table.getAllColumns().length}
+        className='p-0 text-center'
+      >
+        <DataTableEmptyState
+          table={table}
+          emptyState={emptyState}
+          onResetFilters={onResetFilters}
+        />
+      </TableCell>
+    </TableRow>
+  )
+}
+
+function DataTableVirtualizedBodyContent<TData>({
+  table,
+  isFetching,
+  rows,
+  virtualRows,
+  rowVirtualizer,
+  onClickRowAction,
+  renderSubRow,
+  subRowClassName,
+  beforeVirtualColumns,
+  afterVirtualColumns,
+  virtualColumns,
+  enableVirtualRows,
+  emptyState,
+  onResetFilters,
+}: {
+  table: TanstackTable<TData>
+  isFetching?: boolean
+  rows: Row<TData>[]
+  virtualRows: Array<Pick<VirtualItem, 'index' | 'key' | 'start' | 'size'>>
+  rowVirtualizer: ReturnType<
+    typeof useVirtualizer<HTMLDivElement, HTMLTableRowElement>
+  >
+  onClickRowAction?: (row: TData) => void
+  renderSubRow?: (row: Row<TData>) => React.ReactNode
+  subRowClassName?: string
+  beforeVirtualColumns: number
+  afterVirtualColumns: number
+  virtualColumns: Array<Pick<VirtualItem, 'index' | 'key' | 'start' | 'size'>>
+  enableVirtualRows?: boolean
+  emptyState?: React.ReactNode
+  onResetFilters?: () => void
+}) {
+  if (isFetching) {
+    return (
+      <tr className='flex h-48 items-center justify-center'>
+        <td>
+          <Loader2 className='animate-spin' size={32} />
+        </td>
+      </tr>
+    )
+  }
+
+  if (rows.length > 0) {
+    return virtualRows.map((virtualRow) => {
+      const row = rows[virtualRow.index]
+      if (!row) return null
+
+      return (
+        <DataTableVirtualizedRow
+          key={row.id}
+          row={row}
+          virtualRow={virtualRow}
+          rowVirtualizer={rowVirtualizer}
+          onClickRowAction={onClickRowAction}
+          renderSubRow={renderSubRow}
+          subRowClassName={subRowClassName}
+          beforeVirtualColumns={beforeVirtualColumns}
+          afterVirtualColumns={afterVirtualColumns}
+          virtualColumns={virtualColumns}
+          enableVirtualRows={enableVirtualRows}
+        />
+      )
+    })
+  }
+
+  return (
+    <tr className='flex w-full items-center justify-center'>
+      <td className='w-full p-0 text-center'>
+        <DataTableEmptyState
+          table={table}
+          emptyState={emptyState}
+          onResetFilters={onResetFilters}
+        />
+      </td>
+    </tr>
   )
 }
 
@@ -548,55 +638,74 @@ function getVirtualCells<TData>(
     .filter((cell): cell is Cell<TData, unknown> => Boolean(cell))
 }
 
-function DataTableRow<TData>({
-  row,
-  onClickRowAction,
-  renderSubRow,
-  subRowClassName,
-  colSpan,
-}: {
+const DataTableRow = React.memo(
+  function DataTableRow<TData>({
+    row,
+    onClickRowAction,
+    renderSubRow,
+    subRowClassName,
+    colSpan,
+  }: {
+    row: Row<TData>
+    onClickRowAction?: (row: TData) => void
+    renderSubRow?: (row: Row<TData>) => React.ReactNode
+    subRowClassName?: string
+    colSpan: number
+  }) {
+    return (
+      <>
+        <TableRow data-state={row.getIsSelected() && 'selected'}>
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              style={{
+                ...getCommonPinningStyles({ column: cell.column }),
+                minWidth: `${cell.column.columnDef.minSize}px`,
+              }}
+              onClick={() =>
+                cell.id.includes('actions') ||
+                cell.id.includes('select') ||
+                cell.id.includes('expand')
+                  ? undefined
+                  : onClickRowAction?.(row.original)
+              }
+              className={cn(onClickRowAction && 'cursor-pointer')}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+        {renderSubRow && row.getIsExpanded() && (
+          <TableRow className='hover:bg-transparent'>
+            <TableCell
+              colSpan={colSpan}
+              className={cn('bg-muted/30 whitespace-normal', subRowClassName)}
+            >
+              {renderSubRow(row)}
+            </TableCell>
+          </TableRow>
+        )}
+      </>
+    )
+  },
+  (prev, next) => {
+    if (prev.row.id !== next.row.id) return false
+    if (prev.row.getIsSelected() !== next.row.getIsSelected()) return false
+    if (prev.row.getIsExpanded() !== next.row.getIsExpanded()) return false
+    if (prev.row.original !== next.row.original) return false
+    if (prev.colSpan !== next.colSpan) return false
+    if (prev.subRowClassName !== next.subRowClassName) return false
+    if (prev.onClickRowAction !== next.onClickRowAction) return false
+    if (prev.renderSubRow !== next.renderSubRow) return false
+    return true
+  }
+) as <TData>(props: {
   row: Row<TData>
   onClickRowAction?: (row: TData) => void
   renderSubRow?: (row: Row<TData>) => React.ReactNode
   subRowClassName?: string
   colSpan: number
-}) {
-  return (
-    <>
-      <TableRow data-state={row.getIsSelected() && 'selected'}>
-        {row.getVisibleCells().map((cell) => (
-          <TableCell
-            key={cell.id}
-            style={{
-              ...getCommonPinningStyles({ column: cell.column }),
-              minWidth: `${cell.column.columnDef.minSize}px`,
-            }}
-            onClick={() =>
-              cell.id.includes('actions') ||
-              cell.id.includes('select') ||
-              cell.id.includes('expand')
-                ? undefined
-                : onClickRowAction?.(row.original)
-            }
-            className={cn(onClickRowAction && 'cursor-pointer')}
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        ))}
-      </TableRow>
-      {renderSubRow && row.getIsExpanded() && (
-        <TableRow className='hover:bg-transparent'>
-          <TableCell
-            colSpan={colSpan}
-            className={cn('bg-muted/30 whitespace-normal', subRowClassName)}
-          >
-            {renderSubRow(row)}
-          </TableCell>
-        </TableRow>
-      )}
-    </>
-  )
-}
+}) => React.ReactNode
 
 export function DataTableExpandCell<TData>({ row }: { row: Row<TData> }) {
   const canExpand = row.getCanExpand()

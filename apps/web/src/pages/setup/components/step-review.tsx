@@ -34,6 +34,25 @@ type StepReviewProps = {
   onBack: () => void
 }
 
+function getThemeBadgeVariant(
+  isCustomModified: boolean,
+  selectedThemeKey: string
+): 'default' | 'secondary' {
+  if (isCustomModified) return 'default'
+  if (selectedThemeKey === 'blue') return 'secondary'
+  return 'default'
+}
+
+function getThemeBadgeLabel(
+  isCustomModified: boolean,
+  selectedThemeKey: string,
+  customActiveLabel: string
+): string {
+  if (isCustomModified) return customActiveLabel
+  if (selectedThemeKey === 'blue') return 'Default'
+  return 'Preset'
+}
+
 export function StepReview({
   siteBrandValue,
   selectedThemeKey,
@@ -103,20 +122,14 @@ export function StepReview({
               </p>
             </div>
             <Badge
-              variant={
-                isCustomModified
-                  ? 'default'
-                  : selectedThemeKey === 'blue'
-                    ? 'secondary'
-                    : 'default'
-              }
+              variant={getThemeBadgeVariant(isCustomModified, selectedThemeKey)}
               className='text-[10px]'
             >
-              {isCustomModified
-                ? t('setup.theme.customActiveBadge')
-                : selectedThemeKey === 'blue'
-                  ? 'Default'
-                  : 'Preset'}
+              {getThemeBadgeLabel(
+                isCustomModified,
+                selectedThemeKey,
+                t('setup.theme.customActiveBadge')
+              )}
             </Badge>
           </div>
 

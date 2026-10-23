@@ -16,13 +16,13 @@ export function ensureClientThemeCacheVersion() {
   if (typeof window === "undefined") return;
   try {
     const currentVersion = localStorage.getItem(
-      CLIENT_THEME_VERSION_STORAGE_KEY,
+      CLIENT_THEME_VERSION_STORAGE_KEY
     );
     if (currentVersion !== CLIENT_THEME_CACHE_VERSION) {
       localStorage.removeItem(CLIENT_WHITE_LABEL_STORAGE_KEY);
       localStorage.setItem(
         CLIENT_THEME_VERSION_STORAGE_KEY,
-        CLIENT_THEME_CACHE_VERSION,
+        CLIENT_THEME_CACHE_VERSION
       );
     }
   } catch {
@@ -49,11 +49,11 @@ export function setCachedClientWhiteLabel(data: ActiveClientWhiteLabel | null) {
     } else {
       localStorage.setItem(
         CLIENT_WHITE_LABEL_STORAGE_KEY,
-        JSON.stringify(data),
+        JSON.stringify(data)
       );
       localStorage.setItem(
         CLIENT_THEME_VERSION_STORAGE_KEY,
-        CLIENT_THEME_CACHE_VERSION,
+        CLIENT_THEME_CACHE_VERSION
       );
     }
   } catch {
@@ -78,7 +78,7 @@ export async function fetchActiveClientWhiteLabel(): Promise<ActiveClientWhiteLa
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      },
+      }
     );
 
     if (!response.ok) {
@@ -90,13 +90,14 @@ export async function fetchActiveClientWhiteLabel(): Promise<ActiveClientWhiteLa
       setCachedClientWhiteLabel(data);
     }
     return data;
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch active client white-label:", error);
     return null;
   }
 }
 
 export function useActiveClientWhiteLabel(
-  initialData?: ActiveClientWhiteLabel | null,
+  initialData?: ActiveClientWhiteLabel | null
 ) {
   return useQuery({
     queryKey: CLIENT_WHITE_LABEL_QUERY_KEY,

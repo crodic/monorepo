@@ -33,7 +33,7 @@ export function UserAuthForm({
   ...props
 }: UserAuthFormProps) {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const login = useAuthStore((s) => s.login)
   const [twoFactorToken, setTwoFactorToken] = useState<string | null>(null)
   const [pendingUserId, setPendingUserId] = useState<string | null>(null)
   const [twoFactorFocusNonce, setTwoFactorFocusNonce] = useState(0)

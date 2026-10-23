@@ -33,11 +33,31 @@ export type BuildSortableImagesOptions = {
 export class SortableImageUploadService {
   private readonly defaultUploadFolder = 'sortable-images';
   private readonly defaultMaxImageSize = 10 * 1024 * 1024;
+  private static readonly OWNER_KEY_REGEX = /^[a-zA-Z0-9:_-]{1,100}$/;
+  private static readonly ALLOWED_MIME_TO_EXT: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+    'image/avif': 'avif',
+  };
 
   constructor(
     private readonly storage: FilesystemService,
     private readonly configService: ConfigService<AllConfigType>,
   ) {}
+
+  validateOwnerKey(ownerKey: string): string {
+    if (
+      !ownerKey ||
+      !SortableImageUploadService.OWNER_KEY_REGEX.test(ownerKey)
+    ) {
+      throw new BadRequestException(
+        'Invalid ownerKey: must match /^[a-zA-Z0-9:_-]{1,100}$/',
+      );
+    }
+    return ownerKey;
+  }
 
   async buildNextImages({
     currentImages,
@@ -151,16 +171,24 @@ export class SortableImageUploadService {
       maxImageSize?: number;
     } = {},
   ): Promise<SortableImageStoredItem> {
-    if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException(`${file.originalname} must be an image`);
+    const ext = SortableImageUploadService.ALLOWED_MIME_TO_EXT[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException(
+        `${file.originalname} must be a valid raster image (JPEG, PNG, WebP, GIF, AVIF)`,
+      );
     }
 
     if (file.size > maxImageSize) {
       throw new BadRequestException(`${file.originalname} is too large`);
     }
 
+    if (!this.verifyMagicBytes(file.buffer, file.mimetype)) {
+      throw new BadRequestException(
+        `${file.originalname} content does not match declared image MIME type`,
+      );
+    }
+
     const publicId = randomUUID().replace(/-/g, '').slice(0, 20);
-    const ext = this.getFileExtension(file);
     const path = posixPath.join('image', uploadFolder, `${publicId}.${ext}`);
 
     await this.storage.disk().put(path, file.buffer, {
@@ -192,6 +220,12 @@ export class SortableImageUploadService {
       );
     }
 
+    if (!this.isSafeImageUrl(src)) {
+      throw new BadRequestException(
+        'Invalid image src URL: must be a safe http://, https://, or relative / URL',
+      );
+    }
+
     return {
       id: item.id,
       src,
@@ -199,6 +233,71 @@ export class SortableImageUploadService {
       filePublicId: storedImage?.filePublicId,
       path: storedImage?.path,
     };
+  }
+
+  private isSafeImageUrl(src: string): boolean {
+    if (!src || typeof src !== 'string') {
+      return false;
+    }
+    const trimmed = src.trim();
+    if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+      return true;
+    }
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  private verifyMagicBytes(buffer: Buffer, mime: string): boolean {
+    if (!buffer || buffer.length < 4) {
+      return false;
+    }
+
+    switch (mime) {
+      case 'image/jpeg':
+        return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+      case 'image/png':
+        return (
+          buffer.length >= 8 &&
+          buffer[0] === 0x89 &&
+          buffer[1] === 0x50 &&
+          buffer[2] === 0x4e &&
+          buffer[3] === 0x47 &&
+          buffer[4] === 0x0d &&
+          buffer[5] === 0x0a &&
+          buffer[6] === 0x1a &&
+          buffer[7] === 0x0a
+        );
+      case 'image/gif':
+        return (
+          buffer.length >= 6 &&
+          buffer[0] === 0x47 &&
+          buffer[1] === 0x49 &&
+          buffer[2] === 0x46 &&
+          buffer[3] === 0x38 &&
+          (buffer[4] === 0x37 || buffer[4] === 0x39) &&
+          buffer[5] === 0x61
+        );
+      case 'image/webp':
+        return (
+          buffer.length >= 12 &&
+          buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+          buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+        );
+      case 'image/avif':
+        return (
+          buffer.length >= 12 &&
+          buffer.subarray(4, 8).toString('ascii') === 'ftyp' &&
+          ['avif', 'avis', 'mif1', 'msf1'].includes(
+            buffer.subarray(8, 12).toString('ascii'),
+          )
+        );
+      default:
+        return false;
+    }
   }
 
   private createMulterFileFromDataUrl(
@@ -221,15 +320,6 @@ export class SortableImageUploadService {
       size: buffer.length,
       buffer,
     } as Express.Multer.File;
-  }
-
-  private getFileExtension(file: Express.Multer.File) {
-    const originalExt = file.originalname.split('.').pop();
-    if (originalExt && originalExt !== file.originalname) {
-      return originalExt.toLowerCase();
-    }
-
-    return file.mimetype.split('/').pop() || 'jpg';
   }
 
   private getPublicStorageUrl(path: string) {

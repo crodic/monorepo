@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, Navigate, Outlet } from 'react-router'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth-store'
 import Loader from '@/components/loader'
 import { useGetSetupStatusQuery } from '@/pages/setup/queries'
@@ -7,7 +8,12 @@ import { useGetSetupStatusQuery } from '@/pages/setup/queries'
 export function SetupGuard() {
   const location = useLocation()
   const { data, isLoading, error } = useGetSetupStatusQuery()
-  const { isAuthenticated, logout } = useAuthStore()
+  const { isAuthenticated, logout } = useAuthStore(
+    useShallow((s) => ({
+      isAuthenticated: s.isAuthenticated,
+      logout: s.logout,
+    }))
+  )
 
   const initialized = data?.initialized ?? true
 

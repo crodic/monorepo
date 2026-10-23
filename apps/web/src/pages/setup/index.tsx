@@ -71,50 +71,6 @@ export function PageSystemSetup() {
     },
   })
 
-  const passwordValue = form.watch('password') || ''
-  const confirmPasswordValue = form.watch('confirmPassword') || ''
-  const siteBrandValue = form.watch('site_brand') || ''
-  const firstNameValue = form.watch('firstName') || ''
-  const lastNameValue = form.watch('lastName') || ''
-  const emailValue = form.watch('email') || ''
-  const selectedThemeKey = form.watch('theme_key') || colorKey || 'blue'
-
-  // Real-time password requirement checklist
-  const passwordCriteria = [
-    {
-      key: 'min',
-      valid: passwordValue.length >= 8,
-      label: t('setup.pwdReq.min'),
-    },
-    {
-      key: 'upper',
-      valid: /[A-Z]/.test(passwordValue),
-      label: t('setup.pwdReq.upper'),
-    },
-    {
-      key: 'lower',
-      valid: /[a-z]/.test(passwordValue),
-      label: t('setup.pwdReq.lower'),
-    },
-    {
-      key: 'number',
-      valid: /[0-9]/.test(passwordValue),
-      label: t('setup.pwdReq.number'),
-    },
-    {
-      key: 'special',
-      valid: /[^a-zA-Z0-9]/.test(passwordValue),
-      label: t('setup.pwdReq.special'),
-    },
-    {
-      key: 'match',
-      valid:
-        confirmPasswordValue.length > 0 &&
-        confirmPasswordValue === passwordValue,
-      label: t('setup.pwdReq.match'),
-    },
-  ]
-
   const handleNextFromStep1 = async () => {
     const isStep1Valid = await form.trigger(['site_brand'])
     if (isStep1Valid) {
@@ -194,16 +150,9 @@ export function PageSystemSetup() {
                 {/* Progress bar line */}
                 <div className='bg-muted h-1.5 w-full'>
                   <div
-                    className='bg-primary h-full transition-all duration-300'
+                    className='bg-primary h-full transition-[width] duration-200 ease-out'
                     style={{
-                      width:
-                        step === 1
-                          ? '25%'
-                          : step === 2
-                            ? '50%'
-                            : step === 3
-                              ? '75%'
-                              : '100%',
+                      width: `${step * 25}%`,
                     }}
                   />
                 </div>
@@ -211,16 +160,14 @@ export function PageSystemSetup() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     {step === 1 && (
-                      <StepBrand
-                        form={form}
-                        siteBrandValue={siteBrandValue}
-                        onNext={handleNextFromStep1}
-                      />
+                      <StepBrand form={form} onNext={handleNextFromStep1} />
                     )}
 
                     {step === 2 && (
                       <StepTheme
-                        selectedThemeKey={selectedThemeKey}
+                        selectedThemeKey={
+                          form.getValues('theme_key') || colorKey || 'blue'
+                        }
                         isCustomModified={isCustomModified}
                         customStyles={customStyles}
                         editorMode={editorMode}
@@ -238,7 +185,6 @@ export function PageSystemSetup() {
                     {step === 3 && (
                       <StepAdmin
                         form={form}
-                        passwordCriteria={passwordCriteria}
                         onBack={() => setStep(2)}
                         onNext={handleNextFromStep3}
                       />
@@ -246,13 +192,15 @@ export function PageSystemSetup() {
 
                     {step === 4 && (
                       <StepReview
-                        siteBrandValue={siteBrandValue}
-                        selectedThemeKey={selectedThemeKey}
+                        siteBrandValue={form.getValues('site_brand') || ''}
+                        selectedThemeKey={
+                          form.getValues('theme_key') || colorKey || 'blue'
+                        }
                         isCustomModified={isCustomModified}
                         customStyles={customStyles}
-                        firstNameValue={firstNameValue}
-                        lastNameValue={lastNameValue}
-                        emailValue={emailValue}
+                        firstNameValue={form.getValues('firstName') || ''}
+                        lastNameValue={form.getValues('lastName') || ''}
+                        emailValue={form.getValues('email') || ''}
                         isPending={isPending}
                         onBack={() => setStep(3)}
                       />

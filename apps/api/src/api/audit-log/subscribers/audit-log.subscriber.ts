@@ -201,6 +201,46 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     }
   }
 
+  private static readonly IGNORED_DIFF_KEYS = new Set([
+    'updatedAt',
+    'updated_at',
+    'createdAt',
+    'created_at',
+    'id',
+  ]);
+
+  private resolveActorName(currentUser: any, causerId: string | null): string {
+    if (currentUser?.fullName) {
+      return currentUser.fullName;
+    }
+    if (currentUser?.firstName || currentUser?.lastName) {
+      return `${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}`.trim();
+    }
+    if (currentUser?.email) {
+      return currentUser.email;
+    }
+    return causerId ? 'Administrator' : 'System';
+  }
+
+  private resolveAuditRepository(event: any, fallbackRepo: any) {
+    if (this.dataSource && this.dataSource.isInitialized) {
+      return this.dataSource.getRepository(ActivityLogEntity);
+    }
+    return event.manager?.getRepository(ActivityLogEntity) ?? fallbackRepo;
+  }
+
+  private isTrackableFieldChange(
+    action: string,
+    key: string,
+    oldVal: unknown,
+    newVal: unknown,
+  ): boolean {
+    if (action !== 'UPDATE') return false;
+    if (oldVal === undefined || newVal === undefined) return false;
+    if (AuditLogSubscriber.IGNORED_DIFF_KEYS.has(key)) return false;
+    return JSON.stringify(oldVal) !== JSON.stringify(newVal);
+  }
+
   private async saveLog(
     action: 'INSERT' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'SOFT_DELETE',
     event: any,
@@ -229,7 +269,6 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     const cls = ClsServiceManager.getClsService();
     const auditRepo = event.manager.getRepository(ActivityLogEntity);
     const currentUser = cls.get('user') ?? {};
-    const userId = currentUser?.id;
 
     const oldValue: Record<string, any> = {};
     const newValue: Record<string, any> = {};
@@ -252,24 +291,15 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
       if (oldVal !== undefined) oldValue[key] = oldVal;
       if (newVal !== undefined) newValue[key] = newVal;
 
-      if (
-        action === 'UPDATE' &&
-        oldVal !== undefined &&
-        newVal !== undefined &&
-        !['updatedAt', 'updated_at', 'createdAt', 'created_at', 'id'].includes(
-          key,
-        )
-      ) {
-        if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-          changedFields.push(key);
-          changes.push({
-            field: key,
-            label: formatFieldLabel(key),
-            from: formatValueForUser(oldVal),
-            to: formatValueForUser(newVal),
-          });
-        }
-      }
+      if (!this.isTrackableFieldChange(action, key, oldVal, newVal)) continue;
+
+      changedFields.push(key);
+      changes.push({
+        field: key,
+        label: formatFieldLabel(key),
+        from: formatValueForUser(oldVal),
+        to: formatValueForUser(newVal),
+      });
     }
 
     // Skip logging if no fields actually changed
@@ -284,13 +314,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
     const causerId = currentUser?.id ? String(currentUser.id) : null;
     const rawUserType = cls.get('userType');
     const causerType = causerId ? rawUserType || 'AdminUserEntity' : null;
-    const actorName =
-      currentUser?.fullName ??
-      (currentUser?.firstName || currentUser?.lastName
-        ? `${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}`.trim()
-        : null) ??
-      currentUser?.email ??
-      (causerId ? 'Administrator' : 'System');
+    const actorName = this.resolveActorName(currentUser, causerId);
 
     const modelBaseName = event.metadata.name.replace(/Entity$/, '');
     const eventName = this.mapActionToEventName(action);
@@ -347,10 +371,7 @@ export class AuditLogSubscriber implements EntitySubscriberInterface {
 
     setImmediate(async () => {
       try {
-        const repo =
-          this.dataSource && this.dataSource.isInitialized
-            ? this.dataSource.getRepository(ActivityLogEntity)
-            : (event.manager?.getRepository(ActivityLogEntity) ?? auditRepo);
+        const repo = this.resolveAuditRepository(event, auditRepo);
         await repo.save(log);
       } catch (saveError) {
         this.logger.error(

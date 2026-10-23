@@ -42,7 +42,7 @@ export function UnverifiedEmailAlert({ email }: UnverifiedEmailAlertProps) {
 
   return (
     <Alert variant='destructive' className='mb-4'>
-      <AlertCircle className='h-4 w-4' />
+      <AlertCircle className='size-4' />
       <AlertTitle>{t('auth.signIn.unverifiedAlertTitle')}</AlertTitle>
       <AlertDescription className='mt-2 flex flex-col items-start gap-2'>
         <p>{t('auth.signIn.unverifiedAlertDesc')}</p>

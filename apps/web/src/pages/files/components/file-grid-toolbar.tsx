@@ -81,6 +81,16 @@ const CATEGORY_CHIPS = [
   },
 ]
 
+function resolveStatusFilterValue(rawStatus: unknown): string {
+  if (Array.isArray(rawStatus)) {
+    return (rawStatus[0] as string) ?? 'all'
+  }
+  if (typeof rawStatus === 'string' && rawStatus) {
+    return rawStatus
+  }
+  return 'all'
+}
+
 export function FileGridToolbar({
   table,
   activeCategory,
@@ -124,17 +134,13 @@ export function FileGridToolbar({
   // Status Filter
   const statusColumn = table.getColumn('status')
   const rawStatus = statusColumn?.getFilterValue()
-  const currentStatus = Array.isArray(rawStatus)
-    ? ((rawStatus[0] as string) ?? 'all')
-    : typeof rawStatus === 'string' && rawStatus
-      ? rawStatus
-      : 'all'
+  const currentStatus = resolveStatusFilterValue(rawStatus)
 
   const handleSelectStatus = (status: string) => {
     if (status === 'all') {
       statusColumn?.setFilterValue(undefined)
     } else {
-      statusColumn?.setFilterValue([status])
+      statusColumn?.setFilterValue(status)
     }
   }
 
@@ -222,6 +228,7 @@ export function FileGridToolbar({
               onClick={handleClearSearch}
               className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 size-4 -translate-y-1/2 transition-colors'
               title='Clear search'
+              aria-label='Clear search'
             >
               <X className='size-3.5' />
             </button>
