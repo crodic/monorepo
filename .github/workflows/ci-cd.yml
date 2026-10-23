@@ -374,20 +374,42 @@ jobs:
           chmod 600 ~/.ssh/dokku_deploy
           ssh-keyscan -H 127.0.0.1 >> ~/.ssh/known_hosts
 
-      - name: Deploy API
-        run: >-
-          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
-          git:from-image crodic-api
-          ghcr.io/crodic/monorepo-api:sha-${GITHUB_SHA}
+      - name: Deploy apps to Dokku
+        run: |
+          deploy_app() {
+            local app="$1"
+            local image="$2"
+            local output
+            local status
 
-      - name: Deploy admin
-        run: >-
-          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
-          git:from-image crodic-admin
-          ghcr.io/crodic/monorepo-web:sha-${GITHUB_SHA}
+            echo "Deploying $app from $image"
 
-      - name: Deploy client
-        run: >-
-          ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1
-          git:from-image crodic-client
-          ghcr.io/crodic/monorepo-client:sha-${GITHUB_SHA}
+            set +e
+            output=$(ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1 \
+              git:from-image "$app" "$image" 2>&1)
+            status=$?
+            set -e
+
+            echo "$output"
+
+            if [ "$status" -eq 0 ]; then
+              echo "$app deployed successfully."
+              return 0
+            fi
+
+            if echo "$output" | grep -Fq "No changes detected"; then
+              echo "$app already uses this image; rebuilding the app."
+              ssh -i ~/.ssh/dokku_deploy dokku@127.0.0.1 ps:rebuild "$app"
+              return $?
+            fi
+
+            echo "git:from-image failed for $app."
+            return "$status"
+          }
+
+          deploy_app crodic-api \
+            "ghcr.io/crodic/monorepo-api:sha-${GITHUB_SHA}"
+          deploy_app crodic-admin \
+            "ghcr.io/crodic/monorepo-web:sha-${GITHUB_SHA}"
+          deploy_app crodic-client \
+            "ghcr.io/crodic/monorepo-client:sha-${GITHUB_SHA}"
