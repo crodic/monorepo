@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Clock,
   FolderPlus,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,6 +57,27 @@ export function FilesHeader({
   canCreate,
 }: FilesHeaderProps) {
   const { t } = useTranslation()
+
+  const [localSearch, setLocalSearch] = useState(search)
+
+  useEffect(() => {
+    setLocalSearch(search)
+  }, [search])
+
+  const debouncedSearch = useDebouncedCallback((val: string) => {
+    onSearchChange(val)
+  }, 300)
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    setLocalSearch(val)
+    debouncedSearch(val)
+  }
+
+  const handleClearSearch = () => {
+    setLocalSearch('')
+    onSearchChange('')
+  }
 
   // Keyboard shortcuts (⌘U / Ctrl+U for upload, ⌘N / Ctrl+N for new folder)
   useEffect(() => {
@@ -134,15 +156,20 @@ export function FilesHeader({
           <div className='relative w-full min-w-40 sm:w-56 lg:w-64'>
             <Search className='text-muted-foreground pointer-events-none absolute top-2 left-2.5 size-3.5' />
             <Input
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
+              value={localSearch}
+              onChange={handleSearchChange}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  onSearchChange(localSearch)
+                }
+              }}
               placeholder={t('files.search.placeholder', 'Search files...')}
               className='h-8 pr-7 pl-8 text-xs'
             />
-            {search && (
+            {localSearch && (
               <button
                 type='button'
-                onClick={() => onSearchChange('')}
+                onClick={handleClearSearch}
                 className='text-muted-foreground hover:text-foreground absolute top-2 right-2'
                 aria-label={t('dataTable.filter.clear', 'Clear search')}
               >

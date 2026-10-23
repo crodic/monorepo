@@ -113,7 +113,7 @@ export async function copyFileUrl(file: FileSchema) {
 
 export function useFileManagerCore() {
   const { t } = useTranslation()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
   const queryClient = useQueryClient()
 
   // --- View Mode & Navigation ---

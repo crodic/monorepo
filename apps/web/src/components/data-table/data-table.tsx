@@ -638,55 +638,74 @@ function getVirtualCells<TData>(
     .filter((cell): cell is Cell<TData, unknown> => Boolean(cell))
 }
 
-function DataTableRow<TData>({
-  row,
-  onClickRowAction,
-  renderSubRow,
-  subRowClassName,
-  colSpan,
-}: {
+const DataTableRow = React.memo(
+  function DataTableRow<TData>({
+    row,
+    onClickRowAction,
+    renderSubRow,
+    subRowClassName,
+    colSpan,
+  }: {
+    row: Row<TData>
+    onClickRowAction?: (row: TData) => void
+    renderSubRow?: (row: Row<TData>) => React.ReactNode
+    subRowClassName?: string
+    colSpan: number
+  }) {
+    return (
+      <>
+        <TableRow data-state={row.getIsSelected() && 'selected'}>
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              style={{
+                ...getCommonPinningStyles({ column: cell.column }),
+                minWidth: `${cell.column.columnDef.minSize}px`,
+              }}
+              onClick={() =>
+                cell.id.includes('actions') ||
+                cell.id.includes('select') ||
+                cell.id.includes('expand')
+                  ? undefined
+                  : onClickRowAction?.(row.original)
+              }
+              className={cn(onClickRowAction && 'cursor-pointer')}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+        {renderSubRow && row.getIsExpanded() && (
+          <TableRow className='hover:bg-transparent'>
+            <TableCell
+              colSpan={colSpan}
+              className={cn('bg-muted/30 whitespace-normal', subRowClassName)}
+            >
+              {renderSubRow(row)}
+            </TableCell>
+          </TableRow>
+        )}
+      </>
+    )
+  },
+  (prev, next) => {
+    if (prev.row.id !== next.row.id) return false
+    if (prev.row.getIsSelected() !== next.row.getIsSelected()) return false
+    if (prev.row.getIsExpanded() !== next.row.getIsExpanded()) return false
+    if (prev.row.original !== next.row.original) return false
+    if (prev.colSpan !== next.colSpan) return false
+    if (prev.subRowClassName !== next.subRowClassName) return false
+    if (prev.onClickRowAction !== next.onClickRowAction) return false
+    if (prev.renderSubRow !== next.renderSubRow) return false
+    return true
+  }
+) as <TData>(props: {
   row: Row<TData>
   onClickRowAction?: (row: TData) => void
   renderSubRow?: (row: Row<TData>) => React.ReactNode
   subRowClassName?: string
   colSpan: number
-}) {
-  return (
-    <>
-      <TableRow data-state={row.getIsSelected() && 'selected'}>
-        {row.getVisibleCells().map((cell) => (
-          <TableCell
-            key={cell.id}
-            style={{
-              ...getCommonPinningStyles({ column: cell.column }),
-              minWidth: `${cell.column.columnDef.minSize}px`,
-            }}
-            onClick={() =>
-              cell.id.includes('actions') ||
-              cell.id.includes('select') ||
-              cell.id.includes('expand')
-                ? undefined
-                : onClickRowAction?.(row.original)
-            }
-            className={cn(onClickRowAction && 'cursor-pointer')}
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        ))}
-      </TableRow>
-      {renderSubRow && row.getIsExpanded() && (
-        <TableRow className='hover:bg-transparent'>
-          <TableCell
-            colSpan={colSpan}
-            className={cn('bg-muted/30 whitespace-normal', subRowClassName)}
-          >
-            {renderSubRow(row)}
-          </TableCell>
-        </TableRow>
-      )}
-    </>
-  )
-}
+}) => React.ReactNode
 
 export function DataTableExpandCell<TData>({ row }: { row: Row<TData> }) {
   const canExpand = row.getCanExpand()

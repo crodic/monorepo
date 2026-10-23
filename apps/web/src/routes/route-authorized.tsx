@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Actions, Subjects } from '@/lib/permissions'
 
@@ -50,7 +51,12 @@ export const RouteAuthorize: React.FC<RouteAuthorizeProps> = ({
   isAnyPermission = false,
   requireSuperAdmin = false,
 }) => {
-  const { ability, permissions } = useAuthStore()
+  const { ability, permissions } = useAuthStore(
+    useShallow((s) => ({
+      ability: s.ability,
+      permissions: s.permissions,
+    }))
+  )
 
   const isAllowed = checkRoutePermission({
     requireSuperAdmin,

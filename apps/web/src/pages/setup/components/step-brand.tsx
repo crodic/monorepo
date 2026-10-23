@@ -1,4 +1,4 @@
-import type { UseFormReturn } from 'react-hook-form'
+import { useWatch, type UseFormReturn } from 'react-hook-form'
 import { ArrowRight, Globe, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
@@ -22,12 +22,18 @@ import type { SystemSetupSchema } from '../schema'
 
 type StepBrandProps = {
   form: UseFormReturn<SystemSetupSchema>
-  siteBrandValue: string
+  siteBrandValue?: string
   onNext: () => void
 }
 
 export function StepBrand({ form, siteBrandValue, onNext }: StepBrandProps) {
   const { t } = useTranslation()
+  const watchedBrand = useWatch({
+    control: form.control,
+    name: 'site_brand',
+    defaultValue: '',
+  })
+  const brandDisplay = (siteBrandValue ?? watchedBrand ?? '').trim()
 
   return (
     <>
@@ -87,7 +93,7 @@ export function StepBrand({ form, siteBrandValue, onNext }: StepBrandProps) {
               <Sparkles className='text-primary size-2.5' />
             </div>
             <span className='truncate font-medium'>
-              {siteBrandValue.trim() || 'My Platform'} — Admin Portal
+              {brandDisplay || 'My Platform'} — Admin Portal
             </span>
           </div>
         </div>

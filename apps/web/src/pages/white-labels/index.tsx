@@ -28,7 +28,7 @@ const whiteLabelFilterParsers = {
 export function PageWhiteLabelOverview() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
 
   const columns = useMemo(() => defaultColumns, [])
 

@@ -58,7 +58,7 @@ export default function ComponentTableRowActions({
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
   const item = row.original
   const canCreate = ability.can('create', 'WHITE_LABEL')
   const canUpdate = ability.can('update', 'WHITE_LABEL')

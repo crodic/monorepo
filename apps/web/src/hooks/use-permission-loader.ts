@@ -1,12 +1,18 @@
 import { useEffect } from 'react'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
+import { useShallow } from 'zustand/react/shallow'
 import { useAuthStore } from '@/stores/auth-store'
 import { getAdminPermissions } from '@/lib/admin-roles'
 import { apiGetMe } from '@/pages/auth/queries'
 
 export function usePermissionLoader() {
-  const { permissionStatus, setAbilityFromPermissions } = useAuthStore()
+  const { permissionStatus, setAbilityFromPermissions } = useAuthStore(
+    useShallow((s) => ({
+      permissionStatus: s.permissionStatus,
+      setAbilityFromPermissions: s.setAbilityFromPermissions,
+    }))
+  )
 
   const authUserQuery = useQuery({
     enabled: permissionStatus == 'loading',

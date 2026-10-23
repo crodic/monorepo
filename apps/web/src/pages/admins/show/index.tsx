@@ -26,7 +26,7 @@ export function PageAdminShow() {
   const params = useParams()
   const id = params.id as string
   const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
-  const { id: userId } = useAuthStore()
+  const userId = useAuthStore((s) => s.id)
 
   const { data, isFetching } = useDataGetAdminDetail(id)
 

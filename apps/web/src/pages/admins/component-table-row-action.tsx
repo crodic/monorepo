@@ -16,7 +16,7 @@ export default function ComponentTableRowActions({
 }: {
   row: { original: AdminSchema }
 }) {
-  const { id } = useAuthStore()
+  const id = useAuthStore((s) => s.id)
   const queryClient = useQueryClient()
   const [isShowDeleteDialog, setIsShowDeleteDialog] = useState(false)
 

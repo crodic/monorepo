@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react'
 import { Direction } from 'radix-ui'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
@@ -29,25 +36,28 @@ export function DirectionProvider({ children }: { children: React.ReactNode }) {
     htmlElement.setAttribute('dir', dir)
   }, [dir])
 
-  const setDir = (dir: Direction) => {
-    _setDir(dir)
-    setCookie(DIRECTION_COOKIE_NAME, dir, DIRECTION_COOKIE_MAX_AGE)
-  }
+  const setDir = useCallback((newDir: Direction) => {
+    _setDir(newDir)
+    setCookie(DIRECTION_COOKIE_NAME, newDir, DIRECTION_COOKIE_MAX_AGE)
+  }, [])
 
-  const resetDir = () => {
+  const resetDir = useCallback(() => {
     _setDir(DEFAULT_DIRECTION)
     removeCookie(DIRECTION_COOKIE_NAME)
-  }
+  }, [])
+
+  const contextValue = useMemo<DirectionContextType>(
+    () => ({
+      defaultDir: DEFAULT_DIRECTION,
+      dir,
+      setDir,
+      resetDir,
+    }),
+    [dir, setDir, resetDir]
+  )
 
   return (
-    <DirectionContext
-      value={{
-        defaultDir: DEFAULT_DIRECTION,
-        dir,
-        setDir,
-        resetDir,
-      }}
-    >
+    <DirectionContext value={contextValue}>
       <RdxDirProvider dir={dir}>{children}</RdxDirProvider>
     </DirectionContext>
   )

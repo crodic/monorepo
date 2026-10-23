@@ -15,7 +15,7 @@ export function Authorize({
   children,
   fallback = null,
 }: Props) {
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
 
   const isAuthorized = ability.can(action, subject)
 

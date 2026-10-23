@@ -1,4 +1,4 @@
-import type { UseFormReturn } from 'react-hook-form'
+import { useWatch, type UseFormReturn } from 'react-hook-form'
 import {
   ArrowLeft,
   ArrowRight,
@@ -31,7 +31,7 @@ import type { SystemSetupSchema } from '../schema'
 
 type StepAdminProps = {
   form: UseFormReturn<SystemSetupSchema>
-  passwordCriteria: Array<{ key: string; valid: boolean; label: string }>
+  passwordCriteria?: Array<{ key: string; valid: boolean; label: string }>
   onBack: () => void
   onNext: () => void
 }
@@ -43,6 +43,54 @@ export function StepAdmin({
   onNext,
 }: StepAdminProps) {
   const { t } = useTranslation()
+
+  const passwordValue =
+    useWatch({
+      control: form.control,
+      name: 'password',
+      defaultValue: '',
+    }) || ''
+  const confirmPasswordValue =
+    useWatch({
+      control: form.control,
+      name: 'confirmPassword',
+      defaultValue: '',
+    }) || ''
+
+  const activePasswordCriteria = passwordCriteria ?? [
+    {
+      key: 'min',
+      valid: passwordValue.length >= 8,
+      label: t('setup.pwdReq.min'),
+    },
+    {
+      key: 'upper',
+      valid: /[A-Z]/.test(passwordValue),
+      label: t('setup.pwdReq.upper'),
+    },
+    {
+      key: 'lower',
+      valid: /[a-z]/.test(passwordValue),
+      label: t('setup.pwdReq.lower'),
+    },
+    {
+      key: 'number',
+      valid: /[0-9]/.test(passwordValue),
+      label: t('setup.pwdReq.number'),
+    },
+    {
+      key: 'special',
+      valid: /[^a-zA-Z0-9]/.test(passwordValue),
+      label: t('setup.pwdReq.special'),
+    },
+    {
+      key: 'match',
+      valid:
+        confirmPasswordValue.length > 0 &&
+        confirmPasswordValue === passwordValue,
+      label: t('setup.pwdReq.match'),
+    },
+  ]
 
   return (
     <>
@@ -160,7 +208,7 @@ export function StepAdmin({
             {t('setup.pwdReq.title')}
           </p>
           <div className='grid grid-cols-1 gap-1.5 sm:grid-cols-2'>
-            {passwordCriteria.map((item) => (
+            {activePasswordCriteria.map((item) => (
               <div key={item.key} className='flex items-center gap-2 text-xs'>
                 {item.valid ? (
                   <CheckCircle2 className='size-3.5 text-emerald-600 dark:text-emerald-400' />

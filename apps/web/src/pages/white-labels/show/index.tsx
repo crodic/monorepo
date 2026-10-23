@@ -77,7 +77,7 @@ export default function PageWhiteLabelShow() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
 
   const [activeTab, setActiveTab] = useState<TabType>('brand')
   const [colorMode, setColorMode] = useState<ThemeMode>('light')

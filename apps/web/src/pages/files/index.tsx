@@ -31,7 +31,7 @@ import { useFileManagerCore } from './use-file-manager-core'
 
 export function PageFileOverview() {
   const { t } = useTranslation()
-  const { ability } = useAuthStore()
+  const ability = useAuthStore((state) => state.ability)
 
   const {
     // Navigation & View
