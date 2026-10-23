@@ -12,10 +12,13 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { AllConfigType } from '../../config/config.type';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
-import { createHash } from 'crypto';
+import { createHash, createHmac } from 'crypto';
 import {
   FilterOperator,
   paginate,
@@ -47,6 +50,8 @@ export class FileService {
     private readonly fileValidator: FileValidator,
     private readonly storage: FilesystemService,
     private readonly fileFolderService: FileFolderService,
+    @Optional()
+    private readonly configService?: ConfigService<AllConfigType>,
   ) {}
 
   private get disk(): StorageDriver {
@@ -515,21 +520,44 @@ export class FileService {
     const diskName = this.normalizeUploadDisk(
       file.disk ?? this.currentDiskName,
     );
-    const storageKey = this.toStorageKey(file.path);
-    const disk = this.writeDisk(diskName);
 
+    const expires = Math.floor(Date.now() / 1000) + expiresInSeconds;
     let url: string;
-    try {
-      url = await disk.temporaryUrl(storageKey, expiresInSeconds);
-    } catch {
-      url = file.url;
+
+    if (diskName === 's3' || diskName === 's3-private') {
+      const storageKey = this.toStorageKey(file.path);
+      const disk = this.writeDisk(diskName);
+      try {
+        url = await disk.temporaryUrl(storageKey, expiresInSeconds);
+      } catch {
+        url = this.generateSignedUrl(file, expires);
+      }
+    } else {
+      url = this.generateSignedUrl(file, expires);
     }
 
     return {
       url,
       expiresIn: expiresInSeconds,
-      expiresAt: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
+      expiresAt: new Date(expires * 1000).toISOString(),
     };
+  }
+
+  generateSignedUrl(file: FileEntity, expires: number): string {
+    const signature = this.generateFileSignature(file.public_id, expires);
+    const baseUrl = file.url;
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}expires=${expires}&signature=${signature}`;
+  }
+
+  generateFileSignature(publicId: string, expires: number): string {
+    const secret =
+      this.configService?.get('auth.secret', { infer: true }) ||
+      process.env.AUTH_JWT_SECRET ||
+      'temporary-url-secret-fallback-key-32';
+    return createHmac('sha256', secret)
+      .update(`${publicId}:${expires}`)
+      .digest('hex');
   }
 
   async uploadImage(
