@@ -134,7 +134,7 @@ export function FileGridToolbar({
     if (status === 'all') {
       statusColumn?.setFilterValue(undefined)
     } else {
-      statusColumn?.setFilterValue([status])
+      statusColumn?.setFilterValue(status)
     }
   }
 

@@ -281,6 +281,38 @@ export function getFilesTableColumns({
       size: 130,
     },
     {
+      id: ColumnKey.status,
+      accessorFn: (row) => row.status,
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          label={i18n.t('files.table.status', 'Status')}
+        />
+      ),
+      cell: ({ row }) => {
+        const status = row.original.status
+        return (
+          <Badge
+            variant={status === 'active' ? 'secondary' : 'outline'}
+            className='text-xs capitalize'
+          >
+            {status}
+          </Badge>
+        )
+      },
+      meta: {
+        label: i18n.t('files.table.status', 'Status'),
+        variant: 'select',
+        options: [
+          { label: 'Active', value: 'active' },
+          { label: 'Archived', value: 'archived' },
+        ],
+      },
+      enableColumnFilter: true,
+      enableSorting: true,
+      size: 100,
+    },
+    {
       id: ColumnKey.size,
       accessorFn: (row) => row.size,
       header: ({ column }) => (

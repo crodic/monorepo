@@ -153,10 +153,8 @@ export function useFileManagerCore() {
     if (activeView === 'trash') {
       builder.eq('status', 'trash')
     } else {
-      if (filter.status) {
+      if (filter.status && filter.status !== 'all') {
         builder.eq('status', filter.status)
-      } else {
-        builder.eq('status', 'active')
       }
 
       if (activeView === 'starred') {
@@ -437,7 +435,7 @@ export function useFileManagerCore() {
         [ColumnKey.folder]: null,
         [ColumnKey.mime]: null,
         [ColumnKey.resourceType]: null,
-        [ColumnKey.status]: view === 'trash' ? 'archived' : null,
+        [ColumnKey.status]: null,
         [ColumnKey.createdAt]: null,
       })
     },
