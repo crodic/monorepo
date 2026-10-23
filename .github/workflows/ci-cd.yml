@@ -184,11 +184,19 @@ jobs:
 
           while IFS= read -r name; do
             value=$(get_dokku_config "$name")
+            case "$name" in
+              NEXT_PUBLIC_APP_URL)
+                value=${value:-https://frieren.io.vn}
+                ;;
+              NEXT_PUBLIC_ADMIN_PORTAL_URL)
+                value=${value:-https://admin.frieren.io.vn}
+                ;;
+            esac
             printf '%s=%s\n' "$name" "$value" >> "$GITHUB_ENV"
             if [ -n "$value" ]; then
-              echo "$name is configured in Dokku."
+              echo "$name is available for the client build."
             else
-              echo "$name is empty in Dokku."
+              echo "$name is empty in Dokku and has no build default."
             fi
           done <<'BUILD_VARS'
           NEXT_PUBLIC_API_URL
@@ -204,15 +212,10 @@ jobs:
 
       - name: Validate production build environment
         run: |
-          for name in \
-            NEXT_PUBLIC_API_URL \
-            NEXT_PUBLIC_APP_URL \
-            NEXT_PUBLIC_ADMIN_PORTAL_URL; do
-            if [ -z "${!name}" ]; then
-              echo "ERROR: $name is missing from Dokku crodic-client config."
-              exit 1
-            fi
-          done
+          if [ -z "$NEXT_PUBLIC_API_URL" ]; then
+            echo "ERROR: NEXT_PUBLIC_API_URL is missing from Dokku crodic-client config."
+            exit 1
+          fi
 
       - name: Build API image on server
         run: |
