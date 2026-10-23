@@ -295,7 +295,7 @@ jobs:
           labels: ${{ steps.client-meta.outputs.labels }}
           cache-from: type=gha,scope=client
           cache-to: type=gha,mode=max,scope=client
-
+  ## demo ci/cd
   deploy:
     name: Deploy to Dokku
     runs-on: [self-hosted, linux, dokku]
